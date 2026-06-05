@@ -2,7 +2,7 @@
 // BUDGET CLUB 2026 — Prototype complet
 // Stack cible : React 18 + Vite + localStorage
 // ============================================================
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 // ─── DESIGN TOKENS ──────────────────────────────────────────
 const C = {
@@ -880,11 +880,14 @@ export function EpargneView({ getAllMonths }) {
 const SplashScreen = ({ onDone }) => {
   const [visible, setVisible] = useState(false);
   const [out, setOut]         = useState(false);
+  const firedRef              = useRef(false);
 
   useEffect(() => {
     const t0 = setTimeout(() => setVisible(true), 30);
     const t1 = setTimeout(() => setOut(true), 2000);
-    const t2 = setTimeout(onDone, 2500);
+    const t2 = setTimeout(() => {
+      if (!firedRef.current) { firedRef.current = true; onDone(); }
+    }, 2500);
     return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
