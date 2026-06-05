@@ -116,6 +116,10 @@ const byDate         = (arr) => [...arr].sort((a, b) => new Date(b.date || 0) - 
 const getCustomCats  = () => { try { return JSON.parse(localStorage.getItem('budget:categories:custom') || '[]'); } catch { return []; } };
 const saveCustomCats = (cats) => localStorage.setItem('budget:categories:custom', JSON.stringify(cats));
 
+const LIVRET_SOLDE_KEY = 'budget:livret:solde_initial';
+const getLivretSolde  = () => { try { const s = localStorage.getItem(LIVRET_SOLDE_KEY); return s ? JSON.parse(s) : null; } catch { return null; } };
+const saveLivretSolde = (v) => localStorage.setItem(LIVRET_SOLDE_KEY, JSON.stringify(v));
+
 // ─── HOOK STORAGE ────────────────────────────────────────────
 function useMonthData(mi) {
   const key = storageKey(mi);
@@ -300,8 +304,13 @@ const ICON_CHOICES = [
   'ti-paw','ti-baby-carriage','ti-shirt','ti-tool','ti-phone',
 ];
 
-export const AddExpenseModal = ({ onAdd, onClose }) => {
-  const [form, setForm]             = useState({ amount:'', cat:'', name:'', date: new Date().toISOString().split('T')[0] });
+export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose }) => {
+  const isEdit = !!initial;
+  const [form, setForm]             = useState(
+    initial
+      ? { amount: String(initial.amount), cat: initial.cat, name: initial.name || '', date: initial.date || new Date().toISOString().split('T')[0] }
+      : { amount:'', cat:'', name:'', date: new Date().toISOString().split('T')[0] }
+  );
   const [customCats, setCustomCats] = useState(() => getCustomCats());
   const [showNewCat, setShowNewCat] = useState(false);
   const [newCatName, setNewCatName] = useState('');
@@ -313,7 +322,11 @@ export const AddExpenseModal = ({ onAdd, onClose }) => {
   const submit = () => {
     const a = parseFloat(form.amount);
     if (!a || !form.cat) return;
-    onAdd({ id:'e'+Date.now(), name:form.name, amount:a, cat:form.cat, date:form.date });
+    if (isEdit) {
+      onUpdate({ ...initial, name:form.name, amount:a, cat:form.cat, date:form.date });
+    } else {
+      onAdd({ id:'e'+Date.now(), name:form.name, amount:a, cat:form.cat, date:form.date });
+    }
     onClose();
   };
 
@@ -329,7 +342,7 @@ export const AddExpenseModal = ({ onAdd, onClose }) => {
   };
 
   return (
-    <ModalShell title="Nouvelle dépense" onClose={onClose}>
+    <ModalShell title={isEdit ? 'Modifier la dépense' : 'Nouvelle dépense'} onClose={onClose}>
       <div style={{ marginBottom:14 }}>
         <Label>Montant</Label>
         <input type="number" inputMode="decimal" step="0.01" placeholder="0,00" value={form.amount}
@@ -383,7 +396,7 @@ export const AddExpenseModal = ({ onAdd, onClose }) => {
         <div style={{ flex:1 }}><Label>Nom</Label><TextInput placeholder="ex : Carrefour" value={form.name} onChange={e => upd('name', e.target.value)} /></div>
         <div style={{ flex:1 }}><Label>Date</Label><DateInput value={form.date} onChange={e => upd('date', e.target.value)} /></div>
       </div>
-      <SubmitBtn label="Valider la dépense" onClick={submit} />
+      <SubmitBtn label={isEdit ? 'Modifier la dépense' : 'Valider la dépense'} onClick={submit} />
     </ModalShell>
   );
 };
@@ -752,8 +765,10 @@ export function DepensesView({ m, updateData, depTab, setDepTab }) {
   const rev   = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
   const reste = Math.round((rev - bT - eT) * 100) / 100;
 
-  const [xBill, setXBill] = useState(null);
-  const [billForm, setBillForm] = useState({ amount:'', date:'' });
+  const [xBill, setXBill]           = useState(null);
+  const [billForm, setBillForm]     = useState({ amount:'', date:'' });
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [editExp, setEditExp]       = useState(null);
 
   const clickBill = (realI) => {
     setXBill(realI);
@@ -799,8 +814,22 @@ export function DepensesView({ m, updateData, depTab, setDepTab }) {
             {exps.length === 0 && <div style={{ textAlign:'center', padding:24, color:C.muted, fontFamily:sans, fontSize:13 }}>Aucune dépense ce mois</div>}
             {byDate(exps).map(e => {
               const cat = CATS.find(c => c.id === e.cat) || CATS[CATS.length-1];
+              if (deleteConfirm === e.id) {
+                return (
+                  <div key={e.id} style={{ background:C.roseL, borderRadius:12, marginBottom:8, padding:'12px 14px', border:`1px solid ${C.rose}`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                    <span style={{ fontFamily:sans, fontSize:13, color:C.vert }}>Supprimer <strong>{e.name || cat.label}</strong>&nbsp;?</span>
+                    <div style={{ display:'flex', gap:8, flexShrink:0 }}>
+                      <button onClick={() => { updateData(mm => { mm.expenses = mm.expenses.filter(x => x.id !== e.id); }); setDeleteConfirm(null); }}
+                        style={{ padding:'6px 14px', background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:12, fontWeight:600, cursor:'pointer' }}>Oui</button>
+                      <button onClick={() => setDeleteConfirm(null)}
+                        style={{ padding:'6px 14px', background:'white', border:`1px solid ${C.rose}`, borderRadius:8, fontFamily:sans, fontSize:12, cursor:'pointer', color:C.vert }}>Non</button>
+                    </div>
+                  </div>
+                );
+              }
               return (
-                <div key={e.id} style={{ background:C.card, borderRadius:12, marginBottom:8, display:'flex', alignItems:'center', gap:12, padding:'12px 14px', border:`0.5px solid ${C.border}` }}>
+                <div key={e.id} onClick={() => setEditExp(e)}
+                  style={{ background:C.card, borderRadius:12, marginBottom:8, display:'flex', alignItems:'center', gap:12, padding:'12px 14px', border:`0.5px solid ${C.border}`, cursor:'pointer' }}>
                   <CatIcon catId={e.cat} size={38} />
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontFamily:sans, fontSize:13, fontWeight:500, color:C.text, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{e.name || cat.label}</div>
@@ -810,6 +839,10 @@ export function DepensesView({ m, updateData, depTab, setDepTab }) {
                     <div style={{ fontFamily:serif, fontSize:16, fontWeight:600, color:'#C0392B' }}>-{fmtR(e.amount)}</div>
                     <div style={{ fontFamily:sans, fontSize:10, color:C.muted }}>{e.date ? new Date(e.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : ''}</div>
                   </div>
+                  <button onClick={ev => { ev.stopPropagation(); setDeleteConfirm(e.id); }}
+                    style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(28,41,28,0.22)', fontSize:16, padding:'2px 4px', flexShrink:0 }}>
+                    <i className="ti ti-trash" />
+                  </button>
                 </div>
               );
             })}
@@ -904,6 +937,16 @@ export function DepensesView({ m, updateData, depTab, setDepTab }) {
           </div>
         </>
       )}
+      {editExp && (
+        <AddExpenseModal
+          initial={editExp}
+          onUpdate={updated => {
+            updateData(mm => { mm.expenses = mm.expenses.map(x => x.id === updated.id ? updated : x); });
+            setEditExp(null);
+          }}
+          onClose={() => setEditExp(null)}
+        />
+      )}
     </>
   );
 }
@@ -912,6 +955,14 @@ export function DepensesView({ m, updateData, depTab, setDepTab }) {
 export function EpargneView({ currentYear }) {
   const [epargneYear, setEpargneYear] = useState(currentYear);
   const [months, setMonths] = useState(() => loadYearData(currentYear));
+  const [livretSolde, setLivretSolde] = useState(() => getLivretSolde() || { amount: 1938.37, date: '2026-06-05' });
+  const [editSolde, setEditSolde]     = useState(false);
+  const [soldeForm, setSoldeForm]     = useState({ amount:'', date:'' });
+
+  // Persist default initial balance on first load
+  useEffect(() => {
+    if (!getLivretSolde()) saveLivretSolde(livretSolde);
+  }, []);
 
   useEffect(() => {
     setMonths(loadYearData(epargneYear));
@@ -930,6 +981,10 @@ export function EpargneView({ currentYear }) {
     return { idx, total:tot, livret:liv, invest:inv };
   });
   const mx = Math.max(...md.map(d => d.total), 1);
+
+  // Livret A total = solde initial + versements de l'année affichée
+  const livretTotal = (livretSolde?.amount || 0) + tl;
+  const fmtDate = (d) => d ? d.split('-').reverse().join('/') : '';
 
   // Clôture annuelle : tous les mois qui ont des données sont clôturés (mois vides ignorés)
   const dataMonths = months.filter(m => m !== null);
@@ -971,10 +1026,54 @@ export function EpargneView({ currentYear }) {
       <div style={{ flex:1, overflowY:'auto', padding:'0 16px 16px', background:C.beige }}>
         <div style={{ fontFamily:sans, fontSize:11, color:C.muted, marginBottom:8, fontWeight:500 }}>Total à date — {epargneYear}</div>
         {/* Livret A */}
-        <div style={{ background:C.vert, borderRadius:12, padding:'14px 20px', marginBottom:8, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-          <span style={{ fontFamily:sans, fontSize:14, fontWeight:600, color:'rgba(255,255,255,0.8)' }}>Livret A</span>
-          <span style={{ fontFamily:serif, fontSize:28, fontWeight:700, color:'white' }}>{fmtP(tl)}</span>
+        <div style={{ background:C.vert, borderRadius:12, padding:'14px 20px', marginBottom: editSolde ? 0 : 8 }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <span style={{ fontFamily:sans, fontSize:14, fontWeight:600, color:'rgba(255,255,255,0.8)' }}>Livret A</span>
+              <button onClick={() => { setSoldeForm({ amount: String(livretSolde?.amount || ''), date: livretSolde?.date || '' }); setEditSolde(v => !v); }}
+                style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
+                <i className="ti ti-pencil" style={{ fontSize:13, color: editSolde ? C.gold : 'rgba(255,255,255,0.4)' }} />
+              </button>
+            </div>
+            <span style={{ fontFamily:serif, fontSize:28, fontWeight:700, color:'white' }}>{fmtP(livretTotal)}</span>
+          </div>
+          {livretSolde && !editSolde && (
+            <div style={{ fontFamily:sans, fontSize:11, color:'rgba(255,255,255,0.45)', marginTop:4 }}>
+              dont {fmtR(livretSolde.amount)} solde au {fmtDate(livretSolde.date)}
+            </div>
+          )}
         </div>
+        {/* Formulaire édition solde initial */}
+        {editSolde && (
+          <div style={{ background:'rgba(28,41,28,0.92)', borderRadius:'0 0 12px 12px', padding:'10px 14px 14px', marginBottom:8 }}>
+            <div style={{ display:'flex', gap:8, marginBottom:8 }}>
+              <div style={{ flex:2 }}>
+                <Label><span style={{ color:'rgba(255,255,255,0.5)' }}>Solde initial (€)</span></Label>
+                <input type="number" step="0.01" value={soldeForm.amount} onChange={e => setSoldeForm(p => ({...p, amount:e.target.value}))}
+                  style={{ width:'100%', padding:8, border:`1px solid rgba(255,255,255,0.2)`, borderRadius:7, fontSize:15, fontFamily:serif, color:C.vert, background:'white' }} />
+              </div>
+              <div style={{ flex:2 }}>
+                <Label><span style={{ color:'rgba(255,255,255,0.5)' }}>Date du solde</span></Label>
+                <input type="date" value={soldeForm.date} onChange={e => setSoldeForm(p => ({...p, date:e.target.value}))}
+                  style={{ width:'100%', padding:8, border:`1px solid rgba(255,255,255,0.2)`, borderRadius:7, fontSize:12, color:C.vert, background:'white', fontFamily:sans }} />
+              </div>
+            </div>
+            <div style={{ display:'flex', gap:8 }}>
+              <button onClick={() => {
+                const a = parseFloat(soldeForm.amount);
+                if (!a) return;
+                const updated = { amount:a, date:soldeForm.date };
+                saveLivretSolde(updated);
+                setLivretSolde(updated);
+                setEditSolde(false);
+              }} style={{ flex:1, padding:9, background:C.gold, color:C.nav, border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                Enregistrer
+              </button>
+              <button onClick={() => setEditSolde(false)}
+                style={{ padding:'9px 12px', background:'rgba(255,255,255,0.1)', border:'none', borderRadius:8, cursor:'pointer', color:'white', fontFamily:sans }}>✕</button>
+            </div>
+          </div>
+        )}
         {/* PEA / Trade */}
         <div style={{ background:C.rose, borderRadius:12, padding:'14px 20px', marginBottom:16, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
           <span style={{ fontFamily:sans, fontSize:14, fontWeight:600, color:C.vert }}>PEA / Trade</span>
