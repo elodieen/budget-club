@@ -72,6 +72,7 @@ const mkMonth = () => ({
   revenues:   [],
   bills:      BILLS_DEFAULT.map(b => ({...b, realAmount: b.amount, paid: false, paidDate: ''})),
   expenses:   [],
+  closed:     false,
 });
 
 // Données seed Mars / Avril / Mai 2026
@@ -232,13 +233,14 @@ const CatIcon = ({ catId, size = 42, gray = false }) => {
 };
 
 // Header avec logo + navigation mois
-const MonthHeader = ({ mi, setMi }) => (
+const MonthHeader = ({ mi, setMi, closed }) => (
   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px 0', background:C.beige, flexShrink:0 }}>
     <Logo />
     <div style={{ display:'flex', alignItems:'center', gap:4 }}>
       <button onClick={() => setMi(i => Math.max(0, i - 1))}
         style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>‹</button>
       <span style={{ fontFamily:serif, fontSize:16, fontWeight:600, color:C.vert }}>{MONTHS[mi]} 2026</span>
+      {closed && <i className="ti ti-lock" style={{ fontSize:13, color:C.gold, marginLeft:2 }} />}
       <button onClick={() => setMi(i => Math.min(11, i + 1))}
         style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>›</button>
     </div>
@@ -261,7 +263,7 @@ const BottomNav = ({ view, setView, m }) => {
   const bT       = m.bills.reduce((s,b) => s + billValue(b), 0);
   const tv       = CATS.filter(c => c.id !== 'epargne_livret' && c.id !== 'epargne_pea').reduce((s,c) => s + (cb[c.id]||0), 0);
   const nonV     = Math.max(0, rev - bT - tv);
-  const badges   = { revenus: m.revenues.length > 0, budget: rev > 0 && tv > 0 && nonV < 1 };
+  const badges   = { revenus: m.revenues.length > 0, budget: rev > 0 && tv > 0 && nonV < 1, depenses: !!m.closed };
 
   return (
     <div style={{ display:'flex', alignItems:'stretch', background:C.nav, flexShrink:0, padding:'8px 0 12px' }}>
@@ -499,7 +501,8 @@ const DateInput = (props) => (
 // ─── VUES ────────────────────────────────────────────────────
 
 // Vue ACCUEIL
-export function AccueilView({ m, mi, setMi, setView }) {
+export function AccueilView({ m, mi, setMi, setView, updateData }) {
+  const [confirmClose, setConfirmClose] = useState(false);
   const rev  = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
   const bT   = m.bills.filter(b => b.selected !== false).reduce((s,b) => s + billValue(b), 0);
   const eT   = m.expenses.filter(e => e.cat !== 'epargne_livret' && e.cat !== 'epargne_pea').reduce((s,e) => s + (e.amount||0), 0);
@@ -509,7 +512,7 @@ export function AccueilView({ m, mi, setMi, setView }) {
 
   return (
     <>
-      <MonthHeader mi={mi} setMi={setMi} />
+      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} />
       <div style={{ padding:'12px 16px 0', background:C.beige, flexShrink:0 }}>
         {/* Card Reste à dépenser */}
         <div style={{ background:C.rose, borderRadius:16, padding:'20px 20px 16px', textAlign:'center', marginBottom:12 }}>
@@ -548,6 +551,37 @@ export function AccueilView({ m, mi, setMi, setView }) {
             Un bon budget est la première étape vers la liberté financière.
           </div>
           <div style={{ marginTop:8, color:C.gold, fontSize:14 }}>❧</div>
+        </div>
+
+        {/* Clôture du mois */}
+        <div style={{ paddingTop:12 }}>
+          {m.closed ? (
+            <button onClick={() => updateData(mm => { mm.closed = false; })}
+              style={{ width:'100%', padding:'10px 0', background:C.rose, border:'none', borderRadius:10, fontFamily:sans, fontSize:13, fontWeight:600, color:C.vert, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+              <i className="ti ti-lock-open" style={{ fontSize:15 }} /> Réouvrir le mois
+            </button>
+          ) : confirmClose ? (
+            <div style={{ background:C.roseL, border:`1px solid ${C.rose}`, borderRadius:10, padding:'12px 14px' }}>
+              <div style={{ fontFamily:sans, fontSize:12, color:C.vert, marginBottom:10, textAlign:'center' }}>
+                Confirmer la clôture ? Cette action verrouille le mois.
+              </div>
+              <div style={{ display:'flex', gap:8 }}>
+                <button onClick={() => { updateData(mm => { mm.closed = true; }); setConfirmClose(false); }}
+                  style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                  Confirmer
+                </button>
+                <button onClick={() => setConfirmClose(false)}
+                  style={{ padding:'9px 14px', background:'white', border:`1px solid ${C.rose}`, borderRadius:8, cursor:'pointer', color:C.vert, fontFamily:sans, fontSize:13 }}>
+                  Annuler
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => setConfirmClose(true)}
+              style={{ width:'100%', padding:'10px 0', background:'none', border:`1.5px solid rgba(28,41,28,0.25)`, borderRadius:10, fontFamily:sans, fontSize:13, fontWeight:500, color:C.vert, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+              <i className="ti ti-lock" style={{ fontSize:15 }} /> Clôturer le mois
+            </button>
+          )}
         </div>
       </div>
     </>
@@ -680,7 +714,8 @@ export function BudgetEditView({ m, updateData, setView }) {
           </div>
           <input type="number" placeholder="—" value={vals[c.id] || ''}
             onChange={e => handleChange(c.id, e.target.value)}
-            style={{ width:75, padding:'6px 8px', border:`1px solid ${C.border}`, borderRadius:8, fontSize:13, textAlign:'right', background:'white', color:C.vert, fontFamily:sans }} />
+            disabled={m.closed}
+            style={{ width:75, padding:'6px 8px', border:`1px solid ${C.border}`, borderRadius:8, fontSize:13, textAlign:'right', background: m.closed ? 'rgba(28,41,28,0.05)' : 'white', color:C.vert, fontFamily:sans }} />
         </div>
       ))}
       {saved && (
@@ -1074,7 +1109,7 @@ export default function App() {
 
   const renderView = () => {
     switch (view) {
-      case 'accueil':     return <AccueilView m={m} mi={mi} setMi={setMi} setView={setView} />;
+      case 'accueil':     return <AccueilView m={m} mi={mi} setMi={setMi} setView={setView} updateData={updateData} />;
       case 'budget':      return <BudgetView  m={m} setView={setView} />;
       case 'budget_edit': return <BudgetEditView m={m} updateData={updateData} setView={setView} />;
       case 'revenus':     return <RevenusView m={m} updateData={updateData} />;
@@ -1118,7 +1153,7 @@ export default function App() {
           </div>
 
           {/* FAB */}
-          {!['budget_edit'].includes(view) && <FAB view={view} setModal={setModal} setView={setView} depTab={depTab} />}
+          {!['budget_edit'].includes(view) && !m.closed && <FAB view={view} setModal={setModal} setView={setView} depTab={depTab} />}
 
           {/* Nav */}
           <BottomNav view={view} setView={setView} m={m} />
@@ -1127,9 +1162,9 @@ export default function App() {
           {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
 
           {/* Modals */}
-          {modal === 'dep'  && <AddExpenseModal onAdd={addExpense} onClose={() => setModal(null)} />}
-          {modal === 'rev'  && <AddRevenuModal  onAdd={addRevenu}  onClose={() => setModal(null)} />}
-          {modal === 'bill' && <AddBillModal    onAdd={addBill}    onClose={() => setModal(null)} />}
+          {!m.closed && modal === 'dep'  && <AddExpenseModal onAdd={addExpense} onClose={() => setModal(null)} />}
+          {!m.closed && modal === 'rev'  && <AddRevenuModal  onAdd={addRevenu}  onClose={() => setModal(null)} />}
+          {!m.closed && modal === 'bill' && <AddBillModal    onAdd={addBill}    onClose={() => setModal(null)} />}
         </div>
       </div>
     </>
