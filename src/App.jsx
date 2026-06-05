@@ -170,8 +170,8 @@ function useMonthData(mi) {
 // ─── COMPOSANTS PARTAGÉS ─────────────────────────────────────
 
 // Logo BC
-const Logo = ({ size = 38 }) => (
-  <img src="/logo-budget-club.png" alt="Budget Club"
+const Logo = ({ size = 38, src = '/logo-budget-club-accueil.png' }) => (
+  <img src={src} alt="Budget Club"
     style={{ width:size, height:size, borderRadius:'50%', objectFit:'cover', flexShrink:0, display:'block' }} />
 );
 
@@ -1700,7 +1700,7 @@ const SplashScreen = ({ onDone }) => {
       <div style={{ position:'absolute', inset:0, background:'rgba(30,51,40,0.65)' }} />
       <div style={{ position:'relative', textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center' }}>
         <div style={{ color:C.gold, fontSize:16, marginBottom:16 }}>✦</div>
-        <Logo size={120} />
+        <Logo size={120} src="/logo-budget-club.png" />
         <div style={{ marginTop:16, fontFamily:serif, fontSize:48, fontWeight:700, color:C.gold, letterSpacing:'8px', textTransform:'uppercase', lineHeight:1.1 }}>
           BUDGET<br />CLUB
         </div>
