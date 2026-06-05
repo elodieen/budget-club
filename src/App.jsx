@@ -774,19 +774,17 @@ export function DepensesView({ m, mi, updateData, depTab, setDepTab }) {
   const [xBill, setXBill] = useState(null);
   const [billForm, setBillForm] = useState({ amount:'', date:'' });
 
-  const clickBill = (i) => {
-    setXBill(i);
-    setBillForm({ amount: bills[i].realAmount || bills[i].amount, date: new Date().toISOString().split('T')[0] });
+  const clickBill = (realI) => {
+    setXBill(realI);
+    setBillForm({ amount: m.bills[realI].realAmount || m.bills[realI].amount, date: new Date().toISOString().split('T')[0] });
   };
-  const confBill = (i) => {
-    const realI = m.bills.indexOf(bills[i]);
+  const confBill = (realI) => {
     updateData(mm => {
       mm.bills[realI] = { ...mm.bills[realI], paid:true, realAmount: parseFloat(billForm.amount)||mm.bills[realI].amount, paidDate: billForm.date };
     });
     setXBill(null);
   };
-  const unchBill = (i) => {
-    const realI = m.bills.indexOf(bills[i]);
+  const unchBill = (realI) => {
     updateData(mm => { mm.bills[realI] = { ...mm.bills[realI], paid:false, paidDate:'' }; });
   };
 
@@ -863,12 +861,12 @@ export function DepensesView({ m, mi, updateData, depTab, setDepTab }) {
                     <div style={{ fontFamily:sans, fontSize:13, fontWeight:500, color:C.text }}>{b.name}</div>
                     <div style={{ fontFamily:sans, fontSize:10, color:C.muted, marginTop:2 }}>En attente · {fmtR(b.amount)}</div>
                   </div>
-                  <div onClick={() => clickBill(idx)}
+                  <div onClick={() => clickBill(m.bills.indexOf(b))}
                     style={{ width:28, height:28, borderRadius:'50%', background:C.roseL, border:`1.5px solid ${C.rose}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0 }}>
                     <i className="ti ti-check" style={{ fontSize:13, color:'#C8B4B4' }} />
                   </div>
                 </div>
-                {xBill === idx && (
+                {xBill === m.bills.indexOf(b) && (
                   <div style={{ padding:'0 14px 12px' }}>
                     <div style={{ background:C.roseL, border:`1px solid ${C.rose}`, borderRadius:10, padding:12 }}>
                       <div style={{ display:'flex', gap:8, marginBottom:8 }}>
@@ -884,7 +882,7 @@ export function DepensesView({ m, mi, updateData, depTab, setDepTab }) {
                         </div>
                       </div>
                       <div style={{ display:'flex', gap:8 }}>
-                        <button onClick={() => confBill(idx)}
+                        <button onClick={() => confBill(m.bills.indexOf(b))}
                           style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
                           ✓ Confirmer prélevée
                         </button>
@@ -910,7 +908,7 @@ export function DepensesView({ m, mi, updateData, depTab, setDepTab }) {
                       <div style={{ fontFamily:sans, fontSize:13, color:C.text }}>{b.name}</div>
                       <div style={{ fontFamily:sans, fontSize:10, color:C.muted, marginTop:2 }}>{ds ? `Prélevé le ${ds}` : 'Prélevée'} · {fmtR(b.realAmount||b.amount)}</div>
                     </div>
-                    <div onClick={() => unchBill(idx)}
+                    <div onClick={() => unchBill(m.bills.indexOf(b))}
                       style={{ width:28, height:28, borderRadius:'50%', background:C.vert, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0 }}>
                       <i className="ti ti-check" style={{ fontSize:13, color:'white' }} />
                     </div>
