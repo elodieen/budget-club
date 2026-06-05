@@ -876,12 +876,52 @@ export function EpargneView({ getAllMonths }) {
   );
 }
 
+// ─── SPLASH SCREEN ───────────────────────────────────────────
+const SplashScreen = ({ onDone }) => {
+  const [visible, setVisible] = useState(false);
+  const [out, setOut]         = useState(false);
+
+  useEffect(() => {
+    const t0 = setTimeout(() => setVisible(true), 30);
+    const t1 = setTimeout(() => setOut(true), 2000);
+    const t2 = setTimeout(onDone, 2500);
+    return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+
+  return (
+    <div style={{
+      position:'absolute', inset:0, zIndex:100, borderRadius:24,
+      overflow:'hidden', display:'flex', alignItems:'center', justifyContent:'center',
+      opacity: out ? 0 : visible ? 1 : 0,
+      transition: out ? 'opacity 0.5s ease' : 'opacity 0.4s ease',
+    }}>
+      <div style={{
+        position:'absolute', inset:0,
+        backgroundImage:'url(/splash-bg.png)',
+        backgroundSize:'cover', backgroundPosition:'center',
+      }} />
+      <div style={{ position:'absolute', inset:0, background:'rgba(30,51,40,0.6)' }} />
+      <div style={{ position:'relative', textAlign:'center', padding:'0 32px', display:'flex', flexDirection:'column', alignItems:'center', gap:16 }}>
+        <Logo />
+        <div style={{ fontFamily:serif, fontSize:38, fontWeight:700, color:C.gold, letterSpacing:10, textTransform:'uppercase', lineHeight:1 }}>
+          Budget Club
+        </div>
+        <div style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.85)', letterSpacing:4, textTransform:'uppercase' }}>
+          Gérez vos finances avec élégance
+        </div>
+        <div style={{ color:C.gold, fontSize:16 }}>✦</div>
+      </div>
+    </div>
+  );
+};
+
 // ─── APP ROOT ────────────────────────────────────────────────
 export default function App() {
   const [mi, setMi]     = useState(2); // Mars = index 2
   const [view, setView] = useState('accueil');
   const [depTab, setDepTab] = useState('depenses');
   const [modal, setModal]   = useState(null); // 'dep' | 'rev' | 'bill' | null
+  const [showSplash, setShowSplash] = useState(true);
 
   const { data: m, loading, updateData } = useMonthData(mi);
 
@@ -962,6 +1002,9 @@ export default function App() {
 
           {/* Nav */}
           <BottomNav view={view} setView={setView} />
+
+          {/* Splash */}
+          {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
 
           {/* Modals */}
           {modal === 'dep'  && <AddExpenseModal onAdd={addExpense} onClose={() => setModal(null)} />}
