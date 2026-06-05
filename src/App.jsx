@@ -253,21 +253,38 @@ const TABS = [
   { id:'epargne',  icon:'ti-trending-up', label:'Épargne'  },
 ];
 
-const BottomNav = ({ view, setView }) => (
-  <div style={{ display:'flex', alignItems:'stretch', background:C.nav, flexShrink:0, padding:'8px 0 12px' }}>
-    {TABS.map(t => {
-      const active = view === t.id || view === t.id + '_edit';
-      const col = active ? C.gold : 'rgba(201,169,110,0.4)';
-      return (
-        <button key={t.id} onClick={() => setView(t.id)}
-          style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3, border:'none', background:'none', cursor:'pointer', padding:'2px 1px' }}>
-          <i className={`ti ${t.icon}`} style={{ fontSize:20, color:col }} />
-          <span style={{ fontSize:9, color:col, fontWeight: active ? 600 : 400, fontFamily:sans }}>{t.label}</span>
-        </button>
-      );
-    })}
-  </div>
-);
+const BottomNav = ({ view, setView, m }) => {
+  const rev      = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
+  const cb       = m.catBudgets || {};
+  const bT       = m.bills.reduce((s,b) => s + billValue(b), 0);
+  const tv       = CATS.filter(c => c.id !== 'epargne').reduce((s,c) => s + (cb[c.id]||0), 0);
+  const nonV     = Math.max(0, rev - bT - tv);
+  const badges   = { revenus: m.revenues.length > 0, budget: rev > 0 && nonV < 1 };
+
+  return (
+    <div style={{ display:'flex', alignItems:'stretch', background:C.nav, flexShrink:0, padding:'8px 0 12px' }}>
+      {TABS.map(t => {
+        const active    = view === t.id || view === t.id + '_edit';
+        const col       = active ? C.gold : 'rgba(201,169,110,0.4)';
+        const hasBadge  = badges[t.id];
+        return (
+          <button key={t.id} onClick={() => setView(t.id)}
+            style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3, border:'none', background:'none', cursor:'pointer', padding:'2px 1px' }}>
+            <div style={{ position:'relative', display:'inline-flex' }}>
+              <i className={`ti ${t.icon}`} style={{ fontSize:20, color:col }} />
+              {hasBadge && (
+                <div style={{ position:'absolute', top:-4, right:-6, width:13, height:13, borderRadius:'50%', background:C.gold, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <span style={{ fontSize:7, color:C.nav, fontWeight:800, lineHeight:1 }}>✓</span>
+                </div>
+              )}
+            </div>
+            <span style={{ fontSize:9, color:col, fontWeight: active ? 600 : 400, fontFamily:sans }}>{t.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+};
 
 // Bouton FAB contextuel
 const FAB_ACTIONS = {
@@ -442,7 +459,10 @@ export function AccueilView({ m, mi, setMi, setView }) {
         {/* Card Reste à dépenser */}
         <div style={{ background:C.rose, borderRadius:16, padding:'20px 20px 16px', textAlign:'center', marginBottom:12 }}>
           <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:C.vert, marginBottom:6 }}>Reste à dépenser</div>
-          <div style={{ fontFamily:serif, fontSize:48, fontWeight:700, color:C.vert, lineHeight:1 }}>{fmtR(reste)}</div>
+          {rev === 0
+            ? <div style={{ fontFamily:serif, fontSize:20, fontStyle:'italic', color:C.muted, lineHeight:1.3 }}>Revenus non saisis</div>
+            : <div style={{ fontFamily:serif, fontSize:48, fontWeight:700, color:C.vert, lineHeight:1 }}>{fmtR(reste)}</div>
+          }
           <div style={{ height:4, background:'rgba(28,41,28,0.15)', borderRadius:2, marginTop:12, overflow:'hidden' }}>
             <div style={{ height:'100%', width:`${pp}%`, background:C.vert, borderRadius:2 }} />
           </div>
@@ -693,7 +713,10 @@ export function DepensesView({ m, mi, updateData, depTab, setDepTab }) {
           {/* Card reste à dépenser */}
           <div style={{ background:C.vert, padding:'14px 18px', flexShrink:0, textAlign:'center' }}>
             <div style={{ fontFamily:sans, fontSize:9, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.5)', marginBottom:4 }}>Reste à dépenser</div>
-            <div style={{ fontFamily:serif, fontSize:32, fontWeight:700, color:'white' }}>{fmtR(reste)}</div>
+            {rev === 0
+              ? <div style={{ fontFamily:serif, fontSize:18, fontStyle:'italic', color:'rgba(255,255,255,0.55)' }}>Revenus non saisis</div>
+              : <div style={{ fontFamily:serif, fontSize:32, fontWeight:700, color:'white' }}>{fmtR(reste)}</div>
+            }
           </div>
           <div style={{ flex:1, overflowY:'auto', padding:'8px 16px 16px', background:C.beige }}>
             {exps.length === 0 && <div style={{ textAlign:'center', padding:24, color:C.muted, fontFamily:sans, fontSize:13 }}>Aucune dépense ce mois</div>}
@@ -1004,7 +1027,7 @@ export default function App() {
           {!['budget_edit'].includes(view) && <FAB view={view} setModal={setModal} setView={setView} depTab={depTab} />}
 
           {/* Nav */}
-          <BottomNav view={view} setView={setView} />
+          <BottomNav view={view} setView={setView} m={m} />
 
           {/* Splash */}
           {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
