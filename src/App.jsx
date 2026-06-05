@@ -127,6 +127,13 @@ const savePeaSolde  = (v) => localStorage.setItem(PEA_SOLDE_KEY, JSON.stringify(
 const getPeaRend    = () => { try { const s = localStorage.getItem(PEA_REND_KEY);  return s ? JSON.parse(s) : []; } catch { return []; } };
 const savePeaRend   = (v) => localStorage.setItem(PEA_REND_KEY,  JSON.stringify(v));
 
+const LIVRET_HIST_KEY = 'budget:livret:historique';
+const PEA_HIST_KEY    = 'budget:pea:historique';
+const getLivretHist  = () => { try { const s = localStorage.getItem(LIVRET_HIST_KEY); return s ? JSON.parse(s) : []; } catch { return []; } };
+const saveLivretHist = (v) => localStorage.setItem(LIVRET_HIST_KEY, JSON.stringify(v));
+const getPeaHist     = () => { try { const s = localStorage.getItem(PEA_HIST_KEY);    return s ? JSON.parse(s) : []; } catch { return []; } };
+const savePeaHist    = (v) => localStorage.setItem(PEA_HIST_KEY,    JSON.stringify(v));
+
 // ─── HOOK STORAGE ────────────────────────────────────────────
 function useMonthData(mi) {
   const key = storageKey(mi);
@@ -1203,50 +1210,100 @@ const SavingsChart = ({ data, color, title, onClose }) => {
   );
 };
 
-// Panel détail données épargne
-const SavingsDetail = ({ type, items, onSave, onDelete, onAdd, onClose }) => {
-  const [editId, setEditId] = useState(null);
-  const [editVal, setEditVal] = useState('');
-  const [flash, setFlash] = useState(false);
-  const doSave = (id, val) => {
-    onSave(id, parseFloat(val) || 0);
+// Panel détail historique épargne
+const SavingsDetail = ({ type, histItems, soldeItem, onSaveHist, onDeleteHist, onSaveSolde, onAdd, onClose }) => {
+  const [editId, setEditId]     = useState(null);
+  const [editVal, setEditVal]   = useState('');
+  const [editSolde, setEditSolde] = useState(false);
+  const [soldeVal, setSoldeVal] = useState('');
+  const [flash, setFlash]       = useState(false);
+
+  const showFlash = () => { setFlash(true); setTimeout(() => setFlash(false), 1000); };
+
+  const doSaveHist = (id, val) => {
+    onSaveHist(id, parseFloat(val) || 0);
     setEditId(null);
-    setFlash(true);
-    setTimeout(() => setFlash(false), 1000);
+    showFlash();
   };
+  const doSaveSolde = (val) => {
+    onSaveSolde(parseFloat(val) || 0);
+    setEditSolde(false);
+    showFlash();
+  };
+
+  const sorted = [...histItems].sort((a, b) => new Date(b.date) - new Date(a.date));
+
   return (
     <div style={{ position:'absolute', inset:0, background:'rgba(28,41,28,0.5)', zIndex:30, borderRadius:20, display:'flex', alignItems:'flex-end' }}>
-      <div style={{ background:C.card, borderRadius:'20px 20px 0 0', width:'100%', maxHeight:'70%', display:'flex', flexDirection:'column', padding:'20px 18px 16px' }}>
+      <div style={{ background:C.card, borderRadius:'20px 20px 0 0', width:'100%', maxHeight:'78%', display:'flex', flexDirection:'column', padding:'20px 18px 16px' }}>
+
+        {/* Header */}
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12, flexShrink:0 }}>
-          <span style={{ fontFamily:serif, fontSize:19, fontWeight:700, color:C.vert }}>{type === 'livret' ? 'Livret A — dépôts' : 'Rendements PEA'}</span>
+          <span style={{ fontFamily:serif, fontSize:19, fontWeight:700, color:C.vert }}>
+            {type === 'livret' ? 'Détail Livret A' : 'Détail PEA'}
+          </span>
           <button onClick={onClose} style={{ background:C.roseL, border:'none', width:28, height:28, borderRadius:'50%', cursor:'pointer', fontSize:14, color:C.vert }}>✕</button>
         </div>
+
         {flash && <div style={{ textAlign:'center', fontFamily:sans, fontSize:12, color:'#2E7D32', fontWeight:600, marginBottom:8, flexShrink:0 }}>Sauvegardé ✓</div>}
+
         <div style={{ overflowY:'auto', flex:1 }}>
-          {items.length === 0 && <div style={{ textAlign:'center', padding:20, color:C.muted, fontFamily:sans, fontSize:13 }}>Aucune donnée</div>}
-          {items.map(item => (
-            <div key={item.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'9px 0', borderBottom:`0.5px solid ${C.border}` }}>
-              <span style={{ fontFamily:sans, fontSize:12, color:C.muted, minWidth:52, flexShrink:0 }}>{item.label}</span>
+
+          {/* Points historiques — plus récent en haut */}
+          {sorted.length === 0 && (
+            <div style={{ textAlign:'center', padding:'14px 0', color:C.muted, fontFamily:sans, fontSize:13 }}>Aucune mise à jour enregistrée</div>
+          )}
+          {sorted.map(item => (
+            <div key={item.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 0', borderBottom:`0.5px solid ${C.border}` }}>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontFamily:sans, fontSize:10, color:C.muted, textTransform:'uppercase', letterSpacing:.5 }}>{item.label || 'Mise à jour'}</div>
+                <div style={{ fontFamily:sans, fontSize:12, color:C.vert, marginTop:1 }}>{item.date ? item.date.split('-').reverse().join('/') : '—'}</div>
+              </div>
               {editId === item.id ? (
                 <input autoFocus type="number" step="0.01" value={editVal}
                   onChange={e => setEditVal(e.target.value)}
-                  onBlur={() => doSave(item.id, editVal)}
-                  onKeyDown={e => e.key === 'Enter' && doSave(item.id, editVal)}
-                  style={{ flex:1, padding:'5px 8px', border:`1px solid ${C.border}`, borderRadius:7, fontFamily:serif, fontSize:14, color:C.vert }} />
+                  onBlur={() => doSaveHist(item.id, editVal)}
+                  onKeyDown={e => e.key === 'Enter' && doSaveHist(item.id, editVal)}
+                  style={{ width:90, padding:'5px 8px', border:`1px solid ${C.border}`, borderRadius:7, fontFamily:serif, fontSize:15, color:C.vert, textAlign:'right' }} />
               ) : (
-                <span style={{ flex:1, fontFamily:serif, fontSize:14, fontWeight:600, color:C.vert }}>{fmtR(item.montant)}</span>
+                <span style={{ fontFamily:serif, fontSize:16, fontWeight:600, color:C.vert, flexShrink:0 }}>{fmtR(item.montant)}</span>
               )}
               <button onClick={() => { setEditId(item.id); setEditVal(String(item.montant)); }}
-                style={{ background:'none', border:'none', cursor:'pointer', padding:'2px 4px', color:C.muted }}>
+                style={{ background:'none', border:'none', cursor:'pointer', padding:'2px 4px', color:C.muted, flexShrink:0 }}>
                 <i className="ti ti-pencil" style={{ fontSize:13 }} />
               </button>
-              <button onClick={() => onDelete(item.id)}
-                style={{ background:'none', border:'none', cursor:'pointer', padding:'2px 4px', color:'rgba(192,57,43,0.45)' }}>
+              <button onClick={() => onDeleteHist(item.id)}
+                style={{ background:'none', border:'none', cursor:'pointer', padding:'2px 4px', color:'rgba(192,57,43,0.45)', flexShrink:0 }}>
                 <i className="ti ti-trash" style={{ fontSize:13 }} />
               </button>
             </div>
           ))}
+
+          {/* Solde initial — en bas avec séparateur */}
+          <div style={{ borderTop:`1.5px solid ${C.border}`, marginTop:10, paddingTop:10 }}>
+            <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:1, textTransform:'uppercase', color:C.muted, marginBottom:6 }}>Solde initial</div>
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <div style={{ flex:1, fontFamily:sans, fontSize:12, color:C.vert }}>
+                {soldeItem.date ? soldeItem.date.split('-').reverse().join('/') : '—'}
+              </div>
+              {editSolde ? (
+                <input autoFocus type="number" step="0.01" value={soldeVal}
+                  onChange={e => setSoldeVal(e.target.value)}
+                  onBlur={() => doSaveSolde(soldeVal)}
+                  onKeyDown={e => e.key === 'Enter' && doSaveSolde(soldeVal)}
+                  style={{ width:90, padding:'5px 8px', border:`1px solid ${C.border}`, borderRadius:7, fontFamily:serif, fontSize:15, color:C.vert, textAlign:'right' }} />
+              ) : (
+                <span style={{ fontFamily:serif, fontSize:16, fontWeight:600, color:C.vert, flexShrink:0 }}>{fmtR(soldeItem.montant)}</span>
+              )}
+              <button onClick={() => { setEditSolde(true); setSoldeVal(String(soldeItem.montant)); }}
+                style={{ background:'none', border:'none', cursor:'pointer', padding:'2px 4px', color:C.muted, flexShrink:0 }}>
+                <i className="ti ti-pencil" style={{ fontSize:13 }} />
+              </button>
+            </div>
+          </div>
+
         </div>
+
         {type === 'pea' && onAdd && (
           <button onClick={onAdd}
             style={{ marginTop:10, width:'100%', padding:'8px 0', background:'none', border:`1.5px dashed rgba(28,41,28,0.2)`, borderRadius:10, fontFamily:sans, fontSize:12, color:C.muted, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:6, flexShrink:0 }}>
@@ -1279,6 +1336,9 @@ export function EpargneView({ currentYear }) {
   const [chartType, setChartType]     = useState(null); // 'livret' | 'pea'
   const [detailType, setDetailType]   = useState(null); // 'livret' | 'pea'
   const [epargneFlash, setEpargneFlash] = useState(null); // 'livret' | 'pea'
+  // Historique des mises à jour solde
+  const [livretHist, setLivretHist] = useState(() => getLivretHist());
+  const [peaHist, setPeaHist]       = useState(() => getPeaHist());
 
   useEffect(() => {
     if (!getLivretSolde()) saveLivretSolde(livretSolde);
@@ -1436,6 +1496,8 @@ export function EpargneView({ currentYear }) {
                 const updated = { amount:a, date:soldeForm.date };
                 saveLivretSolde(updated);
                 setLivretSolde(updated);
+                const entry = { id:'lh'+Date.now(), date: new Date().toISOString().split('T')[0], montant: a, label: 'Mise à jour' };
+                const uh = [...livretHist, entry]; saveLivretHist(uh); setLivretHist(uh);
                 setEditSolde(false);
                 flashSaved('livret');
               }} style={{ flex:1, padding:9, background:C.gold, color:C.nav, border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
@@ -1504,6 +1566,8 @@ export function EpargneView({ currentYear }) {
                 const updated = { montant:a, rendement:parseFloat(peaSoldeForm.rendement)||0, pct:parseFloat(peaSoldeForm.pct)||0, date:peaSoldeForm.date };
                 savePeaSolde(updated);
                 setPeaSolde(updated);
+                const entry = { id:'ph'+Date.now(), date: new Date().toISOString().split('T')[0], montant: a, label: 'Mise à jour' };
+                const uh = [...peaHist, entry]; savePeaHist(uh); setPeaHist(uh);
                 setEditPeaSolde(false);
                 flashSaved('pea');
               }} style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
@@ -1561,23 +1625,40 @@ export function EpargneView({ currentYear }) {
       {detailType && !showPeaRend && (
         <SavingsDetail
           type={detailType}
-          items={detailType === 'livret' ? livretDetailItems : peaDetailItems}
-          onSave={(id, val) => {
+          histItems={detailType === 'livret' ? livretHist : peaHist}
+          soldeItem={detailType === 'livret'
+            ? { montant: livretSolde?.amount || 0, date: livretSolde?.date || '' }
+            : { montant: peaSolde?.montant   || 0, date: peaSolde?.date   || '' }
+          }
+          onSaveHist={(id, val) => {
             if (detailType === 'livret') {
-              const idx = parseInt(id.replace('livret-', ''));
-              patchMonthCat(idx, 'epargne_livret', val);
+              const upd = livretHist.map(h => h.id === id ? { ...h, montant: val } : h);
+              saveLivretHist(upd); setLivretHist(upd);
             } else {
-              const updated = peaRend.map(r => r.id === id ? { ...r, montant: val } : r);
-              savePeaRend(updated); setPeaRend(updated);
+              const upd = peaHist.map(h => h.id === id ? { ...h, montant: val } : h);
+              savePeaHist(upd); setPeaHist(upd);
             }
           }}
-          onDelete={(id) => {
+          onDeleteHist={(id) => {
             if (detailType === 'livret') {
-              const idx = parseInt(id.replace('livret-', ''));
-              deleteMonthCat(idx, 'epargne_livret');
+              const upd = livretHist.filter(h => h.id !== id);
+              saveLivretHist(upd); setLivretHist(upd);
             } else {
-              const updated = peaRend.filter(r => r.id !== id);
-              savePeaRend(updated); setPeaRend(updated);
+              const upd = peaHist.filter(h => h.id !== id);
+              savePeaHist(upd); setPeaHist(upd);
+            }
+          }}
+          onSaveSolde={(val) => {
+            if (detailType === 'livret') {
+              const upd = { amount: val, date: livretSolde?.date || '' };
+              saveLivretSolde(upd); setLivretSolde(upd);
+              const entry = { id:'lh'+Date.now(), date: new Date().toISOString().split('T')[0], montant: val, label: 'Mise à jour' };
+              const uh = [...livretHist, entry]; saveLivretHist(uh); setLivretHist(uh);
+            } else {
+              const upd = { ...peaSolde, montant: val };
+              savePeaSolde(upd); setPeaSolde(upd);
+              const entry = { id:'ph'+Date.now(), date: new Date().toISOString().split('T')[0], montant: val, label: 'Mise à jour' };
+              const uh = [...peaHist, entry]; savePeaHist(uh); setPeaHist(uh);
             }
           }}
           onAdd={detailType === 'pea' ? () => setShowPeaRend(true) : null}
