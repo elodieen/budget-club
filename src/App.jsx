@@ -17,7 +17,7 @@ const C = {
   muted:  '#8A9A8A',
   border: 'rgba(28,41,28,0.1)',
 };
-const serif = "'Cormorant Garamond', serif";
+const serif = "'Playfair Display', serif";
 const sans  = "'DM Sans', sans-serif";
 
 // ─── DONNÉES ────────────────────────────────────────────────
@@ -580,19 +580,28 @@ export function BudgetView({ m, setView }) {
 
 // Vue BUDGET EDIT (Non ventilé par catégorie)
 export function BudgetEditView({ m, updateData, setView }) {
-  const cb   = m.catBudgets || {};
-  const rev  = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
-  const bT   = m.bills.reduce((s,b) => s + billValue(b), 0);
-  const rpe  = rev - bT;
+  const cb              = m.catBudgets || {};
+  const rev             = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
+  const bT              = m.bills.reduce((s,b) => s + billValue(b), 0);
+  const rpe             = rev - bT;
   const [vals, setVals] = useState({ ...cb });
-  const tv = CATS.filter(c => c.id !== 'epargne').reduce((s,c) => s + (parseFloat(vals[c.id])||0), 0);
+  const [saved, setSaved] = useState(false);
+  const debounceRef     = useRef(null);
+
+  const tv  = CATS.filter(c => c.id !== 'epargne').reduce((s,c) => s + (parseFloat(vals[c.id])||0), 0);
   const lft = rpe - tv;
 
-  const save = () => {
-    const nb = {};
-    CATS.filter(c => c.id !== 'epargne').forEach(c => { if (vals[c.id]) nb[c.id] = parseFloat(vals[c.id]); });
-    updateData(mm => { mm.catBudgets = nb; });
-    setView('budget');
+  const handleChange = (catId, value) => {
+    const next = { ...vals, [catId]: value };
+    setVals(next);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const nb = {};
+      CATS.filter(c => c.id !== 'epargne').forEach(c => { if (next[c.id]) nb[c.id] = parseFloat(next[c.id]); });
+      updateData(mm => { mm.catBudgets = nb; });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1500);
+    }, 500);
   };
 
   return (
@@ -615,22 +624,62 @@ export function BudgetEditView({ m, updateData, setView }) {
             <span style={{ fontFamily:sans, fontSize:13, color:C.text }}>{c.label}</span>
           </div>
           <input type="number" placeholder="—" value={vals[c.id] || ''}
-            onChange={e => setVals(p => ({ ...p, [c.id]: e.target.value }))}
+            onChange={e => handleChange(c.id, e.target.value)}
             style={{ width:75, padding:'6px 8px', border:`1px solid ${C.border}`, borderRadius:8, fontSize:13, textAlign:'right', background:'white', color:C.vert, fontFamily:sans }} />
         </div>
       ))}
-      <button onClick={save}
-        style={{ width:'100%', marginTop:16, padding:13, background:C.vert, color:'white', border:'none', borderRadius:10, fontFamily:sans, fontSize:14, fontWeight:600, cursor:'pointer' }}>
-        Enregistrer
-      </button>
+      {saved && (
+        <div style={{ textAlign:'center', marginTop:14, fontFamily:sans, fontSize:12, color:'#2E7D32', fontWeight:500 }}>Sauvegardé ✓</div>
+      )}
     </div>
   );
 }
 
 // Vue REVENUS
+function RevenueRow({ r, i, onUpdate, onDelete }) {
+  const [editing, setEditing] = useState(null);
+  const [nameVal, setNameVal] = useState(r.name);
+  const [amtVal,  setAmtVal]  = useState(String(r.amount));
+
+  const saveField = (field) => {
+    if (field === 'name') onUpdate(i, { ...r, name: nameVal.trim() || r.name });
+    else                  onUpdate(i, { ...r, amount: parseFloat(amtVal) || r.amount });
+    setEditing(null);
+  };
+  const onKey = (e, field) => {
+    if (e.key === 'Enter')  saveField(field);
+    if (e.key === 'Escape') setEditing(null);
+  };
+
+  return (
+    <div style={{ background:C.card, borderRadius:12, padding:'14px 18px', marginBottom:10, display:'flex', justifyContent:'space-between', alignItems:'center', border:`0.5px solid ${C.border}` }}>
+      {editing === 'name' ? (
+        <input autoFocus value={nameVal} onChange={e => setNameVal(e.target.value)}
+          onBlur={() => saveField('name')} onKeyDown={e => onKey(e, 'name')}
+          style={{ fontFamily:sans, fontSize:15, color:C.vert, border:'none', borderBottom:`1.5px solid ${C.vert}`, outline:'none', background:'transparent', flex:1, minWidth:0 }} />
+      ) : (
+        <span onClick={() => { setNameVal(r.name); setEditing('name'); }}
+          style={{ fontFamily:sans, fontSize:15, color:C.vert, cursor:'text', flex:1, minWidth:0 }}>{r.name}</span>
+      )}
+      <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
+        {editing === 'amount' ? (
+          <input autoFocus type="number" value={amtVal} onChange={e => setAmtVal(e.target.value)}
+            onBlur={() => saveField('amount')} onKeyDown={e => onKey(e, 'amount')}
+            style={{ fontFamily:serif, fontSize:20, fontWeight:600, color:C.vert, width:110, border:'none', borderBottom:`1.5px solid ${C.vert}`, outline:'none', background:'transparent', textAlign:'right' }} />
+        ) : (
+          <span onClick={() => { setAmtVal(String(r.amount)); setEditing('amount'); }}
+            style={{ fontFamily:serif, fontSize:20, fontWeight:600, color:C.vert, cursor:'text' }}>+{fmtR(r.amount)}</span>
+        )}
+        <button onClick={() => onDelete(i)} style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(28,41,28,0.25)', fontSize:14, padding:2 }}>✕</button>
+      </div>
+    </div>
+  );
+}
+
 export function RevenusView({ m, updateData }) {
   const rev = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
-  const del = (i) => updateData(mm => { mm.revenues = mm.revenues.filter((_,idx) => idx !== i); });
+  const del = (i)         => updateData(mm => { mm.revenues = mm.revenues.filter((_,idx) => idx !== i); });
+  const upd = (i, updated) => updateData(mm => { mm.revenues = mm.revenues.map((r, idx) => idx === i ? updated : r); });
 
   return (
     <>
@@ -645,13 +694,7 @@ export function RevenusView({ m, updateData }) {
           <div style={{ textAlign:'center', padding:32, color:C.muted, fontFamily:sans, fontSize:13 }}>Aucun revenu saisi ce mois</div>
         )}
         {m.revenues.map((r, i) => (
-          <div key={r.id} style={{ background:C.card, borderRadius:12, padding:'14px 18px', marginBottom:10, display:'flex', justifyContent:'space-between', alignItems:'center', border:`0.5px solid ${C.border}` }}>
-            <span style={{ fontFamily:sans, fontSize:15, color:C.vert }}>{r.name}</span>
-            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-              <span style={{ fontFamily:serif, fontSize:20, fontWeight:600, color:C.vert }}>+{fmtR(r.amount)}</span>
-              <button onClick={() => del(i)} style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(28,41,28,0.25)', fontSize:14, padding:2 }}>✕</button>
-            </div>
-          </div>
+          <RevenueRow key={r.id} r={r} i={i} onUpdate={upd} onDelete={del} />
         ))}
       </div>
     </>
@@ -993,7 +1036,7 @@ export default function App() {
   return (
     <>
       {/* Google Fonts */}
-      <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
 
       {/* Wrapper desktop centré */}
