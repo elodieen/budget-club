@@ -116,9 +116,16 @@ const byDate         = (arr) => [...arr].sort((a, b) => new Date(b.date || 0) - 
 const getCustomCats  = () => { try { return JSON.parse(localStorage.getItem('budget:categories:custom') || '[]'); } catch { return []; } };
 const saveCustomCats = (cats) => localStorage.setItem('budget:categories:custom', JSON.stringify(cats));
 
-const LIVRET_SOLDE_KEY = 'budget:livret:solde_initial';
+const LIVRET_SOLDE_KEY = 'budget:livret:soldeInitial';
 const getLivretSolde  = () => { try { const s = localStorage.getItem(LIVRET_SOLDE_KEY); return s ? JSON.parse(s) : null; } catch { return null; } };
 const saveLivretSolde = (v) => localStorage.setItem(LIVRET_SOLDE_KEY, JSON.stringify(v));
+
+const PEA_SOLDE_KEY = 'budget:pea:soldeInitial';
+const PEA_REND_KEY  = 'budget:pea:rendements';
+const getPeaSolde   = () => { try { const s = localStorage.getItem(PEA_SOLDE_KEY); return s ? JSON.parse(s) : null; } catch { return null; } };
+const savePeaSolde  = (v) => localStorage.setItem(PEA_SOLDE_KEY, JSON.stringify(v));
+const getPeaRend    = () => { try { const s = localStorage.getItem(PEA_REND_KEY);  return s ? JSON.parse(s) : []; } catch { return []; } };
+const savePeaRend   = (v) => localStorage.setItem(PEA_REND_KEY,  JSON.stringify(v));
 
 // ─── HOOK STORAGE ────────────────────────────────────────────
 function useMonthData(mi) {
@@ -271,6 +278,14 @@ const WarningTriangle = () => (
     <path d="M9 1L17 15H1L9 1Z" fill={C.rose} stroke={C.vert} strokeWidth="1" />
     <text x="9" y="13" textAnchor="middle" fontSize="9" fontWeight="700" fill={C.vert} fontFamily="DM Sans">!</text>
   </svg>
+);
+
+// Bandeau mois clôturé
+const ClosedBanner = () => (
+  <div style={{ background:C.vert, padding:'7px 16px', display:'flex', alignItems:'center', justifyContent:'center', gap:8, flexShrink:0 }}>
+    <i className="ti ti-lock" style={{ fontSize:13, color:C.gold }} />
+    <span style={{ fontFamily:sans, fontSize:12, fontWeight:600, color:'rgba(255,255,255,0.85)' }}>Mois clôturé 🔒</span>
+  </div>
 );
 
 // ─── MODALS ──────────────────────────────────────────────────
@@ -458,13 +473,48 @@ const DateInput = (props) => (
   <input type="date" {...props} style={{ width:'100%', padding:'9px 10px', border:`1px solid ${C.border}`, borderRadius:8, fontSize:13, color:C.vert, background:'white', fontFamily:sans }} />
 );
 
+// Modal Ajouter rendement PEA
+export const AddPeaRendementModal = ({ onAdd, onClose }) => {
+  const [form, setForm] = useState({ montant:'', pct:'', date: new Date().toISOString().split('T')[0] });
+  const submit = () => {
+    const a = parseFloat(form.montant);
+    if (!a) return;
+    onAdd({ id:'pr'+Date.now(), montant:a, pct:parseFloat(form.pct)||0, date:form.date });
+    onClose();
+  };
+  return (
+    <ModalShell title="Ajouter un rendement" onClose={onClose}>
+      <div style={{ marginBottom:14 }}>
+        <Label>Montant du rendement (€)</Label>
+        <input type="number" inputMode="decimal" step="0.01" placeholder="0,00" value={form.montant}
+          onChange={e => setForm(p => ({...p, montant:e.target.value}))}
+          style={{ width:'100%', fontFamily:serif, fontSize:36, fontWeight:700, border:'none', borderBottom:`2px solid ${C.rose}`, outline:'none', padding:'4px 0', background:'transparent', color:C.vert }} />
+      </div>
+      <div style={{ display:'flex', gap:10, marginBottom:16 }}>
+        <div style={{ flex:1 }}>
+          <Label>Performance (%)</Label>
+          <input type="number" step="0.01" placeholder="0,00" value={form.pct}
+            onChange={e => setForm(p => ({...p, pct:e.target.value}))}
+            style={{ width:'100%', padding:'9px 12px', border:`1px solid ${C.border}`, borderRadius:10, fontSize:14, color:C.vert, background:'white', fontFamily:sans }} />
+        </div>
+        <div style={{ flex:1 }}><Label>Date</Label><DateInput value={form.date} onChange={e => setForm(p => ({...p, date:e.target.value}))} /></div>
+      </div>
+      <SubmitBtn label="Ajouter le rendement" onClick={submit} />
+    </ModalShell>
+  );
+};
+
 // ─── VUES ────────────────────────────────────────────────────
 
 // Vue ACCUEIL
 export function AccueilView({ m, mi, setMi, setView, updateData }) {
   const [confirmClose, setConfirmClose] = useState(false);
-  const rev  = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
-  const bT   = m.bills.filter(b => b.selected !== false).reduce((s,b) => s + billValue(b), 0);
+  const rev       = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
+  const allBills  = m.bills.filter(b => b.selected !== false);
+  const bT        = allBills.reduce((s,b) => s + billValue(b), 0);
+  const paidBills = allBills.filter(b => b.paid);
+  const paidAmt   = paidBills.reduce((s,b) => s + billValue(b), 0);
+  const pN = paidBills.length, bN = allBills.length;
   const eT   = m.expenses.filter(e => e.cat !== 'epargne_livret' && e.cat !== 'epargne_pea').reduce((s,e) => s + (e.amount||0), 0);
   const epg  = m.expenses.filter(e => (e.cat === 'epargne_livret' || e.cat === 'epargne_pea')).reduce((s,e) => s + (e.amount||0), 0);
   const reste = Math.round((rev - bT - eT - epg) * 100) / 100;
@@ -473,6 +523,7 @@ export function AccueilView({ m, mi, setMi, setView, updateData }) {
   return (
     <>
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} />
+      {m.closed && <ClosedBanner />}
       <div style={{ padding:'12px 16px 0', background:C.beige, flexShrink:0 }}>
         {/* Card Reste à dépenser */}
         <div style={{ background:C.rose, borderRadius:16, padding:'20px 20px 16px', textAlign:'center', marginBottom:12 }}>
@@ -491,8 +542,8 @@ export function AccueilView({ m, mi, setMi, setView, updateData }) {
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:12 }}>
           {[
             { label:'Revenus',  val:fmtR(rev), icon:'ti-credit-card',  vw:'revenus' },
-            { label:'Factures', val:fmtR(bT),  icon:'ti-file-invoice', vw:'depenses', tab:'factures' },
-            { label:'Dépenses', val:fmtR(eT),  icon:'ti-shopping-bag', vw:'depenses', tab:'depenses' },
+            { label:'Factures', val:`${fmtP(paidAmt)} / ${fmtP(bT)}`, sub:`${pN}/${bN} prélevées`, icon:'ti-file-invoice', vw:'depenses' },
+            { label:'Dépenses', val:fmtR(eT),  icon:'ti-shopping-bag', vw:'depenses' },
             { label:'Épargne',  val:fmtR(epg), icon:'ti-pig-money',    vw:'epargne'  },
           ].map(c => (
             <div key={c.label} onClick={() => setView(c.vw)}
@@ -501,7 +552,8 @@ export function AccueilView({ m, mi, setMi, setView, updateData }) {
                 <span style={{ fontFamily:sans, fontSize:11, color:C.muted, fontWeight:500 }}>{c.label}</span>
                 <i className={`ti ${c.icon}`} style={{ fontSize:18, color:'rgba(28,41,28,0.25)' }} />
               </div>
-              <div style={{ fontFamily:serif, fontSize:22, fontWeight:600, color:C.vert }}>{c.val}</div>
+              <div style={{ fontFamily:serif, fontSize:c.sub ? 18 : 22, fontWeight:600, color:C.vert }}>{c.val}</div>
+              {c.sub && <div style={{ fontFamily:sans, fontSize:10, color:C.muted, marginTop:2 }}>{c.sub}</div>}
             </div>
           ))}
         </div>
@@ -551,15 +603,31 @@ export function AccueilView({ m, mi, setMi, setView, updateData }) {
 // Vue BUDGET
 export function BudgetView({ m, setView }) {
   const cb   = m.catBudgets || {};
-  const cwb  = CATS.filter(c => c.id !== 'epargne_livret' && c.id !== 'epargne_pea' && cb[c.id]);
+  const [customCats, setCustomCats] = useState(getCustomCats);
+  const [showEnv, setShowEnv]       = useState(false);
+  const [envName, setEnvName]       = useState('');
+  const [envIcon, setEnvIcon]       = useState('ti-tag');
+
+  const allCatList = [...CATS.filter(c => c.id !== 'epargne_livret' && c.id !== 'epargne_pea'), ...customCats];
+  const cwb  = allCatList.filter(c => cb[c.id]);
   const tv   = cwb.reduce((s,c) => s + (cb[c.id]||0), 0);
   const rev  = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
   const bT   = m.bills.reduce((s,b) => s + billValue(b), 0);
   const nonV = Math.max(0, rev - bT - tv);
   const done = tv > 0 && nonV < 1;
 
+  const addEnv = () => {
+    if (!envName.trim()) return;
+    const newCat = { id:'custom_'+Date.now(), label:envName.trim(), icon:envIcon };
+    const updated = [...customCats, newCat];
+    saveCustomCats(updated);
+    setCustomCats(updated);
+    setEnvName(''); setShowEnv(false);
+  };
+
   return (
     <>
+      {m.closed && <ClosedBanner />}
       <div style={{ flex:1, overflowY:'auto', padding:'0 16px 12px', background:C.beige }}>
         {/* Card état budget */}
         <div onClick={() => setView('budget_edit')}
@@ -606,7 +674,7 @@ export function BudgetView({ m, setView }) {
         })}
 
         {/* Catégories sans budget mais avec dépenses */}
-        {CATS.filter(c => c.id !== 'epargne_livret' && c.id !== 'epargne_pea' && !cb[c.id]).map(cat => {
+        {allCatList.filter(c => !cb[c.id]).map(cat => {
           const sp = m.expenses.filter(e => e.cat === cat.id).reduce((s,e) => s + (e.amount||0), 0);
           if (!sp) return null;
           return (
@@ -622,6 +690,38 @@ export function BudgetView({ m, setView }) {
             </div>
           );
         })}
+
+        {/* Ajouter une enveloppe */}
+        {!m.closed && (
+          showEnv ? (
+            <div style={{ marginTop:12, padding:12, background:C.roseL, borderRadius:10, border:`1px solid ${C.rose}` }}>
+              <input placeholder="Nom de l'enveloppe" value={envName} onChange={e => setEnvName(e.target.value)}
+                style={{ width:'100%', padding:'7px 10px', border:`1px solid ${C.border}`, borderRadius:8, fontSize:13, fontFamily:sans, color:C.vert, background:'white', marginBottom:8 }} />
+              <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:8 }}>
+                {ICON_CHOICES.map(icon => (
+                  <div key={icon} onClick={() => setEnvIcon(icon)}
+                    style={{ width:34, height:34, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer',
+                      background: envIcon === icon ? C.vert : 'white', border:`1.5px solid ${envIcon === icon ? C.vert : C.border}` }}>
+                    <i className={`ti ${icon}`} style={{ fontSize:16, color: envIcon === icon ? 'white' : C.muted }} />
+                  </div>
+                ))}
+              </div>
+              <div style={{ display:'flex', gap:8 }}>
+                <button onClick={addEnv}
+                  style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                  Ajouter
+                </button>
+                <button onClick={() => setShowEnv(false)}
+                  style={{ padding:'9px 12px', background:'white', border:`1px solid ${C.rose}`, borderRadius:8, cursor:'pointer', color:C.vert, fontFamily:sans }}>✕</button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => setShowEnv(true)}
+              style={{ marginTop:12, width:'100%', padding:'9px 0', background:'none', border:`1.5px dashed rgba(28,41,28,0.2)`, borderRadius:10, fontFamily:sans, fontSize:12, color:C.muted, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
+              <i className="ti ti-plus" style={{ fontSize:13 }} /> Ajouter une enveloppe
+            </button>
+          )
+        )}
       </div>
     </>
   );
@@ -636,8 +736,10 @@ export function BudgetEditView({ m, updateData, setView }) {
   const [vals, setVals] = useState({ ...cb });
   const [saved, setSaved] = useState(false);
   const debounceRef     = useRef(null);
+  const [customCats]    = useState(getCustomCats);
+  const allCatList      = [...CATS.filter(c => c.id !== 'epargne_livret' && c.id !== 'epargne_pea'), ...customCats];
 
-  const tv  = CATS.filter(c => c.id !== 'epargne_livret' && c.id !== 'epargne_pea').reduce((s,c) => s + (parseFloat(vals[c.id])||0), 0);
+  const tv  = allCatList.reduce((s,c) => s + (parseFloat(vals[c.id])||0), 0);
   const lft = rpe - tv;
 
   const handleChange = (catId, value) => {
@@ -646,7 +748,7 @@ export function BudgetEditView({ m, updateData, setView }) {
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       const nb = {};
-      CATS.filter(c => c.id !== 'epargne_livret' && c.id !== 'epargne_pea').forEach(c => { if (next[c.id]) nb[c.id] = parseFloat(next[c.id]); });
+      allCatList.forEach(c => { if (next[c.id]) nb[c.id] = parseFloat(next[c.id]); });
       updateData(mm => { mm.catBudgets = nb; });
       setSaved(true);
       setTimeout(() => setSaved(false), 1500);
@@ -666,7 +768,7 @@ export function BudgetEditView({ m, updateData, setView }) {
         </div>
       </div>
       {/* Inputs par catégorie */}
-      {CATS.filter(c => c.id !== 'epargne_livret' && c.id !== 'epargne_pea').map(c => (
+      {allCatList.map(c => (
         <div key={c.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 0', borderBottom:`0.5px solid ${C.border}` }}>
           <div style={{ display:'flex', alignItems:'center', gap:10 }}>
             <CatIcon catId={c.id} size={36} />
@@ -686,7 +788,7 @@ export function BudgetEditView({ m, updateData, setView }) {
 }
 
 // Vue REVENUS
-function RevenueRow({ r, i, onUpdate, onDelete }) {
+function RevenueRow({ r, i, onUpdate, onDelete, closed }) {
   const [editing, setEditing] = useState(null);
   const [nameVal, setNameVal] = useState(r.name);
   const [amtVal,  setAmtVal]  = useState(String(r.amount));
@@ -708,8 +810,8 @@ function RevenueRow({ r, i, onUpdate, onDelete }) {
           onBlur={() => saveField('name')} onKeyDown={e => onKey(e, 'name')}
           style={{ fontFamily:sans, fontSize:15, color:C.vert, border:'none', borderBottom:`1.5px solid ${C.vert}`, outline:'none', background:'transparent', flex:1, minWidth:0 }} />
       ) : (
-        <span onClick={() => { setNameVal(r.name); setEditing('name'); }}
-          style={{ fontFamily:sans, fontSize:15, color:C.vert, cursor:'text', flex:1, minWidth:0 }}>{r.name}</span>
+        <span onClick={() => { if (closed) return; setNameVal(r.name); setEditing('name'); }}
+          style={{ fontFamily:sans, fontSize:15, color:C.vert, cursor: closed ? 'default' : 'text', flex:1, minWidth:0 }}>{r.name}</span>
       )}
       <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
         {editing === 'amount' ? (
@@ -717,10 +819,10 @@ function RevenueRow({ r, i, onUpdate, onDelete }) {
             onBlur={() => saveField('amount')} onKeyDown={e => onKey(e, 'amount')}
             style={{ fontFamily:serif, fontSize:20, fontWeight:600, color:C.vert, width:110, border:'none', borderBottom:`1.5px solid ${C.vert}`, outline:'none', background:'transparent', textAlign:'right' }} />
         ) : (
-          <span onClick={() => { setAmtVal(String(r.amount)); setEditing('amount'); }}
-            style={{ fontFamily:serif, fontSize:20, fontWeight:600, color:C.vert, cursor:'text' }}>+{fmtR(r.amount)}</span>
+          <span onClick={() => { if (closed) return; setAmtVal(String(r.amount)); setEditing('amount'); }}
+            style={{ fontFamily:serif, fontSize:20, fontWeight:600, color:C.vert, cursor: closed ? 'default' : 'text' }}>+{fmtR(r.amount)}</span>
         )}
-        <button onClick={() => onDelete(i)} style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(28,41,28,0.25)', fontSize:14, padding:2 }}>✕</button>
+        {!closed && <button onClick={() => onDelete(i)} style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(28,41,28,0.25)', fontSize:14, padding:2 }}>✕</button>}
       </div>
     </div>
   );
@@ -733,6 +835,7 @@ export function RevenusView({ m, updateData }) {
 
   return (
     <>
+      {m.closed && <ClosedBanner />}
       {/* Total fixe en haut */}
       <div style={{ background:C.vert, flexShrink:0, padding:'14px 20px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
         <span style={{ fontFamily:sans, fontSize:12, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.5)' }}>Total</span>
@@ -744,7 +847,7 @@ export function RevenusView({ m, updateData }) {
           <div style={{ textAlign:'center', padding:32, color:C.muted, fontFamily:sans, fontSize:13 }}>Aucun revenu saisi ce mois</div>
         )}
         {m.revenues.map((r, i) => (
-          <RevenueRow key={r.id} r={r} i={i} onUpdate={upd} onDelete={del} />
+          <RevenueRow key={r.id} r={r} i={i} onUpdate={upd} onDelete={del} closed={m.closed} />
         ))}
       </div>
     </>
@@ -771,21 +874,25 @@ export function DepensesView({ m, updateData, depTab, setDepTab }) {
   const [editExp, setEditExp]       = useState(null);
 
   const clickBill = (realI) => {
+    if (m.closed) return;
     setXBill(realI);
     setBillForm({ amount: m.bills[realI].realAmount || m.bills[realI].amount, date: new Date().toISOString().split('T')[0] });
   };
   const confBill = (realI) => {
+    if (m.closed) return;
     updateData(mm => {
       mm.bills[realI] = { ...mm.bills[realI], paid:true, realAmount: parseFloat(billForm.amount)||mm.bills[realI].amount, paidDate: billForm.date };
     });
     setXBill(null);
   };
   const unchBill = (realI) => {
+    if (m.closed) return;
     updateData(mm => { mm.bills[realI] = { ...mm.bills[realI], paid:false, paidDate:'' }; });
   };
 
   return (
     <>
+      {m.closed && <ClosedBanner />}
       {/* Switcher capsule */}
       <div style={{ padding:'10px 16px', background:C.beige, flexShrink:0, display:'flex', gap:10 }}>
         {[{id:'factures',label:'Factures'},{id:'depenses',label:'Dépenses'}].map(t => (
@@ -828,8 +935,8 @@ export function DepensesView({ m, updateData, depTab, setDepTab }) {
                 );
               }
               return (
-                <div key={e.id} onClick={() => setEditExp(e)}
-                  style={{ background:C.card, borderRadius:12, marginBottom:8, display:'flex', alignItems:'center', gap:12, padding:'12px 14px', border:`0.5px solid ${C.border}`, cursor:'pointer' }}>
+                <div key={e.id} onClick={() => !m.closed && setEditExp(e)}
+                  style={{ background:C.card, borderRadius:12, marginBottom:8, display:'flex', alignItems:'center', gap:12, padding:'12px 14px', border:`0.5px solid ${C.border}`, cursor: m.closed ? 'default' : 'pointer' }}>
                   <CatIcon catId={e.cat} size={38} />
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontFamily:sans, fontSize:13, fontWeight:500, color:C.text, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{e.name || cat.label}</div>
@@ -839,10 +946,12 @@ export function DepensesView({ m, updateData, depTab, setDepTab }) {
                     <div style={{ fontFamily:serif, fontSize:16, fontWeight:600, color:'#C0392B' }}>-{fmtR(e.amount)}</div>
                     <div style={{ fontFamily:sans, fontSize:10, color:C.muted }}>{e.date ? new Date(e.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : ''}</div>
                   </div>
-                  <button onClick={ev => { ev.stopPropagation(); setDeleteConfirm(e.id); }}
-                    style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(28,41,28,0.22)', fontSize:16, padding:'2px 4px', flexShrink:0 }}>
-                    <i className="ti ti-trash" />
-                  </button>
+                  {!m.closed && (
+                    <button onClick={ev => { ev.stopPropagation(); setDeleteConfirm(e.id); }}
+                      style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(28,41,28,0.22)', fontSize:16, padding:'2px 4px', flexShrink:0 }}>
+                      <i className="ti ti-trash" />
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -955,13 +1064,24 @@ export function DepensesView({ m, updateData, depTab, setDepTab }) {
 export function EpargneView({ currentYear }) {
   const [epargneYear, setEpargneYear] = useState(currentYear);
   const [months, setMonths] = useState(() => loadYearData(currentYear));
+
+  // Livret A
   const [livretSolde, setLivretSolde] = useState(() => getLivretSolde() || { amount: 1938.37, date: '2026-06-05' });
   const [editSolde, setEditSolde]     = useState(false);
   const [soldeForm, setSoldeForm]     = useState({ amount:'', date:'' });
 
-  // Persist default initial balance on first load
+  // PEA solde initial
+  const [peaSolde, setPeaSolde]       = useState(() => getPeaSolde() || { montant:1841.72, rendement:259.24, pct:16.48, date:'2026-06-01' });
+  const [editPeaSolde, setEditPeaSolde] = useState(false);
+  const [peaSoldeForm, setPeaSoldeForm] = useState({ montant:'', rendement:'', pct:'', date:'' });
+
+  // PEA rendements
+  const [peaRend, setPeaRend]         = useState(() => getPeaRend());
+  const [showPeaRend, setShowPeaRend] = useState(false);
+
   useEffect(() => {
     if (!getLivretSolde()) saveLivretSolde(livretSolde);
+    if (!getPeaSolde())    savePeaSolde(peaSolde);
   }, []);
 
   useEffect(() => {
@@ -982,11 +1102,11 @@ export function EpargneView({ currentYear }) {
   });
   const mx = Math.max(...md.map(d => d.total), 1);
 
-  // Livret A total = solde initial + versements de l'année affichée
-  const livretTotal = (livretSolde?.amount || 0) + tl;
-  const fmtDate = (d) => d ? d.split('-').reverse().join('/') : '';
+  const peaRendTotal = peaRend.reduce((s,r) => s + (r.montant||0), 0);
+  const livretTotal  = (livretSolde?.amount || 0) + tl;
+  const peaTotal     = (peaSolde?.montant || 0) + ti + peaRendTotal;
+  const fmtDate      = (d) => d ? d.split('-').reverse().join('/') : '';
 
-  // Clôture annuelle : tous les mois qui ont des données sont clôturés (mois vides ignorés)
   const dataMonths = months.filter(m => m !== null);
   const allClosed  = dataMonths.length > 0 && dataMonths.every(m => m.closed === true);
 
@@ -1025,7 +1145,8 @@ export function EpargneView({ currentYear }) {
 
       <div style={{ flex:1, overflowY:'auto', padding:'0 16px 16px', background:C.beige }}>
         <div style={{ fontFamily:sans, fontSize:11, color:C.muted, marginBottom:8, fontWeight:500 }}>Total à date — {epargneYear}</div>
-        {/* Livret A */}
+
+        {/* ── Livret A ── */}
         <div style={{ background:C.vert, borderRadius:12, padding:'14px 20px', marginBottom: editSolde ? 0 : 8 }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
@@ -1043,7 +1164,6 @@ export function EpargneView({ currentYear }) {
             </div>
           )}
         </div>
-        {/* Formulaire édition solde initial */}
         {editSolde && (
           <div style={{ background:'rgba(28,41,28,0.92)', borderRadius:'0 0 12px 12px', padding:'10px 14px 14px', marginBottom:8 }}>
             <div style={{ display:'flex', gap:8, marginBottom:8 }}>
@@ -1074,11 +1194,83 @@ export function EpargneView({ currentYear }) {
             </div>
           </div>
         )}
-        {/* PEA / Trade */}
-        <div style={{ background:C.rose, borderRadius:12, padding:'14px 20px', marginBottom:16, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-          <span style={{ fontFamily:sans, fontSize:14, fontWeight:600, color:C.vert }}>PEA / Trade</span>
-          <span style={{ fontFamily:serif, fontSize:28, fontWeight:700, color:C.vert }}>{fmtP(ti)}</span>
+
+        {/* ── PEA / Trade ── */}
+        <div style={{ background:C.rose, borderRadius:12, padding:'14px 20px', marginBottom: editPeaSolde ? 0 : 4 }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <span style={{ fontFamily:sans, fontSize:14, fontWeight:600, color:C.vert }}>PEA / Trade</span>
+              <button onClick={() => { setPeaSoldeForm({ montant: String(peaSolde?.montant||''), rendement: String(peaSolde?.rendement||''), pct: String(peaSolde?.pct||''), date: peaSolde?.date||'' }); setEditPeaSolde(v => !v); }}
+                style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
+                <i className="ti ti-pencil" style={{ fontSize:13, color: editPeaSolde ? C.vert : 'rgba(28,41,28,0.3)' }} />
+              </button>
+            </div>
+            <span style={{ fontFamily:serif, fontSize:28, fontWeight:700, color:C.vert }}>{fmtP(peaTotal)}</span>
+          </div>
+          {peaSolde && !editPeaSolde && (peaRendTotal > 0 || peaSolde.rendement > 0) && (
+            <div style={{ fontFamily:sans, fontSize:11, color:'rgba(28,41,28,0.5)', marginTop:4 }}>
+              dont {fmtR(peaSolde.rendement + peaRendTotal)} de rendements
+              {peaSolde.pct ? ` (+${peaSolde.pct}%)` : ''}
+            </div>
+          )}
         </div>
+        {editPeaSolde && (
+          <div style={{ background:'rgba(28,41,28,0.08)', borderRadius:'0 0 12px 12px', padding:'10px 14px 14px', marginBottom:4, border:`1px solid ${C.rose}`, borderTop:'none' }}>
+            <div style={{ display:'flex', gap:8, marginBottom:8 }}>
+              <div style={{ flex:2 }}>
+                <Label>Solde initial (€)</Label>
+                <input type="number" step="0.01" value={peaSoldeForm.montant} onChange={e => setPeaSoldeForm(p => ({...p, montant:e.target.value}))}
+                  style={{ width:'100%', padding:8, border:`1px solid ${C.border}`, borderRadius:7, fontSize:14, fontFamily:serif, color:C.vert, background:'white' }} />
+              </div>
+              <div style={{ flex:2 }}>
+                <Label>Date</Label>
+                <input type="date" value={peaSoldeForm.date} onChange={e => setPeaSoldeForm(p => ({...p, date:e.target.value}))}
+                  style={{ width:'100%', padding:8, border:`1px solid ${C.border}`, borderRadius:7, fontSize:12, color:C.vert, background:'white', fontFamily:sans }} />
+              </div>
+            </div>
+            <div style={{ display:'flex', gap:8, marginBottom:8 }}>
+              <div style={{ flex:2 }}>
+                <Label>Rendements (€)</Label>
+                <input type="number" step="0.01" value={peaSoldeForm.rendement} onChange={e => setPeaSoldeForm(p => ({...p, rendement:e.target.value}))}
+                  style={{ width:'100%', padding:8, border:`1px solid ${C.border}`, borderRadius:7, fontSize:14, fontFamily:serif, color:C.vert, background:'white' }} />
+              </div>
+              <div style={{ flex:1 }}>
+                <Label>Perf. (%)</Label>
+                <input type="number" step="0.01" value={peaSoldeForm.pct} onChange={e => setPeaSoldeForm(p => ({...p, pct:e.target.value}))}
+                  style={{ width:'100%', padding:8, border:`1px solid ${C.border}`, borderRadius:7, fontSize:14, fontFamily:sans, color:C.vert, background:'white' }} />
+              </div>
+            </div>
+            <div style={{ display:'flex', gap:8 }}>
+              <button onClick={() => {
+                const a = parseFloat(peaSoldeForm.montant);
+                if (!a) return;
+                const updated = { montant:a, rendement:parseFloat(peaSoldeForm.rendement)||0, pct:parseFloat(peaSoldeForm.pct)||0, date:peaSoldeForm.date };
+                savePeaSolde(updated);
+                setPeaSolde(updated);
+                setEditPeaSolde(false);
+              }} style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                Enregistrer
+              </button>
+              <button onClick={() => setEditPeaSolde(false)}
+                style={{ padding:'9px 12px', background:'white', border:`1px solid ${C.rose}`, borderRadius:8, cursor:'pointer', color:C.vert, fontFamily:sans }}>✕</button>
+            </div>
+          </div>
+        )}
+
+        {/* Bouton + rendement PEA */}
+        {!editPeaSolde && (
+          <button onClick={() => setShowPeaRend(true)}
+            style={{ width:'100%', marginBottom:16, padding:'8px 0', background:'none', border:`1.5px dashed rgba(28,41,28,0.2)`, borderRadius:10, fontFamily:sans, fontSize:12, color:C.muted, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
+            <i className="ti ti-chart-line" style={{ fontSize:13 }} /> Ajouter un rendement PEA
+          </button>
+        )}
+        {showPeaRend && (
+          <AddPeaRendementModal
+            onAdd={r => { const updated = [...peaRend, r]; savePeaRend(updated); setPeaRend(updated); }}
+            onClose={() => setShowPeaRend(false)}
+          />
+        )}
+
         {/* Total année */}
         <div style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', marginBottom:4 }}>
           <span style={{ fontFamily:sans, fontSize:13, fontWeight:700, color:C.vert, width:36 }}>{epargneYear}</span>
@@ -1161,9 +1353,9 @@ export default function App() {
 
   const { data: m, loading, updateData } = useMonthData(mi);
 
-  const addExpense = (exp)  => updateData(mm => { mm.expenses = [...mm.expenses, exp]; });
-  const addRevenu  = (rev)  => updateData(mm => { mm.revenues = [...mm.revenues, rev]; });
-  const addBill    = (bill) => updateData(mm => { mm.bills    = [...mm.bills, bill];    });
+  const addExpense = (exp)  => { if (m.closed) return; updateData(mm => { mm.expenses = [...mm.expenses, exp]; }); };
+  const addRevenu  = (rev)  => { if (m.closed) return; updateData(mm => { mm.revenues = [...mm.revenues, rev]; }); };
+  const addBill    = (bill) => { if (m.closed) return; updateData(mm => { mm.bills    = [...mm.bills, bill];    }); };
 
   if (loading) return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', background:C.beige }}>
