@@ -655,15 +655,13 @@ export function BudgetView({ m, setView, updateData }) {
           if (confirmDelCat === cat.id) {
             return (
               <div key={cat.id} style={{ background:C.roseL, borderRadius:12, marginBottom:4, padding:'11px 14px', border:`1px solid ${C.rose}`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                <span style={{ fontFamily:sans, fontSize:13, color:C.vert }}>Supprimer <strong>{cat.label}</strong> ?</span>
+                <span style={{ fontFamily:sans, fontSize:13, color:C.vert }}>
+                  {isCustom ? 'Supprimer ' : 'Retirer le budget '}<strong>{cat.label}</strong> ?
+                </span>
                 <div style={{ display:'flex', gap:8, flexShrink:0 }}>
                   <button onClick={() => {
-                    const upd = customCats.filter(c => c.id !== cat.id);
-                    saveCustomCats(upd); setCustomCats(upd);
-                    updateData(mm => {
-                      mm.expenses = mm.expenses.map(e => e.cat === cat.id ? { ...e, cat:'divers' } : e);
-                      mm.catBudgets = Object.fromEntries(Object.entries(mm.catBudgets || {}).filter(([k]) => k !== cat.id));
-                    });
+                    if (isCustom) { const upd = customCats.filter(c => c.id !== cat.id); saveCustomCats(upd); setCustomCats(upd); }
+                    updateData(mm => { mm.catBudgets = Object.fromEntries(Object.entries(mm.catBudgets || {}).filter(([k]) => k !== cat.id)); });
                     setConfirmDelCat(null);
                   }} style={{ padding:'6px 14px', background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:12, fontWeight:600, cursor:'pointer' }}>Oui</button>
                   <button onClick={() => setConfirmDelCat(null)}
@@ -683,7 +681,7 @@ export function BudgetView({ m, setView, updateData }) {
                   </div>
                   <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                     <span style={{ fontFamily:sans, fontSize:12, color: ov ? '#C0392B' : C.muted }}>{fmtR(sp)} / {fmtP(bg)}</span>
-                    {isCustom && !m.closed && (
+                    {!m.closed && (
                       <button onClick={() => setConfirmDelCat(cat.id)}
                         style={{ background:'none', border:'none', cursor:'pointer', padding:'1px 3px', color:'rgba(192,57,43,0.4)' }}>
                         <i className="ti ti-trash" style={{ fontSize:13 }} />
@@ -712,10 +710,7 @@ export function BudgetView({ m, setView, updateData }) {
                   <button onClick={() => {
                     const upd = customCats.filter(c => c.id !== cat.id);
                     saveCustomCats(upd); setCustomCats(upd);
-                    updateData(mm => {
-                      mm.expenses = mm.expenses.map(e => e.cat === cat.id ? { ...e, cat:'divers' } : e);
-                      mm.catBudgets = Object.fromEntries(Object.entries(mm.catBudgets || {}).filter(([k]) => k !== cat.id));
-                    });
+                    updateData(mm => { mm.catBudgets = Object.fromEntries(Object.entries(mm.catBudgets || {}).filter(([k]) => k !== cat.id)); });
                     setConfirmDelCat(null);
                   }} style={{ padding:'6px 14px', background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:12, fontWeight:600, cursor:'pointer' }}>Oui</button>
                   <button onClick={() => setConfirmDelCat(null)}
@@ -790,9 +785,12 @@ export function BudgetEditView({ m, updateData, setView }) {
   const rpe             = rev - bT;
   const [vals, setVals] = useState({ ...cb });
   const [saved, setSaved] = useState(false);
-  const debounceRef     = useRef(null);
-  const [customCats]    = useState(getCustomCats);
-  const allCatList      = [...CATS.filter(c => c.id !== 'epargne_livret' && c.id !== 'epargne_pea'), ...customCats];
+  const debounceRef       = useRef(null);
+  const [customCats, setCustomCats]         = useState(getCustomCats);
+  const [confirmDelEdit, setConfirmDelEdit] = useState(null);
+  const [removedFromEdit, setRemovedFromEdit] = useState([]);
+  const allCatList = [...CATS.filter(c => c.id !== 'epargne_livret' && c.id !== 'epargne_pea'), ...customCats]
+    .filter(c => !removedFromEdit.includes(c.id));
 
   const tv  = allCatList.reduce((s,c) => s + (parseFloat(vals[c.id])||0), 0);
   const lft = rpe - tv;
@@ -823,18 +821,50 @@ export function BudgetEditView({ m, updateData, setView }) {
         </div>
       </div>
       {/* Inputs par catégorie */}
-      {allCatList.map(c => (
-        <div key={c.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 0', borderBottom:`0.5px solid ${C.border}` }}>
-          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            <CatIcon catId={c.id} size={36} />
-            <span style={{ fontFamily:sans, fontSize:13, color:C.text }}>{c.label}</span>
+      {allCatList.map(c => {
+        const isCustom = c.id.startsWith('custom_');
+        if (confirmDelEdit === c.id) {
+          return (
+            <div key={c.id} style={{ background:C.roseL, borderRadius:10, marginBottom:4, padding:'10px 12px', border:`1px solid ${C.rose}`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <span style={{ fontFamily:sans, fontSize:13, color:C.vert }}>
+                {isCustom ? 'Supprimer ' : 'Retirer '}<strong>{c.label}</strong> ?
+              </span>
+              <div style={{ display:'flex', gap:8, flexShrink:0 }}>
+                <button onClick={() => {
+                  if (isCustom) { const upd = customCats.filter(x => x.id !== c.id); saveCustomCats(upd); setCustomCats(upd); }
+                  setRemovedFromEdit(prev => [...prev, c.id]);
+                  const next = { ...vals }; delete next[c.id]; setVals(next);
+                  clearTimeout(debounceRef.current);
+                  updateData(mm => { const nb = { ...(mm.catBudgets || {}) }; delete nb[c.id]; mm.catBudgets = nb; });
+                  setConfirmDelEdit(null);
+                }} style={{ padding:'6px 14px', background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:12, fontWeight:600, cursor:'pointer' }}>Oui</button>
+                <button onClick={() => setConfirmDelEdit(null)}
+                  style={{ padding:'6px 14px', background:'white', border:`1px solid ${C.rose}`, borderRadius:8, fontFamily:sans, fontSize:12, cursor:'pointer', color:C.vert }}>Non</button>
+              </div>
+            </div>
+          );
+        }
+        return (
+          <div key={c.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 0', borderBottom:`0.5px solid ${C.border}` }}>
+            <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+              <CatIcon catId={c.id} size={36} />
+              <span style={{ fontFamily:sans, fontSize:13, color:C.text }}>{c.label}</span>
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <input type="number" placeholder="—" value={vals[c.id] || ''}
+                onChange={e => handleChange(c.id, e.target.value)}
+                disabled={m.closed}
+                style={{ width:75, padding:'6px 8px', border:`1px solid ${C.border}`, borderRadius:8, fontSize:13, textAlign:'right', background: m.closed ? 'rgba(28,41,28,0.05)' : 'white', color:C.vert, fontFamily:sans }} />
+              {!m.closed && (
+                <button onClick={() => setConfirmDelEdit(c.id)}
+                  style={{ background:'none', border:'none', cursor:'pointer', padding:'2px 4px', color:'rgba(192,57,43,0.35)' }}>
+                  <i className="ti ti-trash" style={{ fontSize:14 }} />
+                </button>
+              )}
+            </div>
           </div>
-          <input type="number" placeholder="—" value={vals[c.id] || ''}
-            onChange={e => handleChange(c.id, e.target.value)}
-            disabled={m.closed}
-            style={{ width:75, padding:'6px 8px', border:`1px solid ${C.border}`, borderRadius:8, fontSize:13, textAlign:'right', background: m.closed ? 'rgba(28,41,28,0.05)' : 'white', color:C.vert, fontFamily:sans }} />
-        </div>
-      ))}
+        );
+      })}
       {saved && (
         <div style={{ textAlign:'center', marginTop:14, fontFamily:sans, fontSize:12, color:'#2E7D32', fontWeight:500 }}>Sauvegardé ✓</div>
       )}
@@ -1148,12 +1178,13 @@ const SavingsChart = ({ data, color, title, onClose }) => {
                 onTouchStart={e => { e.preventDefault(); setHover(i); }} onTouchEnd={() => setTimeout(() => setHover(null), 1200)} />
             ))}
             {hover !== null && (() => {
-              const bx = Math.max(PL + 2, Math.min(W - PR - 76, px(hover) - 38));
-              const by = Math.max(PT + 2, py(data[hover].value) - 32);
+              const bx = Math.max(PL + 2, Math.min(W - PR - 84, px(hover) - 42));
+              const by = Math.max(PT + 2, py(data[hover].value) - 42);
               return (
                 <g>
-                  <rect x={bx} y={by} width={76} height={22} rx={5} fill={C.vert} />
-                  <text x={bx + 38} y={by + 15} textAnchor="middle" fontSize={10} fill="white" fontFamily="DM Sans, sans-serif">{fmtP(data[hover].value)}</text>
+                  <rect x={bx} y={by} width={84} height={36} rx={5} fill={C.vert} />
+                  <text x={bx + 42} y={by + 13} textAnchor="middle" fontSize={9} fill="rgba(255,255,255,0.65)" fontFamily="DM Sans, sans-serif">{data[hover].date || data[hover].label}</text>
+                  <text x={bx + 42} y={by + 28} textAnchor="middle" fontSize={10} fontWeight="bold" fill="white" fontFamily="DM Sans, sans-serif">{fmtP(data[hover].value)}</text>
                 </g>
               );
             })()}
@@ -1277,18 +1308,25 @@ export function EpargneView({ currentYear }) {
   const peaTotal     = (peaSolde?.montant || 0) + ti + peaRendTotal;
   const fmtDate      = (d) => d ? d.split('-').reverse().join('/') : '';
 
-  const livretChartData = (() => {
-    const out = [];
-    let cum = livretSolde?.amount || 0;
-    for (let i = 0; i < 12; i++) { cum += md[i]?.livret || 0; out.push({ label: MS[i], value: cum }); }
+  const fmtShortDate = d => {
+    if (!d) return '';
+    const [, mo, da] = d.split('-');
+    return `${parseInt(da)}/${parseInt(mo)}`;
+  };
+  const buildChartSeries = (initialDate, initialAmt, expenses, extras = []) => {
+    const pts = [...expenses, ...extras]
+      .filter(p => p.date)
+      .map(p => ({ date: p.date, amount: p.amount || p.montant || 0 }))
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+    const out = [{ label: fmtShortDate(initialDate), value: initialAmt, date: initialDate }];
+    let cum = initialAmt;
+    pts.forEach(p => { cum += p.amount; out.push({ label: fmtShortDate(p.date), value: cum, date: p.date }); });
     return out;
-  })();
-  const peaChartData = (() => {
-    const out = [];
-    let cum = peaSolde?.montant || 0;
-    for (let i = 0; i < 12; i++) { cum += md[i]?.invest || 0; out.push({ label: MS[i], value: cum + peaRendTotal }); }
-    return out;
-  })();
+  };
+  const livretExpenses = months.flatMap(m => m ? m.expenses.filter(e => e.cat === 'epargne_livret') : []);
+  const peaExpenses    = months.flatMap(m => m ? m.expenses.filter(e => e.cat === 'epargne_pea')    : []);
+  const livretChartData = buildChartSeries(livretSolde?.date || `${epargneYear}-01-01`, livretSolde?.amount || 0, livretExpenses);
+  const peaChartData    = buildChartSeries(peaSolde?.date   || `${epargneYear}-01-01`, peaSolde?.montant   || 0, peaExpenses, peaRend);
 
   const patchMonthCat = (monthIdx, catId, newAmount) => {
     const key = `budget:${epargneYear}:${String(monthIdx + 1).padStart(2, '0')}`;
@@ -1568,7 +1606,8 @@ const SplashScreen = ({ onDone }) => {
   return (
     <div style={{
       position:'absolute', inset:0, zIndex:100, borderRadius:24,
-      overflow:'hidden', display:'flex', alignItems:'center', justifyContent:'center',
+      overflow:'hidden', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-start',
+      paddingTop:'8%',
       opacity: out ? 0 : visible ? 1 : 0,
       transition: out ? 'opacity 0.5s ease' : 'opacity 0.4s ease',
     }}>
@@ -1577,16 +1616,16 @@ const SplashScreen = ({ onDone }) => {
         backgroundImage:'url(/splash-bg.png)',
         backgroundSize:'cover', backgroundPosition:'center',
       }} />
-      <div style={{ position:'absolute', inset:0, background:'rgba(30,51,40,0.6)' }} />
-      <div style={{ position:'relative', textAlign:'center', padding:'0 32px', display:'flex', flexDirection:'column', alignItems:'center', gap:16 }}>
-        <Logo size={90} />
-        <div style={{ fontFamily:serif, fontSize:38, fontWeight:700, color:C.gold, letterSpacing:10, textTransform:'uppercase', lineHeight:1 }}>
-          Budget Club
+      <div style={{ position:'absolute', inset:0, background:'rgba(30,51,40,0.65)' }} />
+      <div style={{ position:'relative', textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center' }}>
+        <div style={{ color:C.gold, fontSize:16, marginBottom:16 }}>✦</div>
+        <Logo size={120} />
+        <div style={{ marginTop:16, fontFamily:serif, fontSize:48, fontWeight:700, color:C.gold, letterSpacing:'8px', textTransform:'uppercase', lineHeight:1.1 }}>
+          BUDGET<br />CLUB
         </div>
-        <div style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.85)', letterSpacing:4, textTransform:'uppercase' }}>
-          Gérez vos finances avec élégance
+        <div style={{ marginTop:14, fontFamily:sans, fontSize:11, color:'rgba(255,255,255,0.7)', letterSpacing:'3px', textTransform:'uppercase' }}>
+          GÉREZ VOS FINANCES AVEC ÉLÉGANCE
         </div>
-        <div style={{ color:C.gold, fontSize:16 }}>✦</div>
       </div>
     </div>
   );
