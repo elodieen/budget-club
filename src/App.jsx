@@ -779,7 +779,7 @@ export function RevenusView({ m, updateData }) {
         <span style={{ fontFamily:serif, fontSize:30, fontWeight:700, color:'white' }}>{fmtR(rev)}</span>
       </div>
       {/* Liste scrollable */}
-      <div style={{ flex:1, overflowY:'auto', padding:'12px 16px 16px', background:C.beige }}>
+      <div style={{ flex:1, overflowY:'auto', padding:'12px 16px 80px', background:C.beige }}>
         {m.revenues.length === 0 && (
           <div style={{ textAlign:'center', padding:32, color:C.muted, fontFamily:sans, fontSize:13 }}>Aucun revenu saisi ce mois</div>
         )}
@@ -848,7 +848,7 @@ export function DepensesView({ m, mi, updateData, depTab, setDepTab }) {
               : <div style={{ fontFamily:serif, fontSize:32, fontWeight:700, color:'white' }}>{fmtR(reste)}</div>
             }
           </div>
-          <div style={{ flex:1, overflowY:'auto', padding:'8px 16px 16px', background:C.beige }}>
+          <div style={{ flex:1, overflowY:'auto', padding:'8px 16px 80px', background:C.beige }}>
             {exps.length === 0 && <div style={{ textAlign:'center', padding:24, color:C.muted, fontFamily:sans, fontSize:13 }}>Aucune dépense ce mois</div>}
             {byDate(exps).map(e => {
               const cat = CATS.find(c => c.id === e.cat) || CATS[CATS.length-1];
@@ -886,7 +886,7 @@ export function DepensesView({ m, mi, updateData, depTab, setDepTab }) {
             </div>
           </div>
           {/* Liste unifiée — non cochées en haut, cochées en bas */}
-          <div style={{ flex:1, overflowY:'auto', padding:'8px 16px 16px', background:C.beige }}>
+          <div style={{ flex:1, overflowY:'auto', padding:'8px 16px 80px', background:C.beige }}>
             {unpaid.length > 0 && <div style={{ padding:'6px 0 8px' }}><span style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:1, textTransform:'uppercase', color:C.muted }}>À prélever — {unpaid.length}</span></div>}
             {unpaid.map((b, idx) => (
               <div key={b.id} style={{ background:C.card, borderRadius:12, marginBottom:8, border:`0.5px solid ${C.border}` }}>
