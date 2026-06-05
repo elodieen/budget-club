@@ -25,18 +25,19 @@ const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Aoû
 const MS     = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
 
 export const CATS = [
-  { id:'alimentation', label:'Alimentation',  icon:'ti-shopping-cart'  },
-  { id:'quotidien',    label:'Quotidien',      icon:'ti-coffee'          },
-  { id:'sortie',       label:'Restau',         icon:'ti-tools-kitchen-2' },
-  { id:'appart',       label:'Maison',         icon:'ti-building'        },
-  { id:'shopping',     label:'Loisirs',        icon:'ti-ball-tennis'     },
-  { id:'sante',        label:'Santé',          icon:'ti-heart'           },
-  { id:'cadeau',       label:'Cadeau',         icon:'ti-gift'            },
-  { id:'vacances',     label:'Vacances',       icon:'ti-plane'           },
-  { id:'transport',    label:'Transport',      icon:'ti-car'             },
-  { id:'affiche',      label:'Affiche Map',    icon:'ti-map'             },
-  { id:'autre',        label:'Autre',          icon:'ti-box'             },
-  { id:'epargne',      label:'Épargne',        icon:'ti-pig-money'       },
+  { id:'alimentation',   label:'Alimentation',      icon:'ti-shopping-cart'   },
+  { id:'quotidien',      label:'Quotidien',          icon:'ti-coffee'          },
+  { id:'sortie',         label:'Sortie/Restau',      icon:'ti-tools-kitchen-2' },
+  { id:'appart',         label:'Appart',             icon:'ti-home'            },
+  { id:'shopping',       label:'Shopping',           icon:'ti-shopping-bag'    },
+  { id:'vacances',       label:'Vacances',           icon:'ti-plane'           },
+  { id:'epargne_livret', label:'Épargne — Livret A', icon:'ti-building-bank'   },
+  { id:'epargne_pea',    label:'Épargne — PEA',      icon:'ti-trending-up'     },
+  { id:'sante',          label:'Santé',              icon:'ti-heart'           },
+  { id:'cadeau',         label:'Cadeau',             icon:'ti-gift'            },
+  { id:'affiche',        label:'Affiche Map',        icon:'ti-map'             },
+  { id:'facture',        label:'Facture',            icon:'ti-receipt'         },
+  { id:'divers',         label:'Divers',             icon:'ti-box'             },
 ];
 
 export const BILLS_DEFAULT = [
@@ -94,7 +95,7 @@ const SEED = {
       {id:'e7', name:'Deliveroo',       amount:43.09,  cat:'sortie',       date:'2026-04-03'},
       {id:'e8', name:'Yepoda',          amount:76,     cat:'quotidien',    date:'2026-03-16'},
       {id:'e9', name:'Anniv papa',      amount:50,     cat:'cadeau',       date:'2026-03-28'},
-      {id:'e10',name:'Trade Republic',  amount:160,    cat:'epargne',      date:'2026-03-10'},
+      {id:'e10',name:'Trade Republic',  amount:160,    cat:'epargne_pea',  date:'2026-03-10'},
     ],
   },
   '2026:04': {
@@ -116,7 +117,7 @@ const SEED = {
       {id:'e3',name:'Alicar',         amount:148,    cat:'sante',        date:'2026-04-13'},
       {id:'e4',name:'Sephora',        amount:55.9,   cat:'shopping',     date:'2026-04-20'},
       {id:'e5',name:'Ikea',           amount:215.88, cat:'appart',       date:'2026-04-22'},
-      {id:'e6',name:'Trade Republic', amount:150,    cat:'epargne',      date:'2026-04-12'},
+      {id:'e6',name:'Trade Republic', amount:150,    cat:'epargne_pea',  date:'2026-04-12'},
       {id:'e7',name:'Deliveroo',      amount:36.48,  cat:'sortie',       date:'2026-04-22'},
       {id:'e8',name:'Carrefour Drive',amount:105.81, cat:'alimentation', date:'2026-04-16'},
     ],
@@ -134,10 +135,10 @@ const SEED = {
       paidDate: ['b1','b2','b3','b4','b5','b7','b8','b9','b10','b11','b21','b22','b23','b24'].includes(b.id) ? '2026-05-10' : '',
     })),
     expenses: [
-      {id:'e1',name:'Épargne Participation', amount:1000,  cat:'epargne',      date:'2026-05-10'},
+      {id:'e1',name:'Épargne Participation', amount:1000,  cat:'epargne_livret',date:'2026-05-10'},
       {id:'e2',name:'Chèque Vacances',       amount:130,   cat:'vacances',     date:'2026-05-11'},
-      {id:'e3',name:'Trade Republic',        amount:165,   cat:'epargne',      date:'2026-05-10'},
-      {id:'e4',name:'Livret A',              amount:140,   cat:'epargne',      date:'2026-05-10'},
+      {id:'e3',name:'Trade Republic',        amount:165,   cat:'epargne_pea',  date:'2026-05-10'},
+      {id:'e4',name:'Livret A',              amount:140,   cat:'epargne_livret',date:'2026-05-10'},
       {id:'e5',name:'Carrefour Drive',       amount:75.35, cat:'alimentation', date:'2026-05-12'},
       {id:'e6',name:'Bowling',               amount:29,    cat:'sortie',       date:'2026-05-15'},
       {id:'e7',name:'Carrefour Drive',       amount:53.77, cat:'alimentation', date:'2026-05-18'},
@@ -158,9 +159,10 @@ const fmtR = (n) => {
 };
 const fmtP = (n) => Math.round(n).toLocaleString('fr-FR') + '\u202f€';
 
-const billValue  = (b) => b.paid ? (b.realAmount || b.amount) : b.amount;
-const isInvest   = (name) => ['trade','republic','invest','participation','pea'].some(k => (name||'').toLowerCase().includes(k));
-const byDate     = (arr) => [...arr].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+const billValue      = (b) => b.paid ? (b.realAmount || b.amount) : b.amount;
+const byDate         = (arr) => [...arr].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+const getCustomCats  = () => { try { return JSON.parse(localStorage.getItem('budget:categories:custom') || '[]'); } catch { return []; } };
+const saveCustomCats = (cats) => localStorage.setItem('budget:categories:custom', JSON.stringify(cats));
 
 // ─── HOOK STORAGE ────────────────────────────────────────────
 function useMonthData(mi) {
@@ -217,7 +219,7 @@ const Logo = () => (
 
 // Icône catégorie — cercle vert foncé
 const CatIcon = ({ catId, size = 42, gray = false }) => {
-  const cat = CATS.find(c => c.id === catId) || CATS[CATS.length - 1];
+  const cat = [...CATS, ...getCustomCats()].find(c => c.id === catId) || CATS[CATS.length - 1];
   return (
     <div style={{
       width:size, height:size, borderRadius:'50%',
@@ -257,7 +259,7 @@ const BottomNav = ({ view, setView, m }) => {
   const rev      = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
   const cb       = m.catBudgets || {};
   const bT       = m.bills.reduce((s,b) => s + billValue(b), 0);
-  const tv       = CATS.filter(c => c.id !== 'epargne').reduce((s,c) => s + (cb[c.id]||0), 0);
+  const tv       = CATS.filter(c => c.id !== 'epargne_livret' && c.id !== 'epargne_pea').reduce((s,c) => s + (cb[c.id]||0), 0);
   const nonV     = Math.max(0, rev - bT - tv);
   const badges   = { revenus: m.revenues.length > 0, budget: rev > 0 && tv > 0 && nonV < 1 };
 
@@ -344,15 +346,39 @@ const SubmitBtn = ({ label, onClick }) => (
 );
 
 // Modal Nouvelle dépense
+const ICON_CHOICES = [
+  'ti-tag','ti-star','ti-wallet','ti-music','ti-device-tv',
+  'ti-paw','ti-baby-carriage','ti-shirt','ti-tool','ti-phone',
+];
+
 export const AddExpenseModal = ({ onAdd, onClose }) => {
-  const [form, setForm] = useState({ amount:'', cat:'', name:'', date: new Date().toISOString().split('T')[0] });
+  const [form, setForm]             = useState({ amount:'', cat:'', name:'', date: new Date().toISOString().split('T')[0] });
+  const [customCats, setCustomCats] = useState(() => getCustomCats());
+  const [showNewCat, setShowNewCat] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatIcon, setNewCatIcon] = useState('ti-tag');
+
+  const allCats = [...CATS, ...customCats];
   const upd = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
   const submit = () => {
     const a = parseFloat(form.amount);
     if (!a || !form.cat) return;
     onAdd({ id:'e'+Date.now(), name:form.name, amount:a, cat:form.cat, date:form.date });
     onClose();
   };
+
+  const addCustomCat = () => {
+    if (!newCatName.trim()) return;
+    const newCat = { id:'custom_'+Date.now(), label:newCatName.trim(), icon:newCatIcon };
+    const updated = [...customCats, newCat];
+    setCustomCats(updated);
+    saveCustomCats(updated);
+    upd('cat', newCat.id);
+    setNewCatName('');
+    setShowNewCat(false);
+  };
+
   return (
     <ModalShell title="Nouvelle dépense" onClose={onClose}>
       <div style={{ marginBottom:14 }}>
@@ -363,8 +389,8 @@ export const AddExpenseModal = ({ onAdd, onClose }) => {
       </div>
       <div style={{ marginBottom:14 }}>
         <Label>Catégorie</Label>
-        <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
-          {CATS.map(c => (
+        <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:8 }}>
+          {allCats.map(c => (
             <span key={c.id} onClick={() => upd('cat', c.id)}
               style={{ padding:'5px 11px', borderRadius:20, fontFamily:sans, fontSize:11, cursor:'pointer',
                 border:`1.5px solid ${form.cat === c.id ? C.vert : 'rgba(28,41,28,0.15)'}`,
@@ -374,6 +400,35 @@ export const AddExpenseModal = ({ onAdd, onClose }) => {
             </span>
           ))}
         </div>
+        {showNewCat ? (
+          <div style={{ padding:12, background:C.roseL, borderRadius:10, border:`1px solid ${C.rose}` }}>
+            <input placeholder="Nom de la catégorie" value={newCatName} onChange={e => setNewCatName(e.target.value)}
+              style={{ width:'100%', padding:'7px 10px', border:`1px solid ${C.border}`, borderRadius:8, fontSize:13, fontFamily:sans, color:C.vert, background:'white', marginBottom:8 }} />
+            <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:8 }}>
+              {ICON_CHOICES.map(icon => (
+                <div key={icon} onClick={() => setNewCatIcon(icon)}
+                  style={{ width:34, height:34, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer',
+                    background: newCatIcon === icon ? C.vert : 'white',
+                    border:`1.5px solid ${newCatIcon === icon ? C.vert : C.border}` }}>
+                  <i className={`ti ${icon}`} style={{ fontSize:16, color: newCatIcon === icon ? 'white' : C.muted }} />
+                </div>
+              ))}
+            </div>
+            <div style={{ display:'flex', gap:8 }}>
+              <button onClick={addCustomCat}
+                style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                Ajouter
+              </button>
+              <button onClick={() => setShowNewCat(false)}
+                style={{ padding:'9px 12px', background:'white', border:`1px solid ${C.rose}`, borderRadius:8, cursor:'pointer', color:C.vert, fontFamily:sans }}>✕</button>
+            </div>
+          </div>
+        ) : (
+          <button onClick={() => setShowNewCat(true)}
+            style={{ padding:'5px 12px', background:'none', border:`1.5px dashed rgba(28,41,28,0.2)`, borderRadius:20, fontFamily:sans, fontSize:11, color:C.muted, cursor:'pointer', display:'inline-flex', alignItems:'center', gap:5 }}>
+            <i className="ti ti-plus" style={{ fontSize:11 }} /> Ajouter une catégorie
+          </button>
+        )}
       </div>
       <div style={{ display:'flex', gap:10, marginBottom:16 }}>
         <div style={{ flex:1 }}><Label>Nom</Label><TextInput placeholder="ex : Carrefour" value={form.name} onChange={e => upd('name', e.target.value)} /></div>
@@ -447,8 +502,8 @@ const DateInput = (props) => (
 export function AccueilView({ m, mi, setMi, setView }) {
   const rev  = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
   const bT   = m.bills.filter(b => b.selected !== false).reduce((s,b) => s + billValue(b), 0);
-  const eT   = m.expenses.filter(e => e.cat !== 'epargne').reduce((s,e) => s + (e.amount||0), 0);
-  const epg  = m.expenses.filter(e => e.cat === 'epargne').reduce((s,e) => s + (e.amount||0), 0);
+  const eT   = m.expenses.filter(e => e.cat !== 'epargne_livret' && e.cat !== 'epargne_pea').reduce((s,e) => s + (e.amount||0), 0);
+  const epg  = m.expenses.filter(e => (e.cat === 'epargne_livret' || e.cat === 'epargne_pea')).reduce((s,e) => s + (e.amount||0), 0);
   const reste = Math.round((rev - bT - eT - epg) * 100) / 100;
   const pp    = rev > 0 ? Math.min(100, Math.round((bT + eT + epg) / rev * 100)) : 0;
 
@@ -502,7 +557,7 @@ export function AccueilView({ m, mi, setMi, setView }) {
 // Vue BUDGET
 export function BudgetView({ m, setView }) {
   const cb   = m.catBudgets || {};
-  const cwb  = CATS.filter(c => c.id !== 'epargne' && cb[c.id]);
+  const cwb  = CATS.filter(c => c.id !== 'epargne_livret' && c.id !== 'epargne_pea' && cb[c.id]);
   const tv   = cwb.reduce((s,c) => s + (cb[c.id]||0), 0);
   const rev  = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
   const bT   = m.bills.reduce((s,b) => s + billValue(b), 0);
@@ -557,7 +612,7 @@ export function BudgetView({ m, setView }) {
         })}
 
         {/* Catégories sans budget mais avec dépenses */}
-        {CATS.filter(c => c.id !== 'epargne' && !cb[c.id]).map(cat => {
+        {CATS.filter(c => c.id !== 'epargne_livret' && c.id !== 'epargne_pea' && !cb[c.id]).map(cat => {
           const sp = m.expenses.filter(e => e.cat === cat.id).reduce((s,e) => s + (e.amount||0), 0);
           if (!sp) return null;
           return (
@@ -588,7 +643,7 @@ export function BudgetEditView({ m, updateData, setView }) {
   const [saved, setSaved] = useState(false);
   const debounceRef     = useRef(null);
 
-  const tv  = CATS.filter(c => c.id !== 'epargne').reduce((s,c) => s + (parseFloat(vals[c.id])||0), 0);
+  const tv  = CATS.filter(c => c.id !== 'epargne_livret' && c.id !== 'epargne_pea').reduce((s,c) => s + (parseFloat(vals[c.id])||0), 0);
   const lft = rpe - tv;
 
   const handleChange = (catId, value) => {
@@ -597,7 +652,7 @@ export function BudgetEditView({ m, updateData, setView }) {
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       const nb = {};
-      CATS.filter(c => c.id !== 'epargne').forEach(c => { if (next[c.id]) nb[c.id] = parseFloat(next[c.id]); });
+      CATS.filter(c => c.id !== 'epargne_livret' && c.id !== 'epargne_pea').forEach(c => { if (next[c.id]) nb[c.id] = parseFloat(next[c.id]); });
       updateData(mm => { mm.catBudgets = nb; });
       setSaved(true);
       setTimeout(() => setSaved(false), 1500);
@@ -617,7 +672,7 @@ export function BudgetEditView({ m, updateData, setView }) {
         </div>
       </div>
       {/* Inputs par catégorie */}
-      {CATS.filter(c => c.id !== 'epargne').map(c => (
+      {CATS.filter(c => c.id !== 'epargne_livret' && c.id !== 'epargne_pea').map(c => (
         <div key={c.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 0', borderBottom:`0.5px solid ${C.border}` }}>
           <div style={{ display:'flex', alignItems:'center', gap:10 }}>
             <CatIcon catId={c.id} size={36} />
@@ -703,7 +758,7 @@ export function RevenusView({ m, updateData }) {
 
 // Vue DÉPENSES + FACTURES
 export function DepensesView({ m, mi, updateData, depTab, setDepTab }) {
-  const exps    = m.expenses.filter(e => e.cat !== 'epargne');
+  const exps    = m.expenses.filter(e => e.cat !== 'epargne_livret' && e.cat !== 'epargne_pea');
   const bills   = m.bills.filter(b => b.selected !== false);
   const unpaid  = bills.filter(b => !b.paid);
   const paid    = bills.filter(b =>  b.paid);
@@ -713,7 +768,7 @@ export function DepensesView({ m, mi, updateData, depTab, setDepTab }) {
   const pN = paid.length, bN = bills.length;
 
   const rev   = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
-  const epg   = m.expenses.filter(e => e.cat === 'epargne').reduce((s,e) => s + (e.amount||0), 0);
+  const epg   = m.expenses.filter(e => (e.cat === 'epargne_livret' || e.cat === 'epargne_pea')).reduce((s,e) => s + (e.amount||0), 0);
   const reste = Math.round((rev - bT - eT - epg) * 100) / 100;
 
   const [xBill, setXBill] = useState(null);
@@ -879,10 +934,9 @@ export function EpargneView({ getAllMonths }) {
   const months = getAllMonths();
   let te=0, tl=0, ti=0;
   const md = months.map((m, idx) => {
-    const mv  = m.expenses.filter(e => e.cat === 'epargne');
-    const tot = mv.reduce((s,e) => s + (e.amount||0), 0);
-    const liv = mv.filter(e => !isInvest(e.name)).reduce((s,e) => s + (e.amount||0), 0);
-    const inv = mv.filter(e =>  isInvest(e.name)).reduce((s,e) => s + (e.amount||0), 0);
+    const liv = m.expenses.filter(e => e.cat === 'epargne_livret').reduce((s,e) => s + (e.amount||0), 0);
+    const inv = m.expenses.filter(e => e.cat === 'epargne_pea').reduce((s,e) => s + (e.amount||0), 0);
+    const tot = liv + inv;
     te += tot; tl += liv; ti += inv;
     return { idx, total:tot, livret:liv, invest:inv };
   });
