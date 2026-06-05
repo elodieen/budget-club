@@ -170,7 +170,7 @@ function useMonthData(mi) {
 // ─── COMPOSANTS PARTAGÉS ─────────────────────────────────────
 
 // Logo BC
-const Logo = ({ size = 38, src = '/logo-budget-club-accueil.png' }) => (
+const Logo = ({ size = 38, src = '/icon-512.png' }) => (
   <img src={src} alt="Budget Club"
     style={{ width:size, height:size, borderRadius:'50%', objectFit:'cover', flexShrink:0, display:'block' }} />
 );
