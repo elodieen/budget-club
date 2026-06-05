@@ -1,6 +1,6 @@
 // ============================================================
 // BUDGET CLUB 2026 — Prototype complet
-// Stack cible : React 18 + Vite + window.storage
+// Stack cible : React 18 + Vite + localStorage
 // ============================================================
 import { useState, useEffect, useCallback } from "react";
 
@@ -164,43 +164,43 @@ const byDate     = (arr) => [...arr].sort((a, b) => new Date(b.date || 0) - new 
 
 // ─── HOOK STORAGE ────────────────────────────────────────────
 function useMonthData(mi) {
-  const [data, setData] = useState(() => SEED[storageKey(mi)] || mkMonth());
-  const [loading, setLoading] = useState(true);
+  const key = storageKey(mi);
 
-  // Charger depuis window.storage au changement de mois
+  const [data, setData] = useState(() => {
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored) return JSON.parse(stored);
+    } catch {}
+    const seed = SEED[key] || mkMonth();
+    localStorage.setItem(key, JSON.stringify(seed));
+    return seed;
+  });
+
   useEffect(() => {
-    setLoading(true);
-    const load = async () => {
-      try {
-        const result = await window.storage.get(storageKey(mi));
-        if (result) {
-          setData(JSON.parse(result.value));
-        } else {
-          // Seed ou mois vide
-          const seed = SEED[storageKey(mi)] || mkMonth();
-          setData(seed);
-          await window.storage.set(storageKey(mi), JSON.stringify(seed));
-        }
-      } catch {
-        setData(SEED[storageKey(mi)] || mkMonth());
-      } finally {
-        setLoading(false);
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        setData(JSON.parse(stored));
+      } else {
+        const seed = SEED[key] || mkMonth();
+        localStorage.setItem(key, JSON.stringify(seed));
+        setData(seed);
       }
-    };
-    load();
+    } catch {
+      setData(SEED[key] || mkMonth());
+    }
   }, [mi]);
 
-  // Sauvegarder + mettre à jour l'état
-  const updateData = useCallback(async (fn) => {
+  const updateData = useCallback((fn) => {
     setData(prev => {
       const next = { ...prev };
       fn(next);
-      window.storage.set(storageKey(mi), JSON.stringify(next)).catch(console.error);
+      localStorage.setItem(key, JSON.stringify(next));
       return next;
     });
-  }, [mi]);
+  }, [key]);
 
-  return { data, loading, updateData };
+  return { data, loading: false, updateData };
 }
 
 // ─── COMPOSANTS PARTAGÉS ─────────────────────────────────────
@@ -888,19 +888,16 @@ export default function App() {
   // Récupérer tous les mois pour la vue Épargne
   const [allData, setAllData] = useState({});
   useEffect(() => {
-    const load = async () => {
-      const loaded = {};
-      for (let i = 0; i < 12; i++) {
-        try {
-          const r = await window.storage.get(storageKey(i));
-          loaded[i] = r ? JSON.parse(r.value) : (SEED[storageKey(i)] || mkMonth());
-        } catch {
-          loaded[i] = SEED[storageKey(i)] || mkMonth();
-        }
+    const loaded = {};
+    for (let i = 0; i < 12; i++) {
+      try {
+        const stored = localStorage.getItem(storageKey(i));
+        loaded[i] = stored ? JSON.parse(stored) : (SEED[storageKey(i)] || mkMonth());
+      } catch {
+        loaded[i] = SEED[storageKey(i)] || mkMonth();
       }
-      setAllData(loaded);
-    };
-    load();
+    }
+    setAllData(loaded);
   }, []);
 
   const getAllMonths = () => Array.from({length:12}, (_,i) => allData[i] || mkMonth());
