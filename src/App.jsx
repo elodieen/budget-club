@@ -259,7 +259,7 @@ const BottomNav = ({ view, setView, m }) => {
   const bT       = m.bills.reduce((s,b) => s + billValue(b), 0);
   const tv       = CATS.filter(c => c.id !== 'epargne').reduce((s,c) => s + (cb[c.id]||0), 0);
   const nonV     = Math.max(0, rev - bT - tv);
-  const badges   = { revenus: m.revenues.length > 0, budget: rev > 0 && nonV < 1 };
+  const badges   = { revenus: m.revenues.length > 0, budget: rev > 0 && tv > 0 && nonV < 1 };
 
   return (
     <div style={{ display:'flex', alignItems:'stretch', background:C.nav, flexShrink:0, padding:'8px 0 12px' }}>
