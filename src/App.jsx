@@ -75,90 +75,41 @@ const mkMonth = () => ({
   closed:     false,
 });
 
-// Données seed Mars / Avril / Mai 2026
-const SEED = {
-  '2026:03': {
-    catBudgets: { alimentation:400, quotidien:150, sortie:150, cadeau:50 },
-    revenues: [
-      {id:'r1',name:'Salaire',      amount:2682.62},
-      {id:'r2',name:'Appart',       amount:200},
-      {id:'r3',name:'Castorama',    amount:150},
-      {id:'r4',name:'Fin de mois',  amount:150},
-    ],
-    bills: BILLS_DEFAULT.map(b => ({...b, paid:true, realAmount:b.amount, paidDate:'2026-03-10'})),
-    expenses: [
-      {id:'e1', name:'Deliveroo',       amount:14.69,  cat:'sortie',       date:'2026-03-12'},
-      {id:'e2', name:'Carrefour Drive', amount:94.64,  cat:'alimentation', date:'2026-03-14'},
-      {id:'e3', name:'Brico depot',     amount:138.98, cat:'appart',       date:'2026-03-27'},
-      {id:'e4', name:'Carrefour Drive', amount:102.32, cat:'alimentation', date:'2026-03-21'},
-      {id:'e5', name:'Burger King',     amount:23.15,  cat:'sortie',       date:'2026-03-27'},
-      {id:'e6', name:'Carrefour Drive', amount:56.84,  cat:'alimentation', date:'2026-03-31'},
-      {id:'e7', name:'Deliveroo',       amount:43.09,  cat:'sortie',       date:'2026-04-03'},
-      {id:'e8', name:'Yepoda',          amount:76,     cat:'quotidien',    date:'2026-03-16'},
-      {id:'e9', name:'Anniv papa',      amount:50,     cat:'cadeau',       date:'2026-03-28'},
-      {id:'e10',name:'Trade Republic',  amount:160,    cat:'epargne_pea',  date:'2026-03-10'},
-    ],
-  },
-  '2026:04': {
-    catBudgets: { alimentation:400, quotidien:100, sortie:150, appart:100, shopping:150 },
-    revenues: [
-      {id:'r1',name:'Salaire',  amount:2828.45},
-      {id:'r2',name:'Virement', amount:425},
-      {id:'r3',name:'Virement', amount:300},
-    ],
-    bills: BILLS_DEFAULT.map(b => ({
-      ...b,
-      paid: ['b5','b14','b16'].includes(b.id),
-      realAmount: b.amount,
-      paidDate: ['b5','b14','b16'].includes(b.id) ? '2026-04-10' : '',
-    })),
-    expenses: [
-      {id:'e1',name:'Amazon Matelas', amount:159.99, cat:'appart',       date:'2026-04-10'},
-      {id:'e2',name:'Carrefour Drive',amount:93.58,  cat:'alimentation', date:'2026-04-12'},
-      {id:'e3',name:'Alicar',         amount:148,    cat:'sante',        date:'2026-04-13'},
-      {id:'e4',name:'Sephora',        amount:55.9,   cat:'shopping',     date:'2026-04-20'},
-      {id:'e5',name:'Ikea',           amount:215.88, cat:'appart',       date:'2026-04-22'},
-      {id:'e6',name:'Trade Republic', amount:150,    cat:'epargne_pea',  date:'2026-04-12'},
-      {id:'e7',name:'Deliveroo',      amount:36.48,  cat:'sortie',       date:'2026-04-22'},
-      {id:'e8',name:'Carrefour Drive',amount:105.81, cat:'alimentation', date:'2026-04-16'},
-    ],
-  },
-  '2026:05': {
-    catBudgets: { alimentation:400, quotidien:150, sortie:100, vacances:130 },
-    revenues: [
-      {id:'r1',name:'Salaire + Participation', amount:3777.23},
-      {id:'r2',name:'Virement ventilateur',    amount:112},
-    ],
-    bills: BILLS_DEFAULT.map(b => ({
-      ...b,
-      paid: ['b1','b2','b3','b4','b5','b7','b8','b9','b10','b11','b21','b22','b23','b24'].includes(b.id),
-      realAmount: b.amount,
-      paidDate: ['b1','b2','b3','b4','b5','b7','b8','b9','b10','b11','b21','b22','b23','b24'].includes(b.id) ? '2026-05-10' : '',
-    })),
-    expenses: [
-      {id:'e1',name:'Épargne Participation', amount:1000,  cat:'epargne_livret',date:'2026-05-10'},
-      {id:'e2',name:'Chèque Vacances',       amount:130,   cat:'vacances',     date:'2026-05-11'},
-      {id:'e3',name:'Trade Republic',        amount:165,   cat:'epargne_pea',  date:'2026-05-10'},
-      {id:'e4',name:'Livret A',              amount:140,   cat:'epargne_livret',date:'2026-05-10'},
-      {id:'e5',name:'Carrefour Drive',       amount:75.35, cat:'alimentation', date:'2026-05-12'},
-      {id:'e6',name:'Bowling',               amount:29,    cat:'sortie',       date:'2026-05-15'},
-      {id:'e7',name:'Carrefour Drive',       amount:53.77, cat:'alimentation', date:'2026-05-18'},
-      {id:'e8',name:'Deliveroo',             amount:9.97,  cat:'sortie',       date:'2026-05-21'},
-      {id:'e9',name:'Sephora',               amount:24.15, cat:'shopping',     date:'2026-05-21'},
-    ],
-  },
+// ─── HELPERS ────────────────────────────────────────────────
+// mi = { month: 0-11, year: YYYY }
+const storageKey = (mi) => `budget:${mi.year}:${String(mi.month + 1).padStart(2, '0')}`;
+
+const loadYearData = (year) => {
+  const months = [];
+  for (let m = 0; m < 12; m++) {
+    const key = `budget:${year}:${String(m + 1).padStart(2, '0')}`;
+    try {
+      const stored = localStorage.getItem(key);
+      months.push(stored ? JSON.parse(stored) : null);
+    } catch { months.push(null); }
+  }
+  return months;
 };
 
-// ─── HELPERS ─────────────────────────────────────────────────
-const storageKey = (mi) => `budget:2026:${String(mi + 1).padStart(2, '0')}`;
+const getInitialMonth = () => {
+  const today = new Date();
+  const day   = today.getDate();
+  const month = today.getMonth(); // 0-11
+  const year  = today.getFullYear();
+  if (day < 10) {
+    if (month === 0) return { month: 11, year: year - 1 };
+    return { month: month - 1, year };
+  }
+  return { month, year };
+};
 
 const fmtR = (n) => {
   const v = parseFloat(n) || 0;
   return v % 1 === 0
-    ? v.toLocaleString('fr-FR') + '\u202f€'
-    : v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u202f€';
+    ? v.toLocaleString('fr-FR') + ' €'
+    : v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 };
-const fmtP = (n) => Math.round(n).toLocaleString('fr-FR') + '\u202f€';
+const fmtP = (n) => Math.round(n).toLocaleString('fr-FR') + ' €';
 
 const billValue      = (b) => b.paid ? (b.realAmount || b.amount) : b.amount;
 const byDate         = (arr) => [...arr].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
@@ -174,25 +125,17 @@ function useMonthData(mi) {
       const stored = localStorage.getItem(key);
       if (stored) return JSON.parse(stored);
     } catch {}
-    const seed = SEED[key] || mkMonth();
-    localStorage.setItem(key, JSON.stringify(seed));
-    return seed;
+    return mkMonth();
   });
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem(key);
-      if (stored) {
-        setData(JSON.parse(stored));
-      } else {
-        const seed = SEED[key] || mkMonth();
-        localStorage.setItem(key, JSON.stringify(seed));
-        setData(seed);
-      }
+      setData(stored ? JSON.parse(stored) : mkMonth());
     } catch {
-      setData(SEED[key] || mkMonth());
+      setData(mkMonth());
     }
-  }, [mi]);
+  }, [key]);
 
   const updateData = useCallback((fn) => {
     setData(prev => {
@@ -232,21 +175,25 @@ const CatIcon = ({ catId, size = 42, gray = false }) => {
   );
 };
 
-// Header avec logo + navigation mois
-const MonthHeader = ({ mi, setMi, closed }) => (
-  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px 0', background:C.beige, flexShrink:0 }}>
-    <Logo />
-    <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-      <button onClick={() => setMi(i => Math.max(0, i - 1))}
-        style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>‹</button>
-      <span style={{ fontFamily:serif, fontSize:16, fontWeight:600, color:C.vert }}>{MONTHS[mi]} 2026</span>
-      {closed && <i className="ti ti-lock" style={{ fontSize:13, color:C.gold, marginLeft:2 }} />}
-      <button onClick={() => setMi(i => Math.min(11, i + 1))}
-        style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>›</button>
+// Header avec logo + navigation mois (sans limite)
+const MonthHeader = ({ mi, setMi, closed }) => {
+  const prev = () => setMi(p => p.month === 0 ? { month:11, year:p.year-1 } : { month:p.month-1, year:p.year });
+  const next = () => setMi(p => p.month === 11 ? { month:0, year:p.year+1 } : { month:p.month+1, year:p.year });
+  return (
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px 0', background:C.beige, flexShrink:0 }}>
+      <Logo />
+      <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+        <button onClick={prev}
+          style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>‹</button>
+        <span style={{ fontFamily:serif, fontSize:16, fontWeight:600, color:C.vert }}>{MONTHS[mi.month]} {mi.year}</span>
+        {closed && <i className="ti ti-lock" style={{ fontSize:13, color:C.gold, marginLeft:2 }} />}
+        <button onClick={next}
+          style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>›</button>
+      </div>
+      <i className="ti ti-bell" style={{ fontSize:20, color:C.vert, width:38, textAlign:'right' }} />
     </div>
-    <i className="ti ti-bell" style={{ fontSize:20, color:C.vert, width:38, textAlign:'right' }} />
-  </div>
-);
+  );
+};
 
 // Barre de navigation 5 onglets
 const TABS = [
@@ -792,7 +739,7 @@ export function RevenusView({ m, updateData }) {
 }
 
 // Vue DÉPENSES + FACTURES
-export function DepensesView({ m, mi, updateData, depTab, setDepTab }) {
+export function DepensesView({ m, updateData, depTab, setDepTab }) {
   const exps    = m.expenses;
   const bills   = m.bills.filter(b => b.selected !== false);
   const unpaid  = bills.filter(b => !b.paid);
@@ -888,7 +835,7 @@ export function DepensesView({ m, mi, updateData, depTab, setDepTab }) {
           {/* Liste unifiée — non cochées en haut, cochées en bas */}
           <div style={{ flex:1, overflowY:'auto', padding:'8px 16px 80px', background:C.beige }}>
             {unpaid.length > 0 && <div style={{ padding:'6px 0 8px' }}><span style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:1, textTransform:'uppercase', color:C.muted }}>À prélever — {unpaid.length}</span></div>}
-            {unpaid.map((b, idx) => (
+            {unpaid.map((b) => (
               <div key={b.id} style={{ background:C.card, borderRadius:12, marginBottom:8, border:`0.5px solid ${C.border}` }}>
                 <div style={{ display:'flex', alignItems:'center', gap:10, padding:'13px 14px' }}>
                   <div style={{ flex:1 }}>
@@ -933,7 +880,7 @@ export function DepensesView({ m, mi, updateData, depTab, setDepTab }) {
                 <span style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:1, textTransform:'uppercase', color:C.muted }}>Prélevées — {paid.length}</span>
               </div>
             )}
-            {paid.map((b, idx) => {
+            {paid.map((b) => {
               const ds = b.paidDate ? new Date(b.paidDate).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : null;
               return (
                 <div key={b.id} style={{ background:C.card, borderRadius:12, marginBottom:8, border:`0.5px solid ${C.border}`, opacity:0.72 }}>
@@ -961,11 +908,21 @@ export function DepensesView({ m, mi, updateData, depTab, setDepTab }) {
   );
 }
 
-// Vue ÉPARGNE
-export function EpargneView({ getAllMonths }) {
-  const months = getAllMonths();
+// Vue ÉPARGNE — navigation année indépendante
+export function EpargneView({ currentYear }) {
+  const [epargneYear, setEpargneYear] = useState(currentYear);
+  const [months, setMonths] = useState(() => loadYearData(currentYear));
+
+  useEffect(() => {
+    setMonths(loadYearData(epargneYear));
+  }, [epargneYear]);
+
+  const prevYear = () => setEpargneYear(y => y - 1);
+  const nextYear = () => setEpargneYear(y => y + 1);
+
   let te=0, tl=0, ti=0;
   const md = months.map((m, idx) => {
+    if (!m) return { idx, total:0, livret:0, invest:0 };
     const liv = m.expenses.filter(e => e.cat === 'epargne_livret').reduce((s,e) => s + (e.amount||0), 0);
     const inv = m.expenses.filter(e => e.cat === 'epargne_pea').reduce((s,e) => s + (e.amount||0), 0);
     const tot = liv + inv;
@@ -974,20 +931,45 @@ export function EpargneView({ getAllMonths }) {
   });
   const mx = Math.max(...md.map(d => d.total), 1);
 
+  // Clôture annuelle : tous les mois qui ont des données sont clôturés (mois vides ignorés)
+  const dataMonths = months.filter(m => m !== null);
+  const allClosed  = dataMonths.length > 0 && dataMonths.every(m => m.closed === true);
+
   return (
     <>
+      {/* Header avec navigation année */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px 10px', background:C.beige, flexShrink:0 }}>
         <Logo />
-        <span style={{ fontFamily:serif, fontSize:16, fontWeight:600, color:C.vert }}>‹ 2026 ›</span>
+        <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+          <button onClick={prevYear}
+            style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>‹</button>
+          <span style={{ fontFamily:serif, fontSize:16, fontWeight:600, color:C.vert }}>{epargneYear}</span>
+          {allClosed && <i className="ti ti-lock" style={{ fontSize:13, color:C.gold, marginLeft:4 }} />}
+          <button onClick={nextYear}
+            style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>›</button>
+        </div>
         <i className="ti ti-bell" style={{ fontSize:20, color:C.vert, width:38, textAlign:'right' }} />
       </div>
+
+      {/* Bandeau clôture annuelle */}
+      {allClosed && (
+        <div style={{ background:'#2E7D32', padding:'10px 16px', display:'flex', alignItems:'center', justifyContent:'center', gap:8, flexShrink:0 }}>
+          <i className="ti ti-circle-check" style={{ fontSize:15, color:'white' }} />
+          <span style={{ fontFamily:sans, fontSize:13, fontWeight:600, color:'white' }}>
+            Année {epargneYear} clôturée ✓
+          </span>
+          <span style={{ fontFamily:serif, fontSize:15, fontWeight:700, color:C.gold, marginLeft:4 }}>{fmtP(te)}</span>
+        </div>
+      )}
+
       <div style={{ textAlign:'center', padding:'4px 16px 10px', background:C.beige, flexShrink:0 }}>
         <div style={{ fontFamily:serif, fontSize:18, fontWeight:600, letterSpacing:3, textTransform:'uppercase', color:C.vert }}>
           Épargne &amp;<br />Investissement
         </div>
       </div>
+
       <div style={{ flex:1, overflowY:'auto', padding:'0 16px 16px', background:C.beige }}>
-        <div style={{ fontFamily:sans, fontSize:11, color:C.muted, marginBottom:8, fontWeight:500 }}>Total à date</div>
+        <div style={{ fontFamily:sans, fontSize:11, color:C.muted, marginBottom:8, fontWeight:500 }}>Total à date — {epargneYear}</div>
         {/* Livret A */}
         <div style={{ background:C.vert, borderRadius:12, padding:'14px 20px', marginBottom:8, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
           <span style={{ fontFamily:sans, fontSize:14, fontWeight:600, color:'rgba(255,255,255,0.8)' }}>Livret A</span>
@@ -998,9 +980,9 @@ export function EpargneView({ getAllMonths }) {
           <span style={{ fontFamily:sans, fontSize:14, fontWeight:600, color:C.vert }}>PEA / Trade</span>
           <span style={{ fontFamily:serif, fontSize:28, fontWeight:700, color:C.vert }}>{fmtP(ti)}</span>
         </div>
-        {/* Total 2026 */}
+        {/* Total année */}
         <div style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', marginBottom:4 }}>
-          <span style={{ fontFamily:sans, fontSize:13, fontWeight:700, color:C.vert, width:36 }}>2026</span>
+          <span style={{ fontFamily:sans, fontSize:13, fontWeight:700, color:C.vert, width:36 }}>{epargneYear}</span>
           <div style={{ flex:1, height:1, background:'rgba(28,41,28,0.2)' }} />
           <div style={{ background:'rgba(28,41,28,0.08)', borderRadius:6, padding:'2px 10px' }}>
             <span style={{ fontFamily:serif, fontSize:13, fontWeight:700, color:C.vert }}>{fmtP(te)}</span>
@@ -1072,34 +1054,17 @@ const SplashScreen = ({ onDone }) => {
 
 // ─── APP ROOT ────────────────────────────────────────────────
 export default function App() {
-  const [mi, setMi]     = useState(2); // Mars = index 2
-  const [view, setView] = useState('accueil');
+  const [mi, setMi]         = useState(getInitialMonth);
+  const [view, setView]     = useState('accueil');
   const [depTab, setDepTab] = useState('depenses');
   const [modal, setModal]   = useState(null); // 'dep' | 'rev' | 'bill' | null
   const [showSplash, setShowSplash] = useState(true);
 
   const { data: m, loading, updateData } = useMonthData(mi);
 
-  // Récupérer tous les mois pour la vue Épargne
-  const [allData, setAllData] = useState({});
-  useEffect(() => {
-    const loaded = {};
-    for (let i = 0; i < 12; i++) {
-      try {
-        const stored = localStorage.getItem(storageKey(i));
-        loaded[i] = stored ? JSON.parse(stored) : (SEED[storageKey(i)] || mkMonth());
-      } catch {
-        loaded[i] = SEED[storageKey(i)] || mkMonth();
-      }
-    }
-    setAllData(loaded);
-  }, []);
-
-  const getAllMonths = () => Array.from({length:12}, (_,i) => allData[i] || mkMonth());
-
-  const addExpense = (exp) => updateData(mm => { mm.expenses = [...mm.expenses, exp]; });
-  const addRevenu  = (rev) => updateData(mm => { mm.revenues = [...mm.revenues, rev]; });
-  const addBill    = (bill) => updateData(mm => { mm.bills = [...mm.bills, bill]; });
+  const addExpense = (exp)  => updateData(mm => { mm.expenses = [...mm.expenses, exp]; });
+  const addRevenu  = (rev)  => updateData(mm => { mm.revenues = [...mm.revenues, rev]; });
+  const addBill    = (bill) => updateData(mm => { mm.bills    = [...mm.bills, bill];    });
 
   if (loading) return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', background:C.beige }}>
@@ -1113,8 +1078,8 @@ export default function App() {
       case 'budget':      return <BudgetView  m={m} setView={setView} />;
       case 'budget_edit': return <BudgetEditView m={m} updateData={updateData} setView={setView} />;
       case 'revenus':     return <RevenusView m={m} updateData={updateData} />;
-      case 'depenses':    return <DepensesView m={m} mi={mi} updateData={updateData} depTab={depTab} setDepTab={setDepTab} />;
-      case 'epargne':     return <EpargneView getAllMonths={getAllMonths} />;
+      case 'depenses':    return <DepensesView m={m} updateData={updateData} depTab={depTab} setDepTab={setDepTab} />;
+      case 'epargne':     return <EpargneView currentYear={mi.year} />;
       default:            return null;
     }
   };
@@ -1129,7 +1094,7 @@ export default function App() {
       <div style={{ background:'#2A1F1A', minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', padding:12, fontFamily:sans }}>
         <div style={{ background:C.beige, borderRadius:24, overflow:'hidden', display:'flex', flexDirection:'column', width:'100%', maxWidth:390, height:'90vh', maxHeight:780, position:'relative', boxShadow:'0 20px 60px rgba(0,0,0,0.35)' }}>
 
-          {/* En-tête page (sauf accueil qui gère le sien) */}
+          {/* En-tête page (sauf accueil et épargne qui gèrent le leur) */}
           {!['accueil','budget_edit','epargne'].includes(view) && (
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px 8px', background:C.beige, flexShrink:0 }}>
               <button onClick={() => setView('accueil')} style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:22, width:32 }}>‹</button>
