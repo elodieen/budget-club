@@ -758,7 +758,7 @@ export function RevenusView({ m, updateData }) {
 
 // Vue DÉPENSES + FACTURES
 export function DepensesView({ m, mi, updateData, depTab, setDepTab }) {
-  const exps    = m.expenses.filter(e => e.cat !== 'epargne_livret' && e.cat !== 'epargne_pea');
+  const exps    = m.expenses;
   const bills   = m.bills.filter(b => b.selected !== false);
   const unpaid  = bills.filter(b => !b.paid);
   const paid    = bills.filter(b =>  b.paid);
@@ -768,8 +768,7 @@ export function DepensesView({ m, mi, updateData, depTab, setDepTab }) {
   const pN = paid.length, bN = bills.length;
 
   const rev   = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
-  const epg   = m.expenses.filter(e => (e.cat === 'epargne_livret' || e.cat === 'epargne_pea')).reduce((s,e) => s + (e.amount||0), 0);
-  const reste = Math.round((rev - bT - eT - epg) * 100) / 100;
+  const reste = Math.round((rev - bT - eT) * 100) / 100;
 
   const [xBill, setXBill] = useState(null);
   const [billForm, setBillForm] = useState({ amount:'', date:'' });
