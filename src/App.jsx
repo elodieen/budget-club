@@ -1691,14 +1691,15 @@ export function EpargneView({ currentYear }) {
 
         {/* Total année — fixe */}
         <div style={{ flexShrink:0, display:'flex', alignItems:'center', gap:10, padding:'8px 16px', background:C.beige }}>
-          <span style={{ fontFamily:sans, fontSize:13, fontWeight:700, color:C.vert, width:36 }}>{epargneYear}</span>
-          <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+          <span style={{ fontFamily:sans, fontSize:13, fontWeight:700, color:C.vert, flexShrink:0 }}>{epargneYear}</span>
+          <div style={{ display:'flex', alignItems:'center', gap:6, flexShrink:0 }}>
             <div style={{ width:8, height:8, borderRadius:2, background:C.vert, flexShrink:0 }} />
             <span style={{ fontFamily:sans, fontSize:10, color:C.vert }}>Livret A</span>
             <div style={{ width:8, height:8, borderRadius:2, background:C.rose, flexShrink:0 }} />
             <span style={{ fontFamily:sans, fontSize:10, color:C.vert }}>PEA</span>
           </div>
-          <div style={{ background:'rgba(28,41,28,0.08)', borderRadius:6, padding:'2px 10px' }}>
+          <div style={{ flex:1, height:1, background:'rgba(28,41,28,0.2)' }} />
+          <div style={{ background:'rgba(28,41,28,0.08)', borderRadius:6, padding:'2px 10px', flexShrink:0 }}>
             <span style={{ fontFamily:serif, fontSize:13, fontWeight:700, color:C.vert }}>{fmtP(te)}</span>
           </div>
         </div>
