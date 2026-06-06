@@ -272,7 +272,7 @@ const BottomNav = ({ view, setView, m }) => {
   const badges   = { revenus: m.revenues.length > 0, budget: rev > 0 && tv > 0 && nonV < 1, depenses: !!m.closed };
 
   return (
-    <div style={{ display:'flex', alignItems:'stretch', background:C.nav, flexShrink:0, position:'sticky', bottom:0, zIndex:100, paddingTop:8, paddingLeft:0, paddingRight:0, paddingBottom:'calc(8px + env(safe-area-inset-bottom))' }}>
+    <div style={{ display:'flex', alignItems:'stretch', background:C.nav, flexShrink:0, paddingTop:8, paddingBottom:'env(safe-area-inset-bottom)' }}>
       {TABS.map(t => {
         const active    = view === t.id || view === t.id + '_edit';
         const col       = active ? C.gold : 'rgba(201,169,110,0.4)';
