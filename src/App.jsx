@@ -1497,7 +1497,7 @@ export function EpargneView({ currentYear }) {
     <>
       {/* Header avec navigation année */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px 10px', background:C.beige, flexShrink:0 }}>
-        <Logo />
+        <img src="/logo-budget-club-accueil.png" style={{ width:38, height:38, borderRadius:'50%', objectFit:'cover' }} />
         <div style={{ display:'flex', alignItems:'center', gap:4 }}>
           <button onClick={prevYear}
             style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>‹</button>
@@ -1772,7 +1772,7 @@ const SplashScreen = ({ onDone }) => {
       <div style={{ position:'absolute', inset:0, background:'rgba(30,51,40,0.65)' }} />
       <div style={{ position:'relative', textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center' }}>
         <div style={{ color:C.gold, fontSize:16, marginBottom:16 }}>✦</div>
-        <img src="/logo-budget-club.png" style={{ width:150, height:150, objectFit:'contain' }} />
+        <img src="/logo-budget-club.png" style={{ width:110, height:110, objectFit:'contain' }} />
         <div style={{ marginTop:16, fontFamily:serif, fontSize:48, fontWeight:700, color:C.gold, letterSpacing:'8px', textTransform:'uppercase', lineHeight:1.1 }}>
           BUDGET<br />CLUB
         </div>
