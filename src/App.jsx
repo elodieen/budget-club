@@ -259,13 +259,28 @@ const CatIcon = ({ catId, size = 42, gray = false }) => {
 const PIN_KEYS = ['1','2','3','4','5','6','7','8','9','','0','del'];
 
 const ProfileMenu = ({ onClose, onSwitch, onCreateProfile }) => {
-  const profiles = getProfiles() || [];
-  const profile  = profiles.find(p => p.id === currentProfileId);
-  const [stage,      setStage]      = useState(null); // null | 'old' | 'new' | 'confirm'
-  const [pinInput,   setPinInput]   = useState('');
-  const [newPinVal,  setNewPinVal]  = useState('');
-  const [pinError,   setPinError]   = useState('');
-  const [pinSuccess, setPinSuccess] = useState(false);
+  const [allProfiles,   setAllProfiles]   = useState(getProfiles() || []);
+  const profile  = allProfiles.find(p => p.id === currentProfileId);
+  const [stage,         setStage]         = useState(null); // null | 'manage' | 'old' | 'new' | 'confirm'
+  const [confirmDelete, setConfirmDelete] = useState(null); // profile object pending deletion
+  const [pinInput,      setPinInput]      = useState('');
+  const [newPinVal,     setNewPinVal]     = useState('');
+  const [pinError,      setPinError]      = useState('');
+  const [pinSuccess,    setPinSuccess]    = useState(false);
+
+  const handleDeleteProfile = (p) => {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(`${p.id}:`)) keys.push(k);
+    }
+    keys.forEach(k => localStorage.removeItem(k));
+    localStorage.removeItem(`profile:${p.id}:pin`);
+    const updated = allProfiles.filter(x => x.id !== p.id);
+    saveProfiles(updated);
+    setAllProfiles(updated);
+    setConfirmDelete(null);
+  };
 
   const handlePinKey = (k) => {
     if (k === 'del') { setPinInput(p => p.slice(0,-1)); return; }
@@ -294,7 +309,54 @@ const ProfileMenu = ({ onClose, onSwitch, onCreateProfile }) => {
     <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(28,41,28,0.5)', zIndex:300, display:'flex', alignItems:'flex-end' }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div style={{ background:C.card, borderRadius:'20px 20px 0 0', width:'100%', padding:'20px 20px', paddingBottom:'calc(20px + env(safe-area-inset-bottom))' }}>
-        {!stage ? (
+
+        {stage === 'manage' && confirmDelete ? (
+          <>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+              <button onClick={() => setConfirmDelete(null)} style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:22, padding:'0 4px' }}>‹</button>
+              <span style={{ fontFamily:serif, fontSize:17, fontWeight:700, color:C.vert }}>Confirmer</span>
+              <div style={{ width:30 }} />
+            </div>
+            <div style={{ textAlign:'center', fontFamily:sans, fontSize:14, color:C.text, marginBottom:28, lineHeight:1.6 }}>
+              Supprimer le profil <strong>{confirmDelete.name}</strong> ?<br/>
+              Toutes ses données seront perdues.
+            </div>
+            <div style={{ display:'flex', gap:10 }}>
+              <button onClick={() => setConfirmDelete(null)}
+                style={{ flex:1, padding:'13px 0', background:C.roseL, border:'none', borderRadius:10, fontFamily:sans, fontSize:14, fontWeight:600, color:C.vert, cursor:'pointer' }}>
+                Annuler
+              </button>
+              <button onClick={() => handleDeleteProfile(confirmDelete)}
+                style={{ flex:1, padding:'13px 0', background:'#E8637A', border:'none', borderRadius:10, fontFamily:sans, fontSize:14, fontWeight:700, color:'white', cursor:'pointer' }}>
+                Supprimer
+              </button>
+            </div>
+          </>
+        ) : stage === 'manage' ? (
+          <>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+              <button onClick={() => setStage(null)} style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:22, padding:'0 4px' }}>‹</button>
+              <span style={{ fontFamily:serif, fontSize:17, fontWeight:700, color:C.vert }}>Gérer les profils</span>
+              <div style={{ width:30 }} />
+            </div>
+            {allProfiles.filter(p => p.id !== 'elodie').length === 0 ? (
+              <div style={{ textAlign:'center', fontFamily:sans, fontSize:13, color:C.muted, padding:'20px 0' }}>Aucun autre profil</div>
+            ) : (
+              allProfiles.filter(p => p.id !== 'elodie').map(p => (
+                <div key={p.id} style={{ display:'flex', alignItems:'center', padding:'12px 10px', borderBottom:`1px solid ${C.border}` }}>
+                  <div style={{ width:38, height:38, borderRadius:'50%', background:C.vert, display:'flex', alignItems:'center', justifyContent:'center', marginRight:12, flexShrink:0 }}>
+                    <span style={{ fontFamily:serif, fontSize:16, fontWeight:700, color:C.rose }}>{p.name[0].toUpperCase()}</span>
+                  </div>
+                  <span style={{ fontFamily:sans, fontSize:14, color:C.vert, flex:1 }}>{p.name}</span>
+                  <button onClick={() => setConfirmDelete(p)}
+                    style={{ background:'rgba(232,99,122,0.12)', border:'none', borderRadius:8, width:36, height:36, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    <i className="ti ti-trash" style={{ fontSize:16, color:'#E8637A' }} />
+                  </button>
+                </div>
+              ))
+            )}
+          </>
+        ) : !stage ? (
           <>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
               <span style={{ fontFamily:serif, fontSize:20, fontWeight:700, color:C.vert }}>Mon profil</span>
@@ -310,9 +372,12 @@ const ProfileMenu = ({ onClose, onSwitch, onCreateProfile }) => {
               </div>
             </div>
             {[
-              { icon:'ti-switch-horizontal', label:'Changer de profil',   action: onSwitch },
-              { icon:'ti-key',               label:'Changer mon code PIN', action: () => { setStage('old'); setPinInput(''); } },
-              ...(currentProfileId === 'elodie' ? [{ icon:'ti-user-plus', label:'Ajouter un profil', action: onCreateProfile }] : []),
+              { icon:'ti-switch-horizontal', label:'Changer de profil',    action: onSwitch },
+              { icon:'ti-key',               label:'Changer mon code PIN',  action: () => { setStage('old'); setPinInput(''); } },
+              ...(currentProfileId === 'elodie' ? [
+                { icon:'ti-settings', label:'Gérer les profils', action: () => setStage('manage') },
+                { icon:'ti-user-plus', label:'Ajouter un profil', action: onCreateProfile },
+              ] : []),
             ].map(btn => (
               <button key={btn.label} onClick={btn.action}
                 style={{ width:'100%', display:'flex', alignItems:'center', gap:12, padding:'12px 10px', background:'none', border:'none', cursor:'pointer', borderRadius:10, marginBottom:4, textAlign:'left' }}>
