@@ -1801,27 +1801,14 @@ export function EpargneView({ currentYear }) {
 
 
 // ─── SPLASH SCREEN ───────────────────────────────────────────
-const SplashScreen = ({ onDone }) => {
-  const [visible, setVisible] = useState(false);
-  const [out, setOut]         = useState(false);
-  const firedRef              = useRef(false);
-
-  useEffect(() => {
-    const t0 = setTimeout(() => setVisible(true), 30);
-    const t1 = setTimeout(() => setOut(true), 2000);
-    const t2 = setTimeout(() => {
-      if (!firedRef.current) { firedRef.current = true; onDone(); }
-    }, 2500);
-    return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); };
-  }, []);
-
+const SplashScreen = ({ out }) => {
   return (
     <div style={{
-      position:'fixed', top:0, left:0, right:0, bottom:0, zIndex:100, borderRadius:0,
+      position:'fixed', top:0, left:0, right:0, bottom:0, zIndex:9999, borderRadius:0,
       width:'100%', height:'100%', overflow:'hidden', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-start',
       paddingTop:'8%',
-      opacity: out ? 0 : visible ? 1 : 0,
-      transition: out ? 'opacity 0.5s ease' : 'opacity 0.4s ease',
+      opacity: out ? 0 : 1,
+      transition: out ? 'opacity 0.5s ease' : 'none',
     }}>
       <div style={{
         position:'absolute', inset:0,
@@ -1849,12 +1836,24 @@ export default function App() {
   const [view, setView]     = useState('accueil');
   const [depTab, setDepTab] = useState('depenses');
   const [modal, setModal]   = useState(null); // 'dep' | 'rev' | 'bill' | null
-  const [showSplash, setShowSplash]       = useState(true);
+  const [showSplash, setShowSplash] = useState(true);
+  const [splashOut, setSplashOut]   = useState(false);
+  const splashShown = useRef(false);
   const { data: m, loading, updateData } = useMonthData(mi);
+
+  useEffect(() => {
+    if (splashShown.current) return;
+    splashShown.current = true;
+    const t1 = setTimeout(() => setSplashOut(true), 2000);
+    const t2 = setTimeout(() => setShowSplash(false), 2500);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
 
   const addExpense = (exp)  => { if (m.closed) return; updateData(mm => { mm.expenses = [...mm.expenses, exp]; }); };
   const addRevenu  = (rev)  => { if (m.closed) return; updateData(mm => { mm.revenues = [...mm.revenues, rev]; }); };
   const addBill    = (bill) => { if (m.closed) return; updateData(mm => { mm.bills    = [...mm.bills, bill];    }); };
+
+  if (showSplash) return <SplashScreen out={splashOut} />;
 
   if (loading) return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', background:C.beige }}>
@@ -1911,9 +1910,6 @@ export default function App() {
 
           {/* Nav */}
           <BottomNav view={view} setView={setView} m={m} />
-
-          {/* Splash */}
-          {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
 
           {/* Modals */}
           {!m.closed && modal === 'dep'  && <AddExpenseModal onAdd={addExpense} onClose={() => setModal(null)} />}
