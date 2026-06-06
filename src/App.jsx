@@ -134,44 +134,6 @@ const saveLivretHist = (v) => localStorage.setItem(LIVRET_HIST_KEY, JSON.stringi
 const getPeaHist     = () => { try { const s = localStorage.getItem(PEA_HIST_KEY);    return s ? JSON.parse(s) : []; } catch { return []; } };
 const savePeaHist    = (v) => localStorage.setItem(PEA_HIST_KEY,    JSON.stringify(v));
 
-const NOTIF_KEY          = 'budget:notif:settings';
-const NOTIF_LASTSENT_KEY = 'budget:notif:lastSent';
-const getNotifSettings   = () => { try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '{}'); } catch { return {}; } };
-const getNotifLastSent   = () => localStorage.getItem(NOTIF_LASTSENT_KEY) || null;
-
-const checkAndNotify = async () => {
-  const s = getNotifSettings();
-  if (!s.enabled) return;
-  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
-  const lastSent = getNotifLastSent();
-  const freqMs = (s.value || 1) * (s.unit === 'Semaine(s)' ? 604800000 : s.unit === 'Mois' ? 2592000000 : 86400000);
-  const now = Date.now();
-  if (lastSent && now - parseInt(lastSent) < freqMs) return;
-  const [h = 18] = (s.heure || '18:00').split(':').map(Number);
-  if (new Date().getHours() < h) return;
-  try {
-    const reg = await navigator.serviceWorker.ready;
-    await reg.showNotification('Budget Club', { body: 'Pensez à mettre à jour votre budget !', icon: '/logo-budget-club-favicon-rose.png' });
-  } catch {
-    new Notification('Budget Club', { body: 'Pensez à mettre à jour votre budget !', icon: '/logo-budget-club-favicon-rose.png' });
-  }
-  localStorage.setItem(NOTIF_LASTSENT_KEY, now.toString());
-};
-
-const sendToSW = async () => {
-  if (!('serviceWorker' in navigator)) return;
-  try {
-    const reg = await navigator.serviceWorker.ready;
-    if (reg.active) reg.active.postMessage({ type: 'NOTIF_DATA', settings: getNotifSettings(), lastSent: getNotifLastSent() });
-  } catch {}
-};
-
-const fmtDateTime = (ts) => {
-  if (!ts) return 'Jamais';
-  const d = new Date(String(ts).match(/^\d+$/) ? parseInt(ts) : ts);
-  const p = n => String(n).padStart(2, '0');
-  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
-};
 
 // ─── HOOK STORAGE ────────────────────────────────────────────
 function useMonthData(mi) {
@@ -229,7 +191,7 @@ const CatIcon = ({ catId, size = 42, gray = false }) => {
 };
 
 // Header avec logo + navigation mois (sans limite)
-const MonthHeader = ({ mi, setMi, closed, onBellClick, notifActive }) => {
+const MonthHeader = ({ mi, setMi, closed }) => {
   const prev = () => setMi(p => p.month === 0 ? { month:11, year:p.year-1 } : { month:p.month-1, year:p.year });
   const next = () => setMi(p => p.month === 11 ? { month:0, year:p.year+1 } : { month:p.month+1, year:p.year });
   return (
@@ -243,11 +205,8 @@ const MonthHeader = ({ mi, setMi, closed, onBellClick, notifActive }) => {
         <button onClick={next}
           style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>›</button>
       </div>
-      <div style={{ position:'relative', width:38, display:'flex', justifyContent:'flex-end' }}>
-        <button onClick={onBellClick} style={{ background:'none', border:'none', cursor:'pointer', padding:0 }}>
-          <i className="ti ti-bell" style={{ fontSize:20, color:C.vert }} />
-        </button>
-        {notifActive && <div style={{ position:'absolute', top:0, right:0, width:8, height:8, borderRadius:'50%', background:C.gold, pointerEvents:'none' }} />}
+      <div style={{ width:38, display:'flex', justifyContent:'flex-end' }}>
+        <i className="ti ti-bell" style={{ fontSize:20, color:C.vert }} />
       </div>
     </div>
   );
@@ -554,7 +513,7 @@ export const AddPeaRendementModal = ({ onAdd, onClose }) => {
 // ─── VUES ────────────────────────────────────────────────────
 
 // Vue ACCUEIL
-export function AccueilView({ m, mi, setMi, setView, updateData, onBellClick, notifActive }) {
+export function AccueilView({ m, mi, setMi, setView, updateData }) {
   const [confirmClose, setConfirmClose] = useState(false);
   const rev       = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
   const allBills  = m.bills.filter(b => b.selected !== false);
@@ -569,18 +528,18 @@ export function AccueilView({ m, mi, setMi, setView, updateData, onBellClick, no
 
   return (
     <>
-      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onBellClick={onBellClick} notifActive={notifActive} />
+      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} />
       {m.closed && <ClosedBanner />}
       <div style={{ padding:'12px 16px 0', background:C.beige, flexShrink:0 }}>
         {/* Card Reste à dépenser */}
-        <div style={{ background:C.rose, borderRadius:16, padding:'20px 20px 16px', textAlign:'center', marginBottom:12 }}>
-          <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:C.vert, marginBottom:6 }}>Reste à dépenser</div>
+        <div style={{ background:C.vert, borderRadius:16, padding:'20px 20px 16px', textAlign:'center', marginBottom:12 }}>
+          <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:C.rose, marginBottom:6 }}>Reste à dépenser</div>
           {rev === 0
-            ? <div style={{ fontFamily:serif, fontSize:20, fontStyle:'italic', color:C.muted, lineHeight:1.3 }}>Revenus non saisis</div>
-            : <div style={{ fontFamily:serif, fontSize:48, fontWeight:700, color:C.vert, lineHeight:1 }}>{fmtR(reste)}</div>
+            ? <div style={{ fontFamily:serif, fontSize:20, fontStyle:'italic', color:'rgba(238,196,196,0.6)', lineHeight:1.3 }}>Revenus non saisis</div>
+            : <div style={{ fontFamily:serif, fontSize:48, fontWeight:700, color:C.rose, lineHeight:1 }}>{fmtR(reste)}</div>
           }
-          <div style={{ height:4, background:'rgba(28,41,28,0.15)', borderRadius:2, marginTop:12, overflow:'hidden' }}>
-            <div style={{ height:'100%', width:`${pp}%`, background:C.vert, borderRadius:2 }} />
+          <div style={{ height:4, background:'rgba(238,196,196,0.2)', borderRadius:2, marginTop:12, overflow:'hidden' }}>
+            <div style={{ height:'100%', width:`${pp}%`, background:C.rose, borderRadius:2 }} />
           </div>
         </div>
       </div>
@@ -648,7 +607,7 @@ export function AccueilView({ m, mi, setMi, setView, updateData, onBellClick, no
 }
 
 // Vue BUDGET
-export function BudgetView({ m, mi, setMi, setView, updateData, onBellClick, notifActive }) {
+export function BudgetView({ m, mi, setMi, setView, updateData }) {
   const cb   = m.catBudgets || {};
   const [customCats, setCustomCats]       = useState(getCustomCats);
   const [showEnv, setShowEnv]             = useState(false);
@@ -675,7 +634,7 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onBellClick, not
 
   return (
     <>
-      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onBellClick={onBellClick} notifActive={notifActive} />
+      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} />
       {m.closed && <ClosedBanner />}
       <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.rose }}>✦</span> BUDGET <span style={{ color:C.rose }}>✦</span></div>
       <div style={{ flex:1, overflowY:'auto', padding:'0 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
@@ -864,13 +823,13 @@ export function BudgetEditView({ m, updateData, setView }) {
   return (
     <div style={{ flex:1, overflowY:'auto', padding:'0 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
       {/* Card non ventilé */}
-      <div style={{ background:C.rose, borderRadius:12, padding:'14px 16px', marginBottom:16 }}>
+      <div style={{ background:C.vert, borderRadius:12, padding:'14px 16px', marginBottom:16 }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-          <span style={{ fontFamily:sans, fontSize:12, color:C.vert, fontWeight:500 }}>Reste à ventiler sur {fmtP(rpe)}</span>
-          <span style={{ fontFamily:serif, fontSize:22, fontWeight:700, color: lft >= 0 ? C.vert : '#C0392B' }}>{fmtP(lft)}</span>
+          <span style={{ fontFamily:sans, fontSize:12, color:C.rose, fontWeight:500 }}>Reste à ventiler sur {fmtP(rpe)}</span>
+          <span style={{ fontFamily:serif, fontSize:22, fontWeight:700, color: lft >= 0 ? C.rose : '#FF8A80' }}>{fmtP(lft)}</span>
         </div>
-        <div style={{ height:3, background:'rgba(28,41,28,0.15)', borderRadius:2, marginTop:8, overflow:'hidden' }}>
-          <div style={{ height:'100%', width:`${rpe > 0 ? Math.min(100, Math.round(tv/rpe*100)) : 0}%`, background:C.vert, borderRadius:2 }} />
+        <div style={{ height:3, background:'rgba(238,196,196,0.2)', borderRadius:2, marginTop:8, overflow:'hidden' }}>
+          <div style={{ height:'100%', width:`${rpe > 0 ? Math.min(100, Math.round(tv/rpe*100)) : 0}%`, background:C.rose, borderRadius:2 }} />
         </div>
       </div>
       {/* Inputs par catégorie */}
@@ -966,14 +925,14 @@ function RevenueRow({ r, i, onUpdate, onDelete, closed }) {
   );
 }
 
-export function RevenusView({ m, mi, setMi, updateData, onBellClick, notifActive }) {
+export function RevenusView({ m, mi, setMi, updateData }) {
   const rev = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
   const del = (i)         => updateData(mm => { mm.revenues = mm.revenues.filter((_,idx) => idx !== i); });
   const upd = (i, updated) => updateData(mm => { mm.revenues = mm.revenues.map((r, idx) => idx === i ? updated : r); });
 
   return (
     <>
-      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onBellClick={onBellClick} notifActive={notifActive} />
+      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} />
       {m.closed && <ClosedBanner />}
       <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.rose }}>✦</span> REVENUS <span style={{ color:C.rose }}>✦</span></div>
       {/* Total fixe en haut */}
@@ -995,7 +954,7 @@ export function RevenusView({ m, mi, setMi, updateData, onBellClick, notifActive
 }
 
 // Vue DÉPENSES + FACTURES
-export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onBellClick, notifActive }) {
+export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab }) {
   const exps    = m.expenses;
   const bills   = m.bills.filter(b => b.selected !== false);
   const unpaid  = bills.filter(b => !b.paid);
@@ -1032,7 +991,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onBe
 
   return (
     <>
-      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onBellClick={onBellClick} notifActive={notifActive} />
+      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} />
       {m.closed && <ClosedBanner />}
       <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.rose }}>✦</span> DÉPENSES <span style={{ color:C.rose }}>✦</span></div>
       {/* Switcher capsule */}
@@ -1388,7 +1347,7 @@ const SavingsDetail = ({ type, histItems, soldeItem, onSaveHist, onDeleteHist, o
 };
 
 // Vue ÉPARGNE — navigation année indépendante
-export function EpargneView({ currentYear, onBellClick, notifActive }) {
+export function EpargneView({ currentYear }) {
   const [epargneYear, setEpargneYear] = useState(currentYear);
   const [months, setMonths] = useState(() => loadYearData(currentYear));
 
@@ -1550,11 +1509,8 @@ export function EpargneView({ currentYear, onBellClick, notifActive }) {
           <button onClick={nextYear}
             style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>›</button>
         </div>
-        <div style={{ position:'relative', width:38, display:'flex', justifyContent:'flex-end' }}>
-          <button onClick={onBellClick} style={{ background:'none', border:'none', cursor:'pointer', padding:0 }}>
-            <i className="ti ti-bell" style={{ fontSize:20, color:C.vert }} />
-          </button>
-          {notifActive && <div style={{ position:'absolute', top:0, right:0, width:8, height:8, borderRadius:'50%', background:C.gold, pointerEvents:'none' }} />}
+        <div style={{ width:38, display:'flex', justifyContent:'flex-end' }}>
+          <i className="ti ti-bell" style={{ fontSize:20, color:C.vert }} />
         </div>
       </div>
 
@@ -1642,25 +1598,25 @@ export function EpargneView({ currentYear, onBellClick, notifActive }) {
           {epargneFlash === 'livret' && <div style={{ textAlign:'center', fontFamily:sans, fontSize:12, color:'#2E7D32', fontWeight:600, padding:'4px 0' }}>Sauvegardé ✓</div>}
 
           {/* ── PEA ── */}
-          <div style={{ background:C.rose, borderRadius:12, padding:'12px 16px', marginBottom: editPeaSolde ? 0 : 8, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <div style={{ background:C.vert, borderRadius:12, padding:'12px 16px', marginBottom: editPeaSolde ? 0 : 8, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
             <div>
-              <span style={{ fontFamily:serif, fontSize:16, fontWeight:700, color:C.vert, display:'block', marginBottom:6 }}>PEA</span>
+              <span style={{ fontFamily:serif, fontSize:16, fontWeight:700, color:C.rose, display:'block', marginBottom:6 }}>PEA</span>
               <div style={{ display:'flex', gap:16 }}>
                 <button title="Nouveau solde" onClick={() => { setPeaSoldeForm({ montant: '', rendement: String(peaSolde?.rendement||''), pct: String(peaSolde?.pct||''), date: new Date().toISOString().split('T')[0] }); setEditPeaSolde(v => !v); }}
                   style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
-                  <i className="ti ti-pencil" style={{ fontSize:18, color: editPeaSolde ? C.gold : C.vert }} />
+                  <i className="ti ti-pencil" style={{ fontSize:18, color: editPeaSolde ? C.gold : C.rose }} />
                 </button>
                 <button onClick={() => setDetailType('pea')}
                   style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
-                  <i className="ti ti-list-details" style={{ fontSize:18, color:C.vert }} />
+                  <i className="ti ti-list-details" style={{ fontSize:18, color:C.rose }} />
                 </button>
                 <button onClick={() => setChartType('pea')}
                   style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
-                  <i className="ti ti-chart-line" style={{ fontSize:18, color:C.vert }} />
+                  <i className="ti ti-chart-line" style={{ fontSize:18, color:C.rose }} />
                 </button>
               </div>
             </div>
-            <span style={{ fontFamily:serif, fontSize:26, fontWeight:700, color:C.vert, cursor:'pointer' }} onClick={() => setChartType('pea')}>{fmtP(peaTotal)}</span>
+            <span style={{ fontFamily:serif, fontSize:26, fontWeight:700, color:C.rose, cursor:'pointer' }} onClick={() => setChartType('pea')}>{fmtP(peaTotal)}</span>
           </div>
           {editPeaSolde && (
             <div style={{ background:'rgba(28,41,28,0.08)', borderRadius:'0 0 12px 12px', padding:'10px 14px 14px', marginBottom:8, border:`1px solid ${C.rose}`, borderTop:'none' }}>
@@ -1790,117 +1746,6 @@ export function EpargneView({ currentYear, onBellClick, notifActive }) {
   );
 }
 
-// ─── NOTIFICATION MODAL ──────────────────────────────────────
-const NotifModal = ({ onSave, onClose }) => {
-  const saved = getNotifSettings();
-  const [enabled, setEnabled] = useState(saved.enabled ?? false);
-  const [value, setValue]     = useState(saved.value ?? 1);
-  const [unit, setUnit]       = useState(saved.unit ?? 'Jour(s)');
-  const [heure, setHeure]     = useState(saved.heure ?? '18:00');
-  const [tick, setTick]       = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => setTick(t => t + 1), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const lastSentRaw = getNotifLastSent();
-  const permission = typeof Notification !== 'undefined' ? Notification.permission : 'non supporté';
-  const [previewNext, setPreviewNext] = useState(null);
-
-  useEffect(() => {
-    const freqMs = (value || 1) * (unit === 'Semaine(s)' ? 604800000 : unit === 'Mois' ? 2592000000 : 86400000);
-    const [h = 18, mn = 0] = heure.split(':').map(Number);
-    const now = new Date();
-    const todayAtHour = new Date();
-    todayAtHour.setHours(h, mn, 0, 0);
-    const next = todayAtHour > now
-      ? todayAtHour
-      : new Date(todayAtHour.getTime() + freqMs);
-    setPreviewNext(next.getTime());
-  }, [heure, value, unit]);
-
-  const handleSave = () => {
-    const s = { enabled, value, unit, heure };
-    localStorage.setItem(NOTIF_KEY, JSON.stringify(s));
-    sendToSW();
-    onSave(s);
-  };
-
-  const handleForce = async () => {
-    if (typeof Notification === 'undefined') { alert('Notifications non supportées.'); return; }
-    if (Notification.permission !== 'granted') {
-      const perm = await Notification.requestPermission();
-      if (perm !== 'granted') { alert('Permission refusée. Activez dans les réglages du navigateur.'); return; }
-    }
-    try {
-      const reg = await navigator.serviceWorker.ready;
-      await reg.showNotification('Budget Club', { body: 'Pensez à mettre à jour votre budget !', icon: '/logo-budget-club-favicon-rose.png' });
-    } catch {
-      new Notification('Budget Club', { body: 'Pensez à mettre à jour votre budget !', icon: '/logo-budget-club-favicon-rose.png' });
-    }
-    localStorage.setItem(NOTIF_LASTSENT_KEY, Date.now().toString());
-    setTick(t => t + 1);
-  };
-
-  return (
-    <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(28,41,28,0.5)', zIndex:200, display:'flex', alignItems:'flex-end' }}>
-      <div style={{ background:'#fff', borderRadius:'20px 20px 0 0', width:'100%', padding:'24px 20px', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', display:'flex', flexDirection:'column', gap:20 }}>
-
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-          <span style={{ fontFamily:serif, fontSize:19, fontWeight:700, color:C.vert }}>Rappels</span>
-          <button onClick={onClose} style={{ background:C.roseL, border:'none', width:28, height:28, borderRadius:'50%', cursor:'pointer', fontSize:14, color:C.vert }}>✕</button>
-        </div>
-
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-          <span style={{ fontFamily:sans, fontSize:14, color:C.vert }}>Activer les rappels</span>
-          <button onClick={() => setEnabled(v => !v)} style={{ width:48, height:26, borderRadius:13, border:'none', cursor:'pointer', background: enabled ? C.vert : C.muted, position:'relative', transition:'background 0.2s' }}>
-            <span style={{ position:'absolute', top:3, left: enabled ? 25 : 3, width:20, height:20, borderRadius:'50%', background:'white', transition:'left 0.2s', display:'block' }} />
-          </button>
-        </div>
-
-        <div>
-          <div style={{ fontFamily:sans, fontSize:11, fontWeight:600, letterSpacing:1, textTransform:'uppercase', color:C.muted, marginBottom:8 }}>Fréquence</div>
-          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            <div style={{ display:'flex', alignItems:'center', border:`1px solid ${C.border}`, borderRadius:8, overflow:'hidden' }}>
-              <button onClick={() => setValue(n => Math.max(1, n - 1))} style={{ padding:'8px 12px', background:'white', border:'none', color:C.vert, fontSize:16, cursor:'pointer', fontWeight:600 }}>−</button>
-              <span style={{ padding:'8px 10px', fontFamily:sans, fontSize:15, color:C.vert, minWidth:30, textAlign:'center' }}>{value}</span>
-              <button onClick={() => setValue(n => Math.min(99, n + 1))} style={{ padding:'8px 12px', background:'white', border:'none', color:C.vert, fontSize:16, cursor:'pointer', fontWeight:600 }}>+</button>
-            </div>
-            <select value={unit} onChange={e => setUnit(e.target.value)} style={{ flex:1, padding:'9px 10px', border:`1px solid ${C.border}`, borderRadius:8, fontFamily:sans, fontSize:14, color:C.vert, background:'white', cursor:'pointer' }}>
-              <option value="Jour(s)">Jour(s)</option>
-              <option value="Semaine(s)">Semaine(s)</option>
-              <option value="Mois">Mois</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <div style={{ fontFamily:sans, fontSize:11, fontWeight:600, letterSpacing:1, textTransform:'uppercase', color:C.muted, marginBottom:8 }}>Heure du rappel</div>
-          <input
-            type="time"
-            value={heure}
-            onChange={e => setHeure(e.target.value)}
-            style={{ width:'100%', padding:'9px 12px', border:`1.5px solid ${C.rose}`, borderRadius:8, fontFamily:sans, fontSize:14, color:C.vert, background:'white', boxSizing:'border-box' }}
-          />
-        </div>
-
-        <div style={{ background:C.roseL, borderRadius:10, padding:'12px 14px', display:'flex', flexDirection:'column', gap:6 }}>
-          <div style={{ fontFamily:sans, fontSize:11, fontWeight:600, letterSpacing:1, textTransform:'uppercase', color:C.muted, marginBottom:2 }}>Diagnostic</div>
-          <span style={{ fontFamily:sans, fontSize:12, color:C.vert }}>Permission : <b>{permission}</b></span>
-          <span style={{ fontFamily:sans, fontSize:12, color:C.vert }}>Heure actuelle : <b>{fmtDateTime(Date.now().toString())}</b></span>
-          <span style={{ fontFamily:sans, fontSize:12, color:C.vert }}>Dernière notification : <b>{fmtDateTime(lastSentRaw)}</b></span>
-          <span style={{ fontFamily:sans, fontSize:12, color:C.vert }}>Prochaine prévue : <b>{previewNext ? fmtDateTime(previewNext.toString()) : '–'}</b></span>
-          <span style={{ fontFamily:sans, fontSize:12, color:C.vert }}>Fréquence : <b>{value} {unit}</b></span>
-        </div>
-
-        <button onClick={handleForce} style={{ width:'100%', padding:11, background:'white', color:C.vert, border:`1.5px solid ${C.vert}`, borderRadius:10, fontFamily:sans, fontSize:14, fontWeight:600, cursor:'pointer' }}>Forcer une notification maintenant</button>
-
-        <button onClick={handleSave} style={{ width:'100%', padding:12, background:C.vert, color:'white', border:'none', borderRadius:10, fontFamily:sans, fontSize:14, fontWeight:600, cursor:'pointer' }}>Enregistrer</button>
-      </div>
-    </div>
-  );
-};
 
 // ─── SPLASH SCREEN ───────────────────────────────────────────
 const SplashScreen = ({ onDone }) => {
@@ -1952,32 +1797,7 @@ export default function App() {
   const [depTab, setDepTab] = useState('depenses');
   const [modal, setModal]   = useState(null); // 'dep' | 'rev' | 'bill' | null
   const [showSplash, setShowSplash]       = useState(true);
-  const [notifEnabled, setNotifEnabled] = useState(() => getNotifSettings().enabled ?? false);
-  const [showNotifModal, setShowNotifModal] = useState(false);
-
   const { data: m, loading, updateData } = useMonthData(mi);
-
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
-        .then(reg => {
-          console.log('[Budget Club] SW:', reg.scope);
-          if ('periodicSync' in reg) reg.periodicSync.register('budget-notif', { minInterval: 86400000 }).catch(() => {});
-          sendToSW();
-        })
-        .catch(err => console.warn('[Budget Club] SW erreur:', err));
-      navigator.serviceWorker.addEventListener('message', (event) => {
-        if (event.data?.type === 'NOTIF_SENT') localStorage.setItem(NOTIF_LASTSENT_KEY, event.data.lastSent);
-      });
-    }
-    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
-      Notification.requestPermission().then(perm => console.log('[Budget Club] Permission:', perm));
-    }
-    checkAndNotify();
-    const onVisibility = () => { if (document.visibilityState === 'visible') checkAndNotify(); };
-    document.addEventListener('visibilitychange', onVisibility);
-    return () => document.removeEventListener('visibilitychange', onVisibility);
-  }, []);
 
   const addExpense = (exp)  => { if (m.closed) return; updateData(mm => { mm.expenses = [...mm.expenses, exp]; }); };
   const addRevenu  = (rev)  => { if (m.closed) return; updateData(mm => { mm.revenues = [...mm.revenues, rev]; }); };
@@ -1991,12 +1811,12 @@ export default function App() {
 
   const renderView = () => {
     switch (view) {
-      case 'accueil':     return <AccueilView  m={m} mi={mi} setMi={setMi} setView={setView} updateData={updateData} onBellClick={() => setShowNotifModal(true)} notifActive={notifEnabled} />;
-      case 'budget':      return <BudgetView   m={m} mi={mi} setMi={setMi} setView={setView} updateData={updateData} onBellClick={() => setShowNotifModal(true)} notifActive={notifEnabled} />;
+      case 'accueil':     return <AccueilView  m={m} mi={mi} setMi={setMi} setView={setView} updateData={updateData} />;
+      case 'budget':      return <BudgetView   m={m} mi={mi} setMi={setMi} setView={setView} updateData={updateData} />;
       case 'budget_edit': return <BudgetEditView m={m} updateData={updateData} setView={setView} />;
-      case 'revenus':     return <RevenusView  m={m} mi={mi} setMi={setMi} updateData={updateData} onBellClick={() => setShowNotifModal(true)} notifActive={notifEnabled} />;
-      case 'depenses':    return <DepensesView m={m} mi={mi} setMi={setMi} updateData={updateData} depTab={depTab} setDepTab={setDepTab} onBellClick={() => setShowNotifModal(true)} notifActive={notifEnabled} />;
-      case 'epargne':     return <EpargneView  currentYear={mi.year} onBellClick={() => setShowNotifModal(true)} notifActive={notifEnabled} />;
+      case 'revenus':     return <RevenusView  m={m} mi={mi} setMi={setMi} updateData={updateData} />;
+      case 'depenses':    return <DepensesView m={m} mi={mi} setMi={setMi} updateData={updateData} depTab={depTab} setDepTab={setDepTab} />;
+      case 'epargne':     return <EpargneView  currentYear={mi.year} />;
       default:            return null;
     }
   };
@@ -2041,14 +1861,6 @@ export default function App() {
 
           {/* Splash */}
           {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
-
-          {/* Notification modal */}
-          {showNotifModal && (
-            <NotifModal
-              onSave={s => { setNotifEnabled(s.enabled); setShowNotifModal(false); }}
-              onClose={() => setShowNotifModal(false)}
-            />
-          )}
 
           {/* Modals */}
           {!m.closed && modal === 'dep'  && <AddExpenseModal onAdd={addExpense} onClose={() => setModal(null)} />}
