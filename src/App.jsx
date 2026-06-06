@@ -1487,26 +1487,28 @@ export function EpargneView({ currentYear }) {
 
         {/* ── Cards fixes ── */}
         <div style={{ flexShrink:0, padding:'0 16px', background:C.beige }}>
-          <div style={{ fontFamily:sans, fontSize:11, color:C.muted, margin:'4px 0 8px', fontWeight:500 }}>Total à date — {epargneYear}</div>
+          <div style={{ fontFamily:sans, fontSize:11, color:C.muted, margin:'4px 0 8px', fontWeight:500 }}>Total à date</div>
 
           {/* ── Livret A ── */}
-          <div style={{ background:C.vert, borderRadius:12, padding:'16px 20px', marginBottom: editSolde ? 0 : 8 }}>
-            <div style={{ textAlign:'center', marginBottom:4 }}>
-              <span style={{ fontFamily:serif, fontSize:18, fontWeight:700, color:'white' }}>Livret A</span>
+          <div style={{ background:C.vert, borderRadius:12, padding:'12px 16px', marginBottom: editSolde ? 0 : 8, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <div>
+              <span style={{ fontFamily:serif, fontSize:16, fontWeight:700, color:'white', display:'block', marginBottom:6 }}>Livret A</span>
+              <div style={{ display:'flex', gap:8 }}>
+                <button title="Nouveau solde" onClick={() => { setSoldeForm({ amount: '', date: new Date().toISOString().split('T')[0] }); setEditSolde(v => !v); }}
+                  style={{ background:'rgba(255,255,255,0.15)', border:'none', cursor:'pointer', padding:'4px 10px', borderRadius:14 }}>
+                  <i className="ti ti-pencil" style={{ fontSize:13, color: editSolde ? C.gold : 'rgba(255,255,255,0.75)' }} />
+                </button>
+                <button onClick={() => setDetailType('livret')}
+                  style={{ background:'rgba(255,255,255,0.15)', border:'none', cursor:'pointer', padding:'4px 10px', borderRadius:14 }}>
+                  <i className="ti ti-list-details" style={{ fontSize:13, color:'rgba(255,255,255,0.75)' }} />
+                </button>
+                <button onClick={() => setChartType('livret')}
+                  style={{ background:'rgba(255,255,255,0.15)', border:'none', cursor:'pointer', padding:'4px 10px', borderRadius:14 }}>
+                  <i className="ti ti-chart-line" style={{ fontSize:13, color:'rgba(255,255,255,0.75)' }} />
+                </button>
+              </div>
             </div>
-            <div style={{ textAlign:'center', marginBottom:10 }}>
-              <span onClick={() => setChartType('livret')} style={{ fontFamily:serif, fontSize:32, fontWeight:700, color:'white', cursor:'pointer' }}>{fmtP(livretTotal)}</span>
-            </div>
-            <div style={{ display:'flex', justifyContent:'center', gap:12 }}>
-              <button title="Nouveau solde" onClick={() => { setSoldeForm({ amount: '', date: new Date().toISOString().split('T')[0] }); setEditSolde(v => !v); }}
-                style={{ background:'rgba(255,255,255,0.15)', border:'none', cursor:'pointer', padding:'7px 18px', borderRadius:20 }}>
-                <i className="ti ti-pencil" style={{ fontSize:15, color: editSolde ? C.gold : 'rgba(255,255,255,0.75)' }} />
-              </button>
-              <button onClick={() => setDetailType('livret')}
-                style={{ background:'rgba(255,255,255,0.15)', border:'none', cursor:'pointer', padding:'7px 18px', borderRadius:20 }}>
-                <i className="ti ti-list-details" style={{ fontSize:15, color:'rgba(255,255,255,0.75)' }} />
-              </button>
-            </div>
+            <span style={{ fontFamily:serif, fontSize:26, fontWeight:700, color:'white', cursor:'pointer' }} onClick={() => setChartType('livret')}>{fmtP(livretTotal)}</span>
           </div>
           {editSolde && (
             <div style={{ background:'rgba(28,41,28,0.92)', borderRadius:'0 0 12px 12px', padding:'10px 14px 14px', marginBottom:8 }}>
@@ -1544,23 +1546,25 @@ export function EpargneView({ currentYear }) {
           {epargneFlash === 'livret' && <div style={{ textAlign:'center', fontFamily:sans, fontSize:12, color:'#2E7D32', fontWeight:600, padding:'4px 0' }}>Sauvegardé ✓</div>}
 
           {/* ── PEA / Trade ── */}
-          <div style={{ background:C.rose, borderRadius:12, padding:'16px 20px', marginBottom: editPeaSolde ? 0 : 8 }}>
-            <div style={{ textAlign:'center', marginBottom:4 }}>
-              <span style={{ fontFamily:serif, fontSize:18, fontWeight:700, color:C.vert }}>PEA / Trade</span>
+          <div style={{ background:C.rose, borderRadius:12, padding:'12px 16px', marginBottom: editPeaSolde ? 0 : 8, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <div>
+              <span style={{ fontFamily:serif, fontSize:16, fontWeight:700, color:C.vert, display:'block', marginBottom:6 }}>PEA / Trade</span>
+              <div style={{ display:'flex', gap:8 }}>
+                <button title="Nouveau solde" onClick={() => { setPeaSoldeForm({ montant: '', rendement: String(peaSolde?.rendement||''), pct: String(peaSolde?.pct||''), date: new Date().toISOString().split('T')[0] }); setEditPeaSolde(v => !v); }}
+                  style={{ background:'rgba(28,41,28,0.1)', border:'none', cursor:'pointer', padding:'4px 10px', borderRadius:14 }}>
+                  <i className="ti ti-pencil" style={{ fontSize:13, color: editPeaSolde ? C.vert : 'rgba(28,41,28,0.45)' }} />
+                </button>
+                <button onClick={() => setDetailType('pea')}
+                  style={{ background:'rgba(28,41,28,0.1)', border:'none', cursor:'pointer', padding:'4px 10px', borderRadius:14 }}>
+                  <i className="ti ti-list-details" style={{ fontSize:13, color:'rgba(28,41,28,0.45)' }} />
+                </button>
+                <button onClick={() => setChartType('pea')}
+                  style={{ background:'rgba(28,41,28,0.1)', border:'none', cursor:'pointer', padding:'4px 10px', borderRadius:14 }}>
+                  <i className="ti ti-chart-line" style={{ fontSize:13, color:'rgba(28,41,28,0.45)' }} />
+                </button>
+              </div>
             </div>
-            <div style={{ textAlign:'center', marginBottom:10 }}>
-              <span onClick={() => setChartType('pea')} style={{ fontFamily:serif, fontSize:32, fontWeight:700, color:C.vert, cursor:'pointer' }}>{fmtP(peaTotal)}</span>
-            </div>
-            <div style={{ display:'flex', justifyContent:'center', gap:12 }}>
-              <button title="Nouveau solde" onClick={() => { setPeaSoldeForm({ montant: '', rendement: String(peaSolde?.rendement||''), pct: String(peaSolde?.pct||''), date: new Date().toISOString().split('T')[0] }); setEditPeaSolde(v => !v); }}
-                style={{ background:'rgba(28,41,28,0.1)', border:'none', cursor:'pointer', padding:'7px 18px', borderRadius:20 }}>
-                <i className="ti ti-pencil" style={{ fontSize:15, color: editPeaSolde ? C.vert : 'rgba(28,41,28,0.45)' }} />
-              </button>
-              <button onClick={() => setDetailType('pea')}
-                style={{ background:'rgba(28,41,28,0.1)', border:'none', cursor:'pointer', padding:'7px 18px', borderRadius:20 }}>
-                <i className="ti ti-list-details" style={{ fontSize:15, color:'rgba(28,41,28,0.45)' }} />
-              </button>
-            </div>
+            <span style={{ fontFamily:serif, fontSize:26, fontWeight:700, color:C.vert, cursor:'pointer' }} onClick={() => setChartType('pea')}>{fmtP(peaTotal)}</span>
           </div>
           {editPeaSolde && (
             <div style={{ background:'rgba(28,41,28,0.08)', borderRadius:'0 0 12px 12px', padding:'10px 14px 14px', marginBottom:8, border:`1px solid ${C.rose}`, borderTop:'none' }}>
@@ -1599,7 +1603,7 @@ export function EpargneView({ currentYear }) {
         </div>
 
         {/* ── Jauges mensuelles scrollables ── */}
-        <div style={{ flex:1, overflowY:'auto', padding:'0 16px 16px', background:C.beige }}>
+        <div style={{ flex:1, overflowY:'auto', padding:'0 16px 80px', background:C.beige }}>
           {/* Total année */}
           <div style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', marginBottom:4 }}>
             <span style={{ fontFamily:sans, fontSize:13, fontWeight:700, color:C.vert, width:36 }}>{epargneYear}</span>
