@@ -134,6 +134,17 @@ const saveLivretHist = (v) => localStorage.setItem(LIVRET_HIST_KEY, JSON.stringi
 const getPeaHist     = () => { try { const s = localStorage.getItem(PEA_HIST_KEY);    return s ? JSON.parse(s) : []; } catch { return []; } };
 const savePeaHist    = (v) => localStorage.setItem(PEA_HIST_KEY,    JSON.stringify(v));
 
+const NOTIF_KEY        = 'budget:notif:settings';
+const getNotifSettings = () => { try { const s = localStorage.getItem(NOTIF_KEY); return s ? JSON.parse(s) : null; } catch { return null; } };
+const saveNotifSettings = (v) => localStorage.setItem(NOTIF_KEY, JSON.stringify(v));
+
+const shouldSendNotif = (s) => {
+  if (!s?.enabled) return false;
+  if (!s.lastSent) return true;
+  const diff = (Date.now() - new Date(s.lastSent).getTime()) / 86400000;
+  return s.frequency === 'daily' ? diff >= 1 : s.frequency === 'every2days' ? diff >= 2 : s.frequency === 'weekly' ? diff >= 7 : diff >= 30;
+};
+
 // ─── HOOK STORAGE ────────────────────────────────────────────
 function useMonthData(mi) {
   const key = storageKey(mi);
@@ -190,7 +201,7 @@ const CatIcon = ({ catId, size = 42, gray = false }) => {
 };
 
 // Header avec logo + navigation mois (sans limite)
-const MonthHeader = ({ mi, setMi, closed }) => {
+const MonthHeader = ({ mi, setMi, closed, onBellClick, notifActive }) => {
   const prev = () => setMi(p => p.month === 0 ? { month:11, year:p.year-1 } : { month:p.month-1, year:p.year });
   const next = () => setMi(p => p.month === 11 ? { month:0, year:p.year+1 } : { month:p.month+1, year:p.year });
   return (
@@ -204,7 +215,12 @@ const MonthHeader = ({ mi, setMi, closed }) => {
         <button onClick={next}
           style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>›</button>
       </div>
-      <i className="ti ti-bell" style={{ fontSize:20, color:C.vert, width:38, textAlign:'right' }} />
+      <div style={{ position:'relative', width:38, display:'flex', justifyContent:'flex-end' }}>
+        <button onClick={onBellClick} style={{ background:'none', border:'none', cursor:'pointer', padding:0 }}>
+          <i className="ti ti-bell" style={{ fontSize:20, color:C.vert }} />
+        </button>
+        {notifActive && <div style={{ position:'absolute', top:0, right:0, width:8, height:8, borderRadius:'50%', background:C.gold, pointerEvents:'none' }} />}
+      </div>
     </div>
   );
 };
@@ -227,7 +243,7 @@ const BottomNav = ({ view, setView, m }) => {
   const badges   = { revenus: m.revenues.length > 0, budget: rev > 0 && tv > 0 && nonV < 1, depenses: !!m.closed };
 
   return (
-    <div style={{ display:'flex', alignItems:'stretch', background:C.nav, flexShrink:0, paddingTop:8, paddingLeft:0, paddingRight:0, paddingBottom:'calc(8px + env(safe-area-inset-bottom))' }}>
+    <div style={{ display:'flex', alignItems:'stretch', background:C.nav, flexShrink:0, position:'sticky', bottom:0, zIndex:100, paddingTop:8, paddingLeft:0, paddingRight:0, paddingBottom:'calc(8px + env(safe-area-inset-bottom))' }}>
       {TABS.map(t => {
         const active    = view === t.id || view === t.id + '_edit';
         const col       = active ? C.gold : 'rgba(201,169,110,0.4)';
@@ -510,7 +526,7 @@ export const AddPeaRendementModal = ({ onAdd, onClose }) => {
 // ─── VUES ────────────────────────────────────────────────────
 
 // Vue ACCUEIL
-export function AccueilView({ m, mi, setMi, setView, updateData }) {
+export function AccueilView({ m, mi, setMi, setView, updateData, onBellClick, notifActive }) {
   const [confirmClose, setConfirmClose] = useState(false);
   const rev       = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
   const allBills  = m.bills.filter(b => b.selected !== false);
@@ -525,7 +541,7 @@ export function AccueilView({ m, mi, setMi, setView, updateData }) {
 
   return (
     <>
-      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} />
+      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onBellClick={onBellClick} notifActive={notifActive} />
       {m.closed && <ClosedBanner />}
       <div style={{ padding:'12px 16px 0', background:C.beige, flexShrink:0 }}>
         {/* Card Reste à dépenser */}
@@ -604,7 +620,7 @@ export function AccueilView({ m, mi, setMi, setView, updateData }) {
 }
 
 // Vue BUDGET
-export function BudgetView({ m, mi, setMi, setView, updateData }) {
+export function BudgetView({ m, mi, setMi, setView, updateData, onBellClick, notifActive }) {
   const cb   = m.catBudgets || {};
   const [customCats, setCustomCats]       = useState(getCustomCats);
   const [showEnv, setShowEnv]             = useState(false);
@@ -631,7 +647,7 @@ export function BudgetView({ m, mi, setMi, setView, updateData }) {
 
   return (
     <>
-      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} />
+      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onBellClick={onBellClick} notifActive={notifActive} />
       {m.closed && <ClosedBanner />}
       <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.rose }}>✦</span> BUDGET <span style={{ color:C.rose }}>✦</span></div>
       <div style={{ flex:1, overflowY:'auto', padding:'0 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
@@ -922,14 +938,14 @@ function RevenueRow({ r, i, onUpdate, onDelete, closed }) {
   );
 }
 
-export function RevenusView({ m, mi, setMi, updateData }) {
+export function RevenusView({ m, mi, setMi, updateData, onBellClick, notifActive }) {
   const rev = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
   const del = (i)         => updateData(mm => { mm.revenues = mm.revenues.filter((_,idx) => idx !== i); });
   const upd = (i, updated) => updateData(mm => { mm.revenues = mm.revenues.map((r, idx) => idx === i ? updated : r); });
 
   return (
     <>
-      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} />
+      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onBellClick={onBellClick} notifActive={notifActive} />
       {m.closed && <ClosedBanner />}
       <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.rose }}>✦</span> REVENUS <span style={{ color:C.rose }}>✦</span></div>
       {/* Total fixe en haut */}
@@ -951,7 +967,7 @@ export function RevenusView({ m, mi, setMi, updateData }) {
 }
 
 // Vue DÉPENSES + FACTURES
-export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab }) {
+export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onBellClick, notifActive }) {
   const exps    = m.expenses;
   const bills   = m.bills.filter(b => b.selected !== false);
   const unpaid  = bills.filter(b => !b.paid);
@@ -988,7 +1004,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab }) {
 
   return (
     <>
-      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} />
+      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onBellClick={onBellClick} notifActive={notifActive} />
       {m.closed && <ClosedBanner />}
       <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.rose }}>✦</span> DÉPENSES <span style={{ color:C.rose }}>✦</span></div>
       {/* Switcher capsule */}
@@ -1344,7 +1360,7 @@ const SavingsDetail = ({ type, histItems, soldeItem, onSaveHist, onDeleteHist, o
 };
 
 // Vue ÉPARGNE — navigation année indépendante
-export function EpargneView({ currentYear }) {
+export function EpargneView({ currentYear, onBellClick, notifActive }) {
   const [epargneYear, setEpargneYear] = useState(currentYear);
   const [months, setMonths] = useState(() => loadYearData(currentYear));
 
@@ -1506,7 +1522,12 @@ export function EpargneView({ currentYear }) {
           <button onClick={nextYear}
             style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>›</button>
         </div>
-        <i className="ti ti-bell" style={{ fontSize:20, color:C.vert, width:38, textAlign:'right' }} />
+        <div style={{ position:'relative', width:38, display:'flex', justifyContent:'flex-end' }}>
+          <button onClick={onBellClick} style={{ background:'none', border:'none', cursor:'pointer', padding:0 }}>
+            <i className="ti ti-bell" style={{ fontSize:20, color:C.vert }} />
+          </button>
+          {notifActive && <div style={{ position:'absolute', top:0, right:0, width:8, height:8, borderRadius:'50%', background:C.gold, pointerEvents:'none' }} />}
+        </div>
       </div>
 
       {/* Bandeau clôture annuelle */}
@@ -1741,6 +1762,53 @@ export function EpargneView({ currentYear }) {
   );
 }
 
+// ─── NOTIFICATION MODAL ──────────────────────────────────────
+const NotifModal = ({ settings, onSave, onClose }) => {
+  const [enabled, setEnabled]     = useState(settings?.enabled ?? false);
+  const [frequency, setFrequency] = useState(settings?.frequency ?? 'daily');
+  const [time, setTime]           = useState(settings?.time ?? '18:00');
+
+  const handleSave = () => {
+    const s = { enabled, frequency, time, lastSent: settings?.lastSent ?? null };
+    saveNotifSettings(s);
+    onSave(s);
+  };
+
+  return (
+    <div style={{ position:'absolute', inset:0, background:'rgba(28,41,28,0.5)', zIndex:50, display:'flex', alignItems:'flex-end' }}>
+      <div style={{ background:'#fff', borderRadius:'20px 20px 0 0', width:'100%', padding:'24px 20px', paddingBottom:'calc(24px + env(safe-area-inset-bottom))', display:'flex', flexDirection:'column', gap:20 }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+          <span style={{ fontFamily:serif, fontSize:19, fontWeight:700, color:C.vert }}>Rappels</span>
+          <button onClick={onClose} style={{ background:C.roseL, border:'none', width:28, height:28, borderRadius:'50%', cursor:'pointer', fontSize:14, color:C.vert }}>✕</button>
+        </div>
+
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <span style={{ fontFamily:sans, fontSize:14, color:C.vert }}>Activer les rappels</span>
+          <button onClick={() => setEnabled(v => !v)} style={{ width:48, height:26, borderRadius:13, border:'none', cursor:'pointer', background: enabled ? C.vert : C.muted, position:'relative', transition:'background 0.2s' }}>
+            <span style={{ position:'absolute', top:3, left: enabled ? 25 : 3, width:20, height:20, borderRadius:'50%', background:'white', transition:'left 0.2s', display:'block' }} />
+          </button>
+        </div>
+
+        <div>
+          <div style={{ fontFamily:sans, fontSize:11, fontWeight:600, letterSpacing:1, textTransform:'uppercase', color:C.muted, marginBottom:8 }}>Fréquence</div>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+            {[['daily','Quotidien'],['every2days','Tous les 2 j'],['weekly','Hebdomadaire'],['monthly','Mensuel']].map(([id, label]) => (
+              <button key={id} onClick={() => setFrequency(id)} style={{ padding:'6px 12px', borderRadius:20, border:`1.5px solid ${frequency === id ? C.vert : C.border}`, background: frequency === id ? C.vert : 'white', color: frequency === id ? 'white' : C.vert, fontFamily:sans, fontSize:12, cursor:'pointer' }}>{label}</button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div style={{ fontFamily:sans, fontSize:11, fontWeight:600, letterSpacing:1, textTransform:'uppercase', color:C.muted, marginBottom:8 }}>Heure du rappel</div>
+          <input type="time" value={time} onChange={e => setTime(e.target.value)} style={{ width:'100%', padding:'10px 12px', border:`1px solid ${C.border}`, borderRadius:8, fontFamily:sans, fontSize:14, color:C.vert, background:'white' }} />
+        </div>
+
+        <button onClick={handleSave} style={{ width:'100%', padding:12, background:C.vert, color:'white', border:'none', borderRadius:10, fontFamily:sans, fontSize:14, fontWeight:600, cursor:'pointer' }}>Enregistrer</button>
+      </div>
+    </div>
+  );
+};
+
 // ─── SPLASH SCREEN ───────────────────────────────────────────
 const SplashScreen = ({ onDone }) => {
   const [visible, setVisible] = useState(false);
@@ -1758,8 +1826,8 @@ const SplashScreen = ({ onDone }) => {
 
   return (
     <div style={{
-      position:'absolute', inset:0, zIndex:100, borderRadius:24,
-      overflow:'hidden', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-start',
+      position:'fixed', top:0, left:0, right:0, bottom:0, zIndex:100, borderRadius:0,
+      width:'100%', height:'100%', overflow:'hidden', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-start',
       paddingTop:'8%',
       opacity: out ? 0 : visible ? 1 : 0,
       transition: out ? 'opacity 0.5s ease' : 'opacity 0.4s ease',
@@ -1790,9 +1858,27 @@ export default function App() {
   const [view, setView]     = useState('accueil');
   const [depTab, setDepTab] = useState('depenses');
   const [modal, setModal]   = useState(null); // 'dep' | 'rev' | 'bill' | null
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash]       = useState(true);
+  const [notifSettings, setNotifSettings] = useState(getNotifSettings);
+  const [showNotifModal, setShowNotifModal] = useState(false);
 
   const { data: m, loading, updateData } = useMonthData(mi);
+
+  useEffect(() => {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+    const s = getNotifSettings();
+    if (s?.enabled && shouldSendNotif(s) && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      const [h] = (s.time || '18:00').split(':').map(Number);
+      if (new Date().getHours() >= h) {
+        new Notification('Budget Club 💰', { body: 'Pensez à mettre à jour votre budget !', icon: '/logo-budget-club-favicon2.png' });
+        const updated = { ...s, lastSent: new Date().toISOString() };
+        saveNotifSettings(updated);
+        setNotifSettings(updated);
+      }
+    }
+  }, []);
 
   const addExpense = (exp)  => { if (m.closed) return; updateData(mm => { mm.expenses = [...mm.expenses, exp]; }); };
   const addRevenu  = (rev)  => { if (m.closed) return; updateData(mm => { mm.revenues = [...mm.revenues, rev]; }); };
@@ -1806,12 +1892,12 @@ export default function App() {
 
   const renderView = () => {
     switch (view) {
-      case 'accueil':     return <AccueilView m={m} mi={mi} setMi={setMi} setView={setView} updateData={updateData} />;
-      case 'budget':      return <BudgetView  m={m} mi={mi} setMi={setMi} setView={setView} updateData={updateData} />;
+      case 'accueil':     return <AccueilView  m={m} mi={mi} setMi={setMi} setView={setView} updateData={updateData} onBellClick={() => setShowNotifModal(true)} notifActive={!!notifSettings?.enabled} />;
+      case 'budget':      return <BudgetView   m={m} mi={mi} setMi={setMi} setView={setView} updateData={updateData} onBellClick={() => setShowNotifModal(true)} notifActive={!!notifSettings?.enabled} />;
       case 'budget_edit': return <BudgetEditView m={m} updateData={updateData} setView={setView} />;
-      case 'revenus':     return <RevenusView m={m} mi={mi} setMi={setMi} updateData={updateData} />;
-      case 'depenses':    return <DepensesView m={m} mi={mi} setMi={setMi} updateData={updateData} depTab={depTab} setDepTab={setDepTab} />;
-      case 'epargne':     return <EpargneView currentYear={mi.year} />;
+      case 'revenus':     return <RevenusView  m={m} mi={mi} setMi={setMi} updateData={updateData} onBellClick={() => setShowNotifModal(true)} notifActive={!!notifSettings?.enabled} />;
+      case 'depenses':    return <DepensesView m={m} mi={mi} setMi={setMi} updateData={updateData} depTab={depTab} setDepTab={setDepTab} onBellClick={() => setShowNotifModal(true)} notifActive={!!notifSettings?.enabled} />;
+      case 'epargne':     return <EpargneView  currentYear={mi.year} onBellClick={() => setShowNotifModal(true)} notifActive={!!notifSettings?.enabled} />;
       default:            return null;
     }
   };
@@ -1856,6 +1942,15 @@ export default function App() {
 
           {/* Splash */}
           {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
+
+          {/* Notification modal */}
+          {showNotifModal && (
+            <NotifModal
+              settings={notifSettings}
+              onSave={s => { setNotifSettings(s); setShowNotifModal(false); }}
+              onClose={() => setShowNotifModal(false)}
+            />
+          )}
 
           {/* Modals */}
           {!m.closed && modal === 'dep'  && <AddExpenseModal onAdd={addExpense} onClose={() => setModal(null)} />}
