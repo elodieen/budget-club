@@ -1210,7 +1210,11 @@ const SavingsChart = ({ data, color, svgBg = 'white', title, onClose }) => {
   const range = maxV - minV || 1;
   const px = i => PL + (data.length < 2 ? iW / 2 : (i / (data.length - 1)) * iW);
   const py = v => data.length <= 1 ? PT + iH / 2 : PT + iH - ((v - minV) / range) * iH;
-  const d0 = data.length >= 2 ? data.map((d, i) => `${i === 0 ? 'M' : 'L'}${px(i)},${py(d.value)}`).join(' ') : '';
+  const d0 = data.length >= 2 ? data.map((d, i) => {
+    if (i === 0) return `M${px(i).toFixed(1)},${py(d.value).toFixed(1)}`;
+    const x0 = px(i-1), y0 = py(data[i-1].value), x1 = px(i), y1 = py(d.value), t = 0.4;
+    return `C${(x0+t*(x1-x0)).toFixed(1)},${y0.toFixed(1)} ${(x1-t*(x1-x0)).toFixed(1)},${y1.toFixed(1)} ${x1.toFixed(1)},${y1.toFixed(1)}`;
+  }).join(' ') : '';
   return (
     <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(28,41,28,0.55)', zIndex:200, display:'flex', alignItems:'center', justifyContent:'center' }}>
       <div style={{ background:C.beige, borderRadius:16, margin:16, padding:'18px 16px 14px', width:'100%', maxWidth:340 }}>
