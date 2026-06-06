@@ -1349,7 +1349,7 @@ export function EpargneView({ currentYear }) {
   const [months, setMonths] = useState(() => loadYearData(currentYear));
 
   // Livret A
-  const [livretSolde, setLivretSolde] = useState(() => getLivretSolde() || { amount: 1938.37, date: '2026-06-05' });
+  const [livretSolde, setLivretSolde] = useState(() => getLivretSolde() || { amount: 1938.37, date: '2026-06-01' });
   const [editSolde, setEditSolde]     = useState(false);
   const [soldeForm, setSoldeForm]     = useState({ amount:'', date:'' });
 
