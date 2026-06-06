@@ -163,6 +163,34 @@ const sendNotification = async (title, body) => {
   new Notification(title, { body, icon: '/logo-budget-club-favicon-rose.png' });
 };
 
+const checkNotif = async () => {
+  const s = getNotifSettings();
+  if (!s?.enabled) return null;
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return null;
+  if (!shouldSendNotif(s)) return null;
+  const [h] = (s.time || '18:00').split(':').map(Number);
+  if (new Date().getHours() < h) return null;
+  await sendNotification('Budget Club', 'Pensez à mettre à jour votre budget !');
+  const updated = { ...s, lastSent: new Date().toISOString() };
+  saveNotifSettings(updated);
+  return updated;
+};
+
+const sendSettingsToSW = async (s) => {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    if (reg.active) reg.active.postMessage({ type: 'NOTIF_SETTINGS', settings: s });
+  } catch (e) { console.warn('[Budget Club] SW postMessage failed:', e); }
+};
+
+const fmtDateTime = (iso) => {
+  if (!iso) return 'Jamais';
+  const d = new Date(iso);
+  const p = n => String(n).padStart(2, '0');
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+
 // ─── HOOK STORAGE ────────────────────────────────────────────
 function useMonthData(mi) {
   const key = storageKey(mi);
@@ -1782,13 +1810,14 @@ export function EpargneView({ currentYear, onBellClick, notifActive }) {
 
 // ─── NOTIFICATION MODAL ──────────────────────────────────────
 const NotifModal = ({ settings, onSave, onClose }) => {
-  const [enabled, setEnabled]   = useState(settings?.enabled ?? false);
+  const [enabled, setEnabled]     = useState(settings?.enabled ?? false);
   const [freqCount, setFreqCount] = useState(() => { const f = settings?.frequency; return (f && typeof f === 'object') ? (f.count ?? 1) : 1; });
   const [freqUnit, setFreqUnit]   = useState(() => { const f = settings?.frequency; return (f && typeof f === 'object') ? (f.unit ?? 'day') : 'day'; });
-  const [time, setTime]         = useState(settings?.time ?? '18:00');
+  const [time, setTime]           = useState(settings?.time ?? '18:00');
+  const [localLastSent, setLocalLastSent] = useState(settings?.lastSent ?? null);
 
   const handleSave = () => {
-    const s = { enabled, frequency: { count: freqCount, unit: freqUnit }, time, lastSent: settings?.lastSent ?? null };
+    const s = { enabled, frequency: { count: freqCount, unit: freqUnit }, time, lastSent: localLastSent };
     saveNotifSettings(s);
     onSave(s);
   };
@@ -1799,8 +1828,22 @@ const NotifModal = ({ settings, onSave, onClose }) => {
       const perm = await Notification.requestPermission();
       if (perm !== 'granted') { alert('Permission refusée. Activez les notifications dans les réglages du navigateur.'); return; }
     }
-    await sendNotification('Budget Club 💰', 'Notification test — tout fonctionne !');
+    await sendNotification('Budget Club', 'Notification test — tout fonctionne !');
+    const now = new Date().toISOString();
+    setLocalLastSent(now);
+    const s = getNotifSettings();
+    if (s) saveNotifSettings({ ...s, lastSent: now });
   };
+
+  const nextDays = freqUnit === 'week' ? freqCount * 7 : freqUnit === 'month' ? freqCount * 30 : freqCount;
+  const [hh = 18, mm = 0] = time.split(':').map(Number);
+  const nextNotif = (() => {
+    const base = localLastSent ? new Date(localLastSent) : null;
+    if (!base) return null;
+    const d = new Date(base.getTime() + nextDays * 86400000);
+    d.setHours(hh, mm, 0, 0);
+    return d;
+  })();
 
   return (
     <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(28,41,28,0.5)', zIndex:200, display:'flex', alignItems:'flex-end' }}>
@@ -1836,6 +1879,11 @@ const NotifModal = ({ settings, onSave, onClose }) => {
         <div>
           <div style={{ fontFamily:sans, fontSize:11, fontWeight:600, letterSpacing:1, textTransform:'uppercase', color:C.muted, marginBottom:8 }}>Heure du rappel</div>
           <input type="time" value={time} onChange={e => setTime(e.target.value)} style={{ width:'100%', padding:'10px 12px', border:`1px solid ${C.border}`, borderRadius:8, fontFamily:sans, fontSize:14, color:C.vert, background:'white' }} />
+        </div>
+
+        <div style={{ background:C.roseL, borderRadius:10, padding:'10px 14px', display:'flex', flexDirection:'column', gap:5 }}>
+          <span style={{ fontFamily:sans, fontSize:11, color:C.muted }}>Dernière notification : <b style={{ color:C.vert }}>{fmtDateTime(localLastSent)}</b></span>
+          <span style={{ fontFamily:sans, fontSize:11, color:C.muted }}>Prochaine : <b style={{ color:C.vert }}>{nextNotif ? fmtDateTime(nextNotif.toISOString()) : '–'}</b></span>
         </div>
 
         <button onClick={handleTest} style={{ width:'100%', padding:11, background:'white', color:C.vert, border:`1.5px solid ${C.vert}`, borderRadius:10, fontFamily:sans, fontSize:14, fontWeight:600, cursor:'pointer' }}>Envoyer une notification test</button>
@@ -1902,34 +1950,45 @@ export default function App() {
   const { data: m, loading, updateData } = useMonthData(mi);
 
   useEffect(() => {
-    // Register service worker (required for notifications on mobile)
+    // Register SW + listeners
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('[Budget Club] SW enregistré:', reg.scope))
+        .then(reg => {
+          console.log('[Budget Club] SW enregistré:', reg.scope);
+          if ('periodicSync' in reg) {
+            reg.periodicSync.register('budget-notif', { minInterval: 24 * 60 * 60 * 1000 }).catch(() => {});
+          }
+        })
         .catch(err => console.warn('[Budget Club] SW erreur:', err));
-    }
-
-    // Request permission if not yet decided
-    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
-      Notification.requestPermission().then(perm => {
-        console.log('[Budget Club] Permission notifications:', perm);
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data?.type === 'NOTIF_SENT') setNotifSettings(event.data.settings);
       });
-    } else {
-      console.log('[Budget Club] Permission notifications:', typeof Notification !== 'undefined' ? Notification.permission : 'non supporté');
     }
 
-    // Send scheduled notification if due
-    const s = getNotifSettings();
-    if (s?.enabled && shouldSendNotif(s) && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-      const [h] = (s.time || '18:00').split(':').map(Number);
-      if (new Date().getHours() >= h) {
-        sendNotification('Budget Club 💰', 'Pensez à mettre à jour votre budget !');
-        const updated = { ...s, lastSent: new Date().toISOString() };
-        saveNotifSettings(updated);
-        setNotifSettings(updated);
-      }
+    // Request permission
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      Notification.requestPermission().then(perm => console.log('[Budget Club] Permission:', perm));
+    } else {
+      console.log('[Budget Club] Permission:', typeof Notification !== 'undefined' ? Notification.permission : 'N/A');
     }
+
+    // Check at startup
+    checkNotif().then(updated => { if (updated) setNotifSettings(updated); });
+
+    // Check each time app becomes visible (retour de veille, changement d'onglet)
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkNotif().then(updated => { if (updated) setNotifSettings(updated); });
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
   }, []);
+
+  // Sync settings to SW whenever they change
+  useEffect(() => {
+    if (notifSettings) sendSettingsToSW(notifSettings);
+  }, [notifSettings]);
 
   const addExpense = (exp)  => { if (m.closed) return; updateData(mm => { mm.expenses = [...mm.expenses, exp]; }); };
   const addRevenu  = (rev)  => { if (m.closed) return; updateData(mm => { mm.revenues = [...mm.revenues, rev]; }); };
