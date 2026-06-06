@@ -151,6 +151,18 @@ const shouldSendNotif = (s) => {
   return f === 'daily' ? diffDays >= 1 : f === 'every2days' ? diffDays >= 2 : f === 'weekly' ? diffDays >= 7 : diffDays >= 30;
 };
 
+const sendNotification = async (title, body) => {
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+  if ('serviceWorker' in navigator) {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      reg.showNotification(title, { body, icon: '/logo-budget-club-favicon-rose.png' });
+      return;
+    } catch (e) { console.warn('[Budget Club] SW showNotification failed:', e); }
+  }
+  new Notification(title, { body, icon: '/logo-budget-club-favicon-rose.png' });
+};
+
 // ─── HOOK STORAGE ────────────────────────────────────────────
 function useMonthData(mi) {
   const key = storageKey(mi);
@@ -309,7 +321,7 @@ const WarningTriangle = () => (
 const ClosedBanner = () => (
   <div style={{ background:C.vert, padding:'7px 16px', display:'flex', alignItems:'center', justifyContent:'center', gap:8, flexShrink:0, marginBottom:12 }}>
     <i className="ti ti-lock" style={{ fontSize:13, color:C.gold }} />
-    <span style={{ fontFamily:sans, fontSize:12, fontWeight:600, color:'rgba(255,255,255,0.85)' }}>Mois clôturé 🔒</span>
+    <span style={{ fontFamily:sans, fontSize:12, fontWeight:600, color:'rgba(255,255,255,0.85)' }}>Mois clôturé</span>
   </div>
 );
 
@@ -1781,6 +1793,15 @@ const NotifModal = ({ settings, onSave, onClose }) => {
     onSave(s);
   };
 
+  const handleTest = async () => {
+    if (typeof Notification === 'undefined') { alert('Notifications non supportées sur ce navigateur.'); return; }
+    if (Notification.permission !== 'granted') {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') { alert('Permission refusée. Activez les notifications dans les réglages du navigateur.'); return; }
+    }
+    await sendNotification('Budget Club 💰', 'Notification test — tout fonctionne !');
+  };
+
   return (
     <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(28,41,28,0.5)', zIndex:200, display:'flex', alignItems:'flex-end' }}>
       <div style={{ background:'#fff', borderRadius:'20px 20px 0 0', width:'100%', padding:'24px 20px', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', display:'flex', flexDirection:'column', gap:20 }}>
@@ -1816,6 +1837,8 @@ const NotifModal = ({ settings, onSave, onClose }) => {
           <div style={{ fontFamily:sans, fontSize:11, fontWeight:600, letterSpacing:1, textTransform:'uppercase', color:C.muted, marginBottom:8 }}>Heure du rappel</div>
           <input type="time" value={time} onChange={e => setTime(e.target.value)} style={{ width:'100%', padding:'10px 12px', border:`1px solid ${C.border}`, borderRadius:8, fontFamily:sans, fontSize:14, color:C.vert, background:'white' }} />
         </div>
+
+        <button onClick={handleTest} style={{ width:'100%', padding:11, background:'white', color:C.vert, border:`1.5px solid ${C.vert}`, borderRadius:10, fontFamily:sans, fontSize:14, fontWeight:600, cursor:'pointer' }}>Envoyer une notification test</button>
 
         <button onClick={handleSave} style={{ width:'100%', padding:12, background:C.vert, color:'white', border:'none', borderRadius:10, fontFamily:sans, fontSize:14, fontWeight:600, cursor:'pointer' }}>Enregistrer</button>
       </div>
@@ -1879,14 +1902,28 @@ export default function App() {
   const { data: m, loading, updateData } = useMonthData(mi);
 
   useEffect(() => {
-    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
-      Notification.requestPermission();
+    // Register service worker (required for notifications on mobile)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('[Budget Club] SW enregistré:', reg.scope))
+        .catch(err => console.warn('[Budget Club] SW erreur:', err));
     }
+
+    // Request permission if not yet decided
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      Notification.requestPermission().then(perm => {
+        console.log('[Budget Club] Permission notifications:', perm);
+      });
+    } else {
+      console.log('[Budget Club] Permission notifications:', typeof Notification !== 'undefined' ? Notification.permission : 'non supporté');
+    }
+
+    // Send scheduled notification if due
     const s = getNotifSettings();
     if (s?.enabled && shouldSendNotif(s) && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
       const [h] = (s.time || '18:00').split(':').map(Number);
       if (new Date().getHours() >= h) {
-        new Notification('Budget Club 💰', { body: 'Pensez à mettre à jour votre budget !', icon: '/logo-budget-club-favicon-rose.png' });
+        sendNotification('Budget Club 💰', 'Pensez à mettre à jour votre budget !');
         const updated = { ...s, lastSent: new Date().toISOString() };
         saveNotifSettings(updated);
         setNotifSettings(updated);
