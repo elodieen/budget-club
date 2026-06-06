@@ -604,7 +604,7 @@ export function AccueilView({ m, mi, setMi, setView, updateData }) {
 }
 
 // Vue BUDGET
-export function BudgetView({ m, setView, updateData }) {
+export function BudgetView({ m, mi, setMi, setView, updateData }) {
   const cb   = m.catBudgets || {};
   const [customCats, setCustomCats]       = useState(getCustomCats);
   const [showEnv, setShowEnv]             = useState(false);
@@ -631,7 +631,9 @@ export function BudgetView({ m, setView, updateData }) {
 
   return (
     <>
+      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} />
       {m.closed && <ClosedBanner />}
+      <div style={{ textAlign:'center', padding:'2px 0 8px', fontFamily:serif, fontSize:20, fontWeight:600, color:C.vert }}>Budget</div>
       <div style={{ flex:1, overflowY:'auto', padding:'0 16px 12px', background:C.beige }}>
         {/* Card état budget */}
         <div onClick={() => setView('budget_edit')}
@@ -920,14 +922,16 @@ function RevenueRow({ r, i, onUpdate, onDelete, closed }) {
   );
 }
 
-export function RevenusView({ m, updateData }) {
+export function RevenusView({ m, mi, setMi, updateData }) {
   const rev = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
   const del = (i)         => updateData(mm => { mm.revenues = mm.revenues.filter((_,idx) => idx !== i); });
   const upd = (i, updated) => updateData(mm => { mm.revenues = mm.revenues.map((r, idx) => idx === i ? updated : r); });
 
   return (
     <>
+      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} />
       {m.closed && <ClosedBanner />}
+      <div style={{ textAlign:'center', padding:'2px 0 8px', fontFamily:serif, fontSize:20, fontWeight:600, color:C.vert }}>Revenus</div>
       {/* Total fixe en haut */}
       <div style={{ background:C.vert, flexShrink:0, padding:'14px 20px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
         <span style={{ fontFamily:sans, fontSize:12, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.5)' }}>Total</span>
@@ -947,7 +951,7 @@ export function RevenusView({ m, updateData }) {
 }
 
 // Vue DÉPENSES + FACTURES
-export function DepensesView({ m, updateData, depTab, setDepTab }) {
+export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab }) {
   const exps    = m.expenses;
   const bills   = m.bills.filter(b => b.selected !== false);
   const unpaid  = bills.filter(b => !b.paid);
@@ -984,7 +988,9 @@ export function DepensesView({ m, updateData, depTab, setDepTab }) {
 
   return (
     <>
+      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} />
       {m.closed && <ClosedBanner />}
+      <div style={{ textAlign:'center', padding:'2px 0 4px', fontFamily:serif, fontSize:20, fontWeight:600, color:C.vert }}>Dépenses</div>
       {/* Switcher capsule */}
       <div style={{ padding:'10px 16px', background:C.beige, flexShrink:0, display:'flex', gap:10 }}>
         {[{id:'factures',label:'Factures'},{id:'depenses',label:'Dépenses'}].map(t => (
@@ -1277,23 +1283,27 @@ const SavingsDetail = ({ type, histItems, soldeItem, onSaveHist, onDeleteHist, o
                 <div style={{ fontFamily:sans, fontSize:10, color:C.muted, textTransform:'uppercase', letterSpacing:.5 }}>{item.label || 'Mise à jour'}</div>
                 <div style={{ fontFamily:sans, fontSize:12, color:C.vert, marginTop:1 }}>{item.date ? item.date.split('-').reverse().join('/') : '—'}</div>
               </div>
-              {editId === item.id ? (
+              {!item.readOnly && editId === item.id ? (
                 <input autoFocus type="number" step="0.01" value={editVal}
                   onChange={e => setEditVal(e.target.value)}
                   onBlur={() => doSaveHist(item.id, editVal)}
                   onKeyDown={e => e.key === 'Enter' && doSaveHist(item.id, editVal)}
                   style={{ width:90, padding:'5px 8px', border:`1px solid ${C.border}`, borderRadius:7, fontFamily:serif, fontSize:15, color:C.vert, textAlign:'right' }} />
               ) : (
-                <span style={{ fontFamily:serif, fontSize:16, fontWeight:600, color:C.vert, flexShrink:0 }}>{fmtR(item.montant)}</span>
+                <span style={{ fontFamily:serif, fontSize:16, fontWeight:600, color: item.readOnly ? C.muted : C.vert, flexShrink:0 }}>{fmtR(item.montant)}</span>
               )}
-              <button onClick={() => { setEditId(item.id); setEditVal(String(item.montant)); }}
-                style={{ background:'none', border:'none', cursor:'pointer', padding:'2px 4px', color:C.muted, flexShrink:0 }}>
-                <i className="ti ti-pencil" style={{ fontSize:13 }} />
-              </button>
-              <button onClick={() => onDeleteHist(item.id)}
-                style={{ background:'none', border:'none', cursor:'pointer', padding:'2px 4px', color:'rgba(192,57,43,0.45)', flexShrink:0 }}>
-                <i className="ti ti-trash" style={{ fontSize:13 }} />
-              </button>
+              {!item.readOnly && (
+                <>
+                  <button onClick={() => { setEditId(item.id); setEditVal(String(item.montant)); }}
+                    style={{ background:'none', border:'none', cursor:'pointer', padding:'2px 4px', color:C.muted, flexShrink:0 }}>
+                    <i className="ti ti-pencil" style={{ fontSize:13 }} />
+                  </button>
+                  <button onClick={() => onDeleteHist(item.id)}
+                    style={{ background:'none', border:'none', cursor:'pointer', padding:'2px 4px', color:'rgba(192,57,43,0.45)', flexShrink:0 }}>
+                    <i className="ti ti-trash" style={{ fontSize:13 }} />
+                  </button>
+                </>
+              )}
             </div>
           ))}
 
@@ -1382,15 +1392,6 @@ export function EpargneView({ currentYear }) {
   const mx = Math.max(...md.map(d => d.total), 1);
 
   const peaRendTotal = peaRend.reduce((s,r) => s + (r.montant||0), 0);
-  // Solde actuel = dernière valeur saisie via "Nouveau solde" (historique) ou solde initial
-  const latestLivret = livretHist.length > 0
-    ? [...livretHist].sort((a,b) => new Date(b.date) - new Date(a.date))[0].montant
-    : (livretSolde?.amount || 0);
-  const latestPea = peaHist.length > 0
-    ? [...peaHist].sort((a,b) => new Date(b.date) - new Date(a.date))[0].montant
-    : (peaSolde?.montant || 0);
-  const livretTotal  = latestLivret;
-  const peaTotal     = latestPea;
   const fmtDate      = (d) => d ? d.split('-').reverse().join('/') : '';
 
   const fmtShortDate = d => {
@@ -1398,25 +1399,48 @@ export function EpargneView({ currentYear }) {
     const [, mo, da] = d.split('-');
     return `${parseInt(da)}/${parseInt(mo)}`;
   };
-  const buildAbsoluteChartSeries = (soldeInitial, historique) => {
-    const firstPt = { date: soldeInitial?.date || '', montant: soldeInitial?.montant || 0 };
-    const sortedHist = [...historique]
-      .filter(h => h.date && h.montant !== undefined)
-      .sort((a, b) => new Date(a.date) - new Date(b.date));
-    const allPts = firstPt.date ? [firstPt, ...sortedHist] : sortedHist;
-    console.log('[Chart] points:', allPts);
-    return allPts.map(p => ({ date: p.date, label: fmtShortDate(p.date), value: p.montant }));
+
+  // Virements mensuels issus des dépenses épargne
+  const allLivretVirements = months.flatMap(mo => mo ? mo.expenses.filter(e => e.cat === 'epargne_livret') : []);
+  const allPeaVirements    = months.flatMap(mo => mo ? mo.expenses.filter(e => e.cat === 'epargne_pea')    : []);
+
+  // Total = dernier solde manuel + virements postérieurs, ou solde initial + tous virements
+  const computeTotal = (initialAmount, manualHist, virements) => {
+    if (manualHist.length > 0) {
+      const last = [...manualHist].sort((a,b) => new Date(b.date) - new Date(a.date))[0];
+      const after = virements
+        .filter(v => v.date && new Date(v.date) > new Date(last.date))
+        .reduce((s, v) => s + (v.amount || 0), 0);
+      return last.montant + after;
+    }
+    return initialAmount + virements.reduce((s, v) => s + (v.amount || 0), 0);
   };
 
-  console.log('[Épargne] livretSolde:', livretSolde, '| livretHist:', livretHist);
-  console.log('[Épargne] peaSolde:', peaSolde, '| peaHist:', peaHist);
-  const livretChartData = buildAbsoluteChartSeries(
-    { date: livretSolde?.date, montant: livretSolde?.amount || 0 },
-    livretHist
+  const livretTotal = computeTotal(livretSolde?.amount || 0, livretHist, allLivretVirements);
+  const peaTotal    = computeTotal(peaSolde?.montant   || 0, peaHist,    allPeaVirements);
+
+  // Série cumulative : solde initial → virements (delta) + ajustements manuels (absolu)
+  const buildCumulativeChartSeries = (initialDate, initialAmount, manualHist, virements) => {
+    if (!initialDate) return [];
+    const events = [
+      ...manualHist.filter(h => h.date).map(h => ({ date: h.date, type: 'manual', montant: h.montant })),
+      ...virements.filter(v => v.date).map(v => ({ date: v.date, type: 'virement', delta: v.amount || 0 })),
+    ].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const pts = [{ date: initialDate, label: fmtShortDate(initialDate), value: initialAmount }];
+    let cur = initialAmount;
+    events.forEach(e => {
+      if (e.type === 'manual') cur = e.montant;
+      else cur += e.delta;
+      pts.push({ date: e.date, label: fmtShortDate(e.date), value: cur });
+    });
+    return pts;
+  };
+
+  const livretChartData = buildCumulativeChartSeries(
+    livretSolde?.date, livretSolde?.amount || 0, livretHist, allLivretVirements
   );
-  const peaChartData = buildAbsoluteChartSeries(
-    { date: peaSolde?.date, montant: peaSolde?.montant || 0 },
-    peaHist
+  const peaChartData = buildCumulativeChartSeries(
+    peaSolde?.date, peaSolde?.montant || 0, peaHist, allPeaVirements
   );
 
   const patchMonthCat = (monthIdx, catId, newAmount) => {
@@ -1444,6 +1468,25 @@ export function EpargneView({ currentYear }) {
 
   const livretDetailItems = md.filter(d => d.livret > 0).map(d => ({ id:`livret-${d.idx}`, label: MS[d.idx], montant: d.livret, idx: d.idx }));
   const peaDetailItems = peaRend.map(r => ({ ...r, label: r.date ? new Date(r.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : '—' }));
+  const livretCombinedHist = [
+    ...livretHist,
+    ...allLivretVirements.map(v => ({ id:`vir-l-${v.id}`, date: v.date, montant: v.amount, label: 'Virement', readOnly: true }))
+  ];
+  const peaCombinedHist = [
+    ...peaHist,
+    ...allPeaVirements.map(v => ({ id:`vir-p-${v.id}`, date: v.date, montant: v.amount, label: 'Virement', readOnly: true }))
+  ];
+  const lastUpdateDate = (() => {
+    const allDates = [
+      ...livretHist.map(h => h.date),
+      ...allLivretVirements.map(v => v.date),
+      ...peaHist.map(h => h.date),
+      ...allPeaVirements.map(v => v.date),
+    ].filter(Boolean);
+    if (!allDates.length) return null;
+    const latest = allDates.reduce((a, b) => (new Date(a) > new Date(b) ? a : b));
+    return latest.split('-').reverse().join('/');
+  })();
   const flashSaved = (type) => { setEpargneFlash(type); setTimeout(() => setEpargneFlash(null), 1000); };
 
   const dataMonths = months.filter(m => m !== null);
@@ -1487,24 +1530,27 @@ export function EpargneView({ currentYear }) {
 
         {/* ── Cards fixes ── */}
         <div style={{ flexShrink:0, padding:'0 16px', background:C.beige }}>
-          <div style={{ fontFamily:sans, fontSize:11, color:C.muted, margin:'4px 0 8px', fontWeight:500 }}>Total à date</div>
+          <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', margin:'4px 0 8px' }}>
+            <span style={{ fontFamily:sans, fontSize:11, color:C.muted, fontWeight:500 }}>Total à date</span>
+            {lastUpdateDate && <span style={{ fontFamily:sans, fontSize:10, color:C.muted }}>Dernière maj le {lastUpdateDate}</span>}
+          </div>
 
           {/* ── Livret A ── */}
           <div style={{ background:C.vert, borderRadius:12, padding:'12px 16px', marginBottom: editSolde ? 0 : 8, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
             <div>
               <span style={{ fontFamily:serif, fontSize:16, fontWeight:700, color:'white', display:'block', marginBottom:6 }}>Livret A</span>
-              <div style={{ display:'flex', gap:8 }}>
+              <div style={{ display:'flex', gap:16 }}>
                 <button title="Nouveau solde" onClick={() => { setSoldeForm({ amount: '', date: new Date().toISOString().split('T')[0] }); setEditSolde(v => !v); }}
-                  style={{ background:'rgba(255,255,255,0.15)', border:'none', cursor:'pointer', padding:'4px 10px', borderRadius:14 }}>
-                  <i className="ti ti-pencil" style={{ fontSize:13, color: editSolde ? C.gold : 'rgba(255,255,255,0.75)' }} />
+                  style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
+                  <i className="ti ti-pencil" style={{ fontSize:18, color: editSolde ? C.gold : 'rgba(255,255,255,0.75)' }} />
                 </button>
                 <button onClick={() => setDetailType('livret')}
-                  style={{ background:'rgba(255,255,255,0.15)', border:'none', cursor:'pointer', padding:'4px 10px', borderRadius:14 }}>
-                  <i className="ti ti-list-details" style={{ fontSize:13, color:'rgba(255,255,255,0.75)' }} />
+                  style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
+                  <i className="ti ti-list-details" style={{ fontSize:18, color:'rgba(255,255,255,0.75)' }} />
                 </button>
                 <button onClick={() => setChartType('livret')}
-                  style={{ background:'rgba(255,255,255,0.15)', border:'none', cursor:'pointer', padding:'4px 10px', borderRadius:14 }}>
-                  <i className="ti ti-chart-line" style={{ fontSize:13, color:'rgba(255,255,255,0.75)' }} />
+                  style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
+                  <i className="ti ti-chart-line" style={{ fontSize:18, color:'rgba(255,255,255,0.75)' }} />
                 </button>
               </div>
             </div>
@@ -1531,7 +1577,7 @@ export function EpargneView({ currentYear }) {
                   const updated = { ...livretSolde, amount:a, date:soldeForm.date };
                   saveLivretSolde(updated);
                   setLivretSolde(updated);
-                  const entry = { id:'lh'+Date.now(), date: soldeForm.date || new Date().toISOString().split('T')[0], montant: a, label: 'Nouveau solde' };
+                  const entry = { id:'lh'+Date.now(), date: soldeForm.date || new Date().toISOString().split('T')[0], montant: a, label: 'Mise à jour manuelle' };
                   const uh = [...livretHist, entry]; saveLivretHist(uh); setLivretHist(uh);
                   setEditSolde(false);
                   flashSaved('livret');
@@ -1545,22 +1591,22 @@ export function EpargneView({ currentYear }) {
           )}
           {epargneFlash === 'livret' && <div style={{ textAlign:'center', fontFamily:sans, fontSize:12, color:'#2E7D32', fontWeight:600, padding:'4px 0' }}>Sauvegardé ✓</div>}
 
-          {/* ── PEA / Trade ── */}
+          {/* ── PEA ── */}
           <div style={{ background:C.rose, borderRadius:12, padding:'12px 16px', marginBottom: editPeaSolde ? 0 : 8, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
             <div>
-              <span style={{ fontFamily:serif, fontSize:16, fontWeight:700, color:C.vert, display:'block', marginBottom:6 }}>PEA / Trade</span>
-              <div style={{ display:'flex', gap:8 }}>
+              <span style={{ fontFamily:serif, fontSize:16, fontWeight:700, color:C.vert, display:'block', marginBottom:6 }}>PEA</span>
+              <div style={{ display:'flex', gap:16 }}>
                 <button title="Nouveau solde" onClick={() => { setPeaSoldeForm({ montant: '', rendement: String(peaSolde?.rendement||''), pct: String(peaSolde?.pct||''), date: new Date().toISOString().split('T')[0] }); setEditPeaSolde(v => !v); }}
-                  style={{ background:'rgba(28,41,28,0.1)', border:'none', cursor:'pointer', padding:'4px 10px', borderRadius:14 }}>
-                  <i className="ti ti-pencil" style={{ fontSize:13, color: editPeaSolde ? C.vert : 'rgba(28,41,28,0.45)' }} />
+                  style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
+                  <i className="ti ti-pencil" style={{ fontSize:18, color: editPeaSolde ? C.gold : C.vert }} />
                 </button>
                 <button onClick={() => setDetailType('pea')}
-                  style={{ background:'rgba(28,41,28,0.1)', border:'none', cursor:'pointer', padding:'4px 10px', borderRadius:14 }}>
-                  <i className="ti ti-list-details" style={{ fontSize:13, color:'rgba(28,41,28,0.45)' }} />
+                  style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
+                  <i className="ti ti-list-details" style={{ fontSize:18, color:C.vert }} />
                 </button>
                 <button onClick={() => setChartType('pea')}
-                  style={{ background:'rgba(28,41,28,0.1)', border:'none', cursor:'pointer', padding:'4px 10px', borderRadius:14 }}>
-                  <i className="ti ti-chart-line" style={{ fontSize:13, color:'rgba(28,41,28,0.45)' }} />
+                  style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
+                  <i className="ti ti-chart-line" style={{ fontSize:18, color:C.vert }} />
                 </button>
               </div>
             </div>
@@ -1587,7 +1633,7 @@ export function EpargneView({ currentYear }) {
                   const updated = { ...peaSolde, montant:a, date:peaSoldeForm.date };
                   savePeaSolde(updated);
                   setPeaSolde(updated);
-                  const entry = { id:'ph'+Date.now(), date: peaSoldeForm.date || new Date().toISOString().split('T')[0], montant: a, label: 'Nouveau solde' };
+                  const entry = { id:'ph'+Date.now(), date: peaSoldeForm.date || new Date().toISOString().split('T')[0], montant: a, label: 'Mise à jour manuelle' };
                   const uh = [...peaHist, entry]; savePeaHist(uh); setPeaHist(uh);
                   setEditPeaSolde(false);
                   flashSaved('pea');
@@ -1643,14 +1689,14 @@ export function EpargneView({ currentYear }) {
           data={chartType === 'livret' ? livretChartData : peaChartData}
           color={C.vert}
           svgBg={chartType === 'livret' ? 'white' : C.roseL}
-          title={chartType === 'livret' ? 'Livret A' : 'PEA / Trade'}
+          title={chartType === 'livret' ? 'Livret A' : 'PEA'}
           onClose={() => setChartType(null)}
         />
       )}
       {detailType && !showPeaRend && (
         <SavingsDetail
           type={detailType}
-          histItems={detailType === 'livret' ? livretHist : peaHist}
+          histItems={detailType === 'livret' ? livretCombinedHist : peaCombinedHist}
           soldeItem={detailType === 'livret'
             ? { montant: livretSolde?.amount || 0, date: livretSolde?.date || '' }
             : { montant: peaSolde?.montant   || 0, date: peaSolde?.date   || '' }
@@ -1760,10 +1806,10 @@ export default function App() {
   const renderView = () => {
     switch (view) {
       case 'accueil':     return <AccueilView m={m} mi={mi} setMi={setMi} setView={setView} updateData={updateData} />;
-      case 'budget':      return <BudgetView  m={m} setView={setView} updateData={updateData} />;
+      case 'budget':      return <BudgetView  m={m} mi={mi} setMi={setMi} setView={setView} updateData={updateData} />;
       case 'budget_edit': return <BudgetEditView m={m} updateData={updateData} setView={setView} />;
-      case 'revenus':     return <RevenusView m={m} updateData={updateData} />;
-      case 'depenses':    return <DepensesView m={m} updateData={updateData} depTab={depTab} setDepTab={setDepTab} />;
+      case 'revenus':     return <RevenusView m={m} mi={mi} setMi={setMi} updateData={updateData} />;
+      case 'depenses':    return <DepensesView m={m} mi={mi} setMi={setMi} updateData={updateData} depTab={depTab} setDepTab={setDepTab} />;
       case 'epargne':     return <EpargneView currentYear={mi.year} />;
       default:            return null;
     }
@@ -1779,8 +1825,8 @@ export default function App() {
       <div style={{ background:'#2A1F1A', minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', padding:12, fontFamily:sans }}>
         <div style={{ background:C.beige, borderRadius:24, overflow:'hidden', display:'flex', flexDirection:'column', width:'100%', maxWidth:390, height:'90vh', maxHeight:780, position:'relative', boxShadow:'0 20px 60px rgba(0,0,0,0.35)' }}>
 
-          {/* En-tête page (sauf accueil et épargne qui gèrent le leur) */}
-          {!['accueil','budget_edit','epargne'].includes(view) && (
+          {/* En-tête page (sauf accueil, épargne, budget, revenus, dépenses qui gèrent le leur) */}
+          {!['accueil','budget_edit','epargne','budget','revenus','depenses'].includes(view) && (
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px 8px', background:C.beige, flexShrink:0 }}>
               <button onClick={() => setView('accueil')} style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:22, width:32 }}>‹</button>
               <span style={{ fontFamily:serif, fontSize:20, fontWeight:600, color:C.vert, letterSpacing:1, textTransform:'uppercase' }}>
