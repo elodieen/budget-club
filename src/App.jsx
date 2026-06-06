@@ -36,9 +36,12 @@ const savePin = (id, pin) => localStorage.setItem(`profile:${id}:pin`, pin);
 const initProfiles = () => {
   let profiles = getProfiles();
   if (!profiles) {
-    profiles = [{ id:'elodie', name:'Élodie' }, { id:'ludivine', name:'Ludivine' }];
+    profiles = [{ id:'elodie', name:'Elodie' }, { id:'ludivine', name:'Ludivine' }];
     saveProfiles(profiles);
   }
+  // Correction orthographe Élodie → Elodie
+  profiles = profiles.map(p => p.id === 'elodie' && p.name === 'Élodie' ? { ...p, name:'Elodie' } : p);
+  saveProfiles(profiles);
   if (!getPin('elodie'))   savePin('elodie',   '123456');
   if (!getPin('ludivine')) savePin('ludivine', '123456');
   return profiles;
@@ -56,6 +59,17 @@ const migrateData = () => {
     if (v !== null) { localStorage.setItem(`elodie:${k}`, v); localStorage.removeItem(k); }
   });
   localStorage.setItem('profile:migration:v1', '1');
+};
+
+const clearLudivineData = () => {
+  if (localStorage.getItem('profile:clear-ludivine:v1')) return;
+  const keys = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('ludivine:')) keys.push(k);
+  }
+  keys.forEach(k => localStorage.removeItem(k));
+  localStorage.setItem('profile:clear-ludivine:v1', '1');
 };
 
 export const CATS = [
@@ -104,7 +118,9 @@ export const BILLS_DEFAULT = [
 const mkMonth = () => ({
   catBudgets: {},
   revenues:   [],
-  bills:      BILLS_DEFAULT.map(b => ({...b, realAmount: b.amount, paid: false, paidDate: ''})),
+  bills:      currentProfileId === 'elodie'
+    ? BILLS_DEFAULT.map(b => ({...b, realAmount: b.amount, paid: false, paidDate: ''}))
+    : [],
   expenses:   [],
   closed:     false,
 });
@@ -277,7 +293,7 @@ const ProfileMenu = ({ onClose, onSwitch, onCreateProfile }) => {
             {[
               { icon:'ti-switch-horizontal', label:'Changer de profil',   action: onSwitch },
               { icon:'ti-key',               label:'Changer mon code PIN', action: () => { setStage('old'); setPinInput(''); } },
-              { icon:'ti-user-plus',         label:'Ajouter un profil',    action: onCreateProfile },
+              ...(currentProfileId === 'elodie' ? [{ icon:'ti-user-plus', label:'Ajouter un profil', action: onCreateProfile }] : []),
             ].map(btn => (
               <button key={btn.label} onClick={btn.action}
                 style={{ width:'100%', display:'flex', alignItems:'center', gap:12, padding:'12px 10px', background:'none', border:'none', cursor:'pointer', borderRadius:10, marginBottom:4, textAlign:'left' }}>
@@ -1983,42 +1999,43 @@ const SplashLogo = ({ size = 110, titleSize = 48, spacing = '8px' }) => (
   </>
 );
 
-const ProfileSelectScreen = ({ profiles, onSelect, onCreateProfile }) => (
-  <SplashBg>
-    <SplashLogo />
-    <div style={{ width:'100%', height:1, background:'rgba(238,196,196,0.3)', margin:'22px 0 16px' }} />
-    <div style={{ fontFamily:serif, fontSize:17, fontWeight:700, color:C.rose, letterSpacing:'3px', textTransform:'uppercase', marginBottom:20 }}>
-      CHOISIR UN PROFIL
-    </div>
-    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, width:'100%' }}>
-      {profiles.map(p => (
-        <button key={p.id} onClick={() => onSelect(p)}
-          style={{ background:'rgba(255,255,255,0.10)', border:`1.5px solid ${C.rose}`, borderRadius:16, padding:'18px 12px', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
-          <div style={{ width:54, height:54, borderRadius:'50%', background:C.vert, border:`2px solid ${C.rose}`, display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <span style={{ fontFamily:serif, fontSize:22, fontWeight:700, color:C.rose }}>{p.name[0].toUpperCase()}</span>
-          </div>
-          <span style={{ fontFamily:sans, fontSize:13, fontWeight:600, color:'white' }}>{p.name}</span>
-        </button>
-      ))}
-      {profiles.length < 4 && (
-        <button onClick={onCreateProfile}
-          style={{ background:'rgba(255,255,255,0.05)', border:`1.5px dashed rgba(238,196,196,0.35)`, borderRadius:16, padding:'18px 12px', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
-          <div style={{ width:54, height:54, borderRadius:'50%', background:'rgba(255,255,255,0.08)', border:`1.5px dashed rgba(238,196,196,0.35)`, display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <i className="ti ti-user-plus" style={{ fontSize:22, color:'rgba(238,196,196,0.55)' }} />
-          </div>
-          <span style={{ fontFamily:sans, fontSize:12, color:'rgba(255,255,255,0.45)' }}>Ajouter</span>
-        </button>
-      )}
-    </div>
-  </SplashBg>
-);
+const ProfileSelectScreen = ({ profiles, onSelect, onCreateProfile }) => {
+  const [selected, setSelected] = useState(profiles[0]?.id || '');
+  return (
+    <SplashBg>
+      <SplashLogo />
+      <div style={{ width:'100%', height:1, background:'rgba(238,196,196,0.3)', margin:'22px 0 16px' }} />
+      <div style={{ fontFamily:serif, fontSize:17, fontWeight:700, color:C.rose, letterSpacing:'3px', textTransform:'uppercase', marginBottom:20 }}>
+        CHOISIR UN PROFIL
+      </div>
+      <select
+        value={selected}
+        onChange={e => setSelected(e.target.value)}
+        style={{ width:'100%', padding:'12px 16px', background:'rgba(255,255,255,0.15)', border:`1.5px solid ${C.rose}`, borderRadius:10, fontFamily:serif, fontSize:16, color:'white', textAlign:'center', outline:'none', cursor:'pointer', appearance:'none', WebkitAppearance:'none' }}>
+        {profiles.map(p => (
+          <option key={p.id} value={p.id} style={{ background:C.vert, color:'white' }}>{p.name}</option>
+        ))}
+      </select>
+      <button
+        onClick={() => { const p = profiles.find(x => x.id === selected); if (p) onSelect(p); }}
+        style={{ marginTop:14, width:'100%', padding:'13px 0', background:C.rose, border:'none', borderRadius:10, fontFamily:sans, fontSize:14, fontWeight:700, color:C.vert, cursor:'pointer', letterSpacing:1 }}>
+        Continuer
+      </button>
+    </SplashBg>
+  );
+};
 
-const PinScreen = ({ profile, onSuccess, onForgot }) => {
-  const [pin,   setPin]   = useState('');
-  const [error, setError] = useState(false);
-  const [shake, setShake] = useState(false);
+const PinScreen = ({ profile, onSuccess }) => {
+  const [pin,      setPin]      = useState('');
+  const [error,    setError]    = useState(false);
+  const [shake,    setShake]    = useState(false);
+  // reset flow: null | 'new' | 'confirm'
+  const [resetStage, setResetStage] = useState(null);
+  const [newPin,     setNewPin]     = useState('');
+  const [resetErr,   setResetErr]   = useState('');
 
   const handleKey = (k) => {
+    if (resetStage) { handleResetKey(k); return; }
     if (k === 'del') { setPin(p => p.slice(0,-1)); return; }
     if (pin.length >= 6) return;
     const next = pin + k;
@@ -2032,33 +2049,87 @@ const PinScreen = ({ profile, onSuccess, onForgot }) => {
     }
   };
 
+  const handleResetKey = (k) => {
+    if (resetStage === 'new') {
+      if (k === 'del') { setNewPin(p => p.slice(0,-1)); return; }
+      if (newPin.length >= 6) return;
+      const next = newPin + k;
+      setNewPin(next);
+      if (next.length === 6) setResetStage('confirm');
+    } else {
+      if (k === 'del') { setPin(p => p.slice(0,-1)); return; }
+      if (pin.length >= 6) return;
+      const next = pin + k;
+      setPin(next);
+      if (next.length === 6) {
+        if (next === newPin) {
+          savePin(profile.id, next);
+          onSuccess(profile);
+        } else {
+          setResetErr('Les codes ne correspondent pas');
+          setPin(''); setNewPin('');
+          setTimeout(() => { setResetErr(''); setResetStage('new'); }, 1200);
+        }
+      }
+    }
+  };
+
+  const curResetPin = resetStage === 'new' ? newPin : pin;
+
   return (
     <SplashBg>
       <SplashLogo size={80} titleSize={30} spacing="6px" />
-      <div style={{ marginTop:26, fontFamily:serif, fontSize:20, fontWeight:600, color:C.rose }}>{profile.name}</div>
-      <div style={{
-        display:'flex', gap:12, marginTop:16, marginBottom:20,
-        animation: shake ? 'pinShake 0.5s' : 'none',
-      }}>
-        {Array.from({ length:6 }).map((_,i) => (
-          <div key={i} style={{ width:13, height:13, borderRadius:'50%', background: i < pin.length ? C.rose : 'rgba(255,255,255,0.2)', border:`1.5px solid ${i < pin.length ? C.rose : 'rgba(255,255,255,0.3)'}`, transition:'background 0.15s' }} />
-        ))}
-      </div>
-      {error && <div style={{ fontFamily:sans, fontSize:12, color:C.rose, marginBottom:8 }}>Code incorrect</div>}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, width:'100%', maxWidth:280 }}>
-        {PIN_KEYS.map((k, i) => (
-          k === '' ? <div key={i} /> :
-          <button key={i} onClick={() => handleKey(k)}
-            style={{ height:56, borderRadius:12, background:'rgba(255,255,255,0.12)', border:'none', fontFamily: k === 'del' ? sans : serif, fontSize: k === 'del' ? 14 : 22, color:'white', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
-            {k === 'del' ? '⌫' : k}
+      {!resetStage ? (
+        <>
+          <div style={{ marginTop:26, fontFamily:serif, fontSize:20, fontWeight:600, color:C.rose }}>{profile.name}</div>
+          <div style={{ display:'flex', gap:12, marginTop:16, marginBottom:20, animation: shake ? 'pinShake 0.5s' : 'none' }}>
+            {Array.from({ length:6 }).map((_,i) => (
+              <div key={i} style={{ width:13, height:13, borderRadius:'50%', background: i < pin.length ? C.rose : 'rgba(255,255,255,0.2)', border:`1.5px solid ${i < pin.length ? C.rose : 'rgba(255,255,255,0.3)'}`, transition:'background 0.15s' }} />
+            ))}
+          </div>
+          {error && <div style={{ fontFamily:sans, fontSize:12, color:C.rose, marginBottom:8 }}>Code incorrect</div>}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, width:'100%', maxWidth:280 }}>
+            {PIN_KEYS.map((k, i) => (
+              k === '' ? <div key={i} /> :
+              <button key={i} onClick={() => handleKey(k)}
+                style={{ height:56, borderRadius:12, background:'rgba(255,255,255,0.12)', border:'none', fontFamily: k === 'del' ? sans : serif, fontSize: k === 'del' ? 14 : 22, color:'white', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                {k === 'del' ? '⌫' : k}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => { setPin(''); setResetStage('new'); setNewPin(''); setResetErr(''); }}
+            style={{ marginTop:20, background:'none', border:'none', color:'rgba(255,255,255,0.45)', fontFamily:sans, fontSize:12, cursor:'pointer', textDecoration:'underline' }}>
+            Code oublié ?
           </button>
-        ))}
-      </div>
-      {onForgot && (
-        <button onClick={onForgot}
-          style={{ marginTop:20, background:'none', border:'none', color:'rgba(255,255,255,0.45)', fontFamily:sans, fontSize:12, cursor:'pointer', textDecoration:'underline' }}>
-          Code oublié ?
-        </button>
+        </>
+      ) : (
+        <>
+          <div style={{ marginTop:26, fontFamily:serif, fontSize:18, fontWeight:600, color:C.rose }}>
+            Réinitialiser le code PIN
+          </div>
+          <div style={{ fontFamily:sans, fontSize:12, color:'rgba(255,255,255,0.55)', marginTop:6, marginBottom:18 }}>
+            {resetStage === 'new' ? 'Choisissez un nouveau code' : 'Confirmez le nouveau code'}
+          </div>
+          <div style={{ display:'flex', gap:12, marginBottom:20 }}>
+            {Array.from({ length:6 }).map((_,i) => (
+              <div key={i} style={{ width:13, height:13, borderRadius:'50%', background: i < curResetPin.length ? C.rose : 'rgba(255,255,255,0.2)', border:`1.5px solid ${i < curResetPin.length ? C.rose : 'rgba(255,255,255,0.3)'}`, transition:'background 0.15s' }} />
+            ))}
+          </div>
+          {resetErr && <div style={{ fontFamily:sans, fontSize:12, color:C.rose, marginBottom:10 }}>{resetErr}</div>}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, width:'100%', maxWidth:280 }}>
+            {PIN_KEYS.map((k, i) => (
+              k === '' ? <div key={i} /> :
+              <button key={i} onClick={() => handleKey(k)}
+                style={{ height:56, borderRadius:12, background:'rgba(255,255,255,0.12)', border:'none', fontFamily: k === 'del' ? sans : serif, fontSize: k === 'del' ? 14 : 22, color:'white', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                {k === 'del' ? '⌫' : k}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => { setResetStage(null); setPin(''); setNewPin(''); setResetErr(''); }}
+            style={{ marginTop:16, background:'none', border:'none', color:'rgba(255,255,255,0.45)', fontFamily:sans, fontSize:12, cursor:'pointer', textDecoration:'underline' }}>
+            Retour
+          </button>
+        </>
       )}
       <style>{`@keyframes pinShake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} }`}</style>
     </SplashBg>
@@ -2257,6 +2328,7 @@ export default function App() {
 
   const handleSplashDone = () => {
     migrateData();
+    clearLudivineData();
     const profiles = initProfiles();
     const savedId  = getSavedProfileId();
     if (savedId) {
@@ -2300,7 +2372,6 @@ export default function App() {
         <PinScreen
           profile={pendingProfile}
           onSuccess={profile => { persistProfile(profile.id); setAppStage('app'); }}
-          onForgot={() => { localStorage.removeItem('profile:current'); setAppStage('select'); }}
         />
       </>
     );
