@@ -1739,7 +1739,7 @@ export function EpargneView({ currentYear }) {
         <SavingsChart
           data={chartType === 'livret' ? livretChartData : peaChartData}
           color={C.vert}
-          svgBg={chartType === 'livret' ? 'white' : C.roseL}
+          svgBg='white'
           title={chartType === 'livret' ? 'Livret A' : 'PEA'}
           onClose={() => setChartType(null)}
         />
