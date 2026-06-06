@@ -44,6 +44,14 @@ const initProfiles = () => {
   saveProfiles(profiles);
   if (!getPin('elodie'))   savePin('elodie',   '123456');
   if (!getPin('ludivine')) savePin('ludivine', '123456');
+  // Soldes initiaux à 0 pour tous les profils non-elodie
+  const today = new Date().toISOString().split('T')[0];
+  profiles.filter(p => p.id !== 'elodie').forEach(p => {
+    if (!localStorage.getItem(`${p.id}:budget:livret:soldeInitial`))
+      localStorage.setItem(`${p.id}:budget:livret:soldeInitial`, JSON.stringify({ amount: 0, date: today }));
+    if (!localStorage.getItem(`${p.id}:budget:pea:soldeInitial`))
+      localStorage.setItem(`${p.id}:budget:pea:soldeInitial`, JSON.stringify({ montant: 0, rendement: 0, pct: 0, date: today }));
+  });
   return profiles;
 };
 
@@ -1983,6 +1991,11 @@ const SplashBg = ({ children }) => (
     <div style={{ position:'relative', textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center', width:'100%', padding:'0 24px' }}>
       {children}
     </div>
+    <div style={{ position:'absolute', bottom:20, width:'100%', textAlign:'center', fontFamily:sans, fontSize:10, pointerEvents:'none' }}>
+      <span style={{ color:C.rose }}>✦</span>
+      <span style={{ color:'rgba(255,255,255,0.6)' }}> Built different. Built by Elodie. </span>
+      <span style={{ color:C.rose }}>✦</span>
+    </div>
   </div>
 );
 
@@ -2163,6 +2176,9 @@ const CreateProfileScreen = ({ onCreated, onCancel }) => {
         const profiles = getProfiles() || [];
         saveProfiles([...profiles, newProfile]);
         savePin(id, pin);
+        const today = new Date().toISOString().split('T')[0];
+        localStorage.setItem(`${id}:budget:livret:soldeInitial`, JSON.stringify({ amount: 0, date: today }));
+        localStorage.setItem(`${id}:budget:pea:soldeInitial`, JSON.stringify({ montant: 0, rendement: 0, pct: 0, date: today }));
         onCreated(newProfile);
       }
     }
