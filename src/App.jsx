@@ -195,7 +195,7 @@ const MonthHeader = ({ mi, setMi, closed }) => {
   const next = () => setMi(p => p.month === 11 ? { month:0, year:p.year+1 } : { month:p.month+1, year:p.year });
   return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px 0', background:C.beige, flexShrink:0 }}>
-      <Logo />
+      <img src="/logo-budget-club-accueil.png" style={{ width:38, height:38, borderRadius:'50%', objectFit:'cover' }} />
       <div style={{ display:'flex', alignItems:'center', gap:4 }}>
         <button onClick={prev}
           style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>‹</button>
@@ -1771,7 +1771,7 @@ const SplashScreen = ({ onDone }) => {
       <div style={{ position:'absolute', inset:0, background:'rgba(30,51,40,0.65)' }} />
       <div style={{ position:'relative', textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center' }}>
         <div style={{ color:C.gold, fontSize:16, marginBottom:16 }}>✦</div>
-        <Logo size={120} src="/logo-budget-club.png" />
+        <img src="/logo-budget-club.png" style={{ width:150, height:150, objectFit:'contain' }} />
         <div style={{ marginTop:16, fontFamily:serif, fontSize:48, fontWeight:700, color:C.gold, letterSpacing:'8px', textTransform:'uppercase', lineHeight:1.1 }}>
           BUDGET<br />CLUB
         </div>
