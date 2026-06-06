@@ -1806,9 +1806,17 @@ const NotifModal = ({ onSave, onClose }) => {
   }, []);
 
   const lastSentRaw = getNotifLastSent();
-  const freqMs = (value || 1) * (unit === 'Semaine(s)' ? 604800000 : unit === 'Mois' ? 2592000000 : 86400000);
-  const nextTs  = lastSentRaw ? parseInt(lastSentRaw) + freqMs : null;
   const permission = typeof Notification !== 'undefined' ? Notification.permission : 'non supporté';
+  const [previewNext, setPreviewNext] = useState(null);
+
+  useEffect(() => {
+    const freqMs = (value || 1) * (unit === 'Semaine(s)' ? 604800000 : unit === 'Mois' ? 2592000000 : 86400000);
+    const base = lastSentRaw ? parseInt(lastSentRaw) : Date.now();
+    const nextDate = new Date(base + freqMs);
+    const [h = 18, m = 0] = heure.split(':').map(Number);
+    nextDate.setHours(h, m, 0, 0);
+    setPreviewNext(nextDate.getTime());
+  }, [heure, value, unit]);
 
   const handleSave = () => {
     const s = { enabled, value, unit, heure };
@@ -1880,7 +1888,7 @@ const NotifModal = ({ onSave, onClose }) => {
           <span style={{ fontFamily:sans, fontSize:12, color:C.vert }}>Permission : <b>{permission}</b></span>
           <span style={{ fontFamily:sans, fontSize:12, color:C.vert }}>Heure actuelle : <b>{fmtDateTime(Date.now().toString())}</b></span>
           <span style={{ fontFamily:sans, fontSize:12, color:C.vert }}>Dernière notification : <b>{fmtDateTime(lastSentRaw)}</b></span>
-          <span style={{ fontFamily:sans, fontSize:12, color:C.vert }}>Prochaine prévue : <b>{nextTs ? fmtDateTime(nextTs.toString()) : '–'}</b></span>
+          <span style={{ fontFamily:sans, fontSize:12, color:C.vert }}>Prochaine prévue : <b>{previewNext ? fmtDateTime(previewNext.toString()) : '–'}</b></span>
           <span style={{ fontFamily:sans, fontSize:12, color:C.vert }}>Fréquence : <b>{value} {unit}</b></span>
         </div>
 
