@@ -147,6 +147,8 @@ const checkAndNotify = async () => {
   const freqMs = (s.value || 1) * (s.unit === 'Semaine(s)' ? 604800000 : s.unit === 'Mois' ? 2592000000 : 86400000);
   const now = Date.now();
   if (lastSent && now - parseInt(lastSent) < freqMs) return;
+  const [h = 18] = (s.heure || '18:00').split(':').map(Number);
+  if (new Date().getHours() < h) return;
   try {
     const reg = await navigator.serviceWorker.ready;
     await reg.showNotification('Budget Club', { body: 'Pensez à mettre à jour votre budget !', icon: '/logo-budget-club-favicon-rose.png' });
@@ -1794,6 +1796,7 @@ const NotifModal = ({ onSave, onClose }) => {
   const [enabled, setEnabled] = useState(saved.enabled ?? false);
   const [value, setValue]     = useState(saved.value ?? 1);
   const [unit, setUnit]       = useState(saved.unit ?? 'Jour(s)');
+  const [heure, setHeure]     = useState(saved.heure ?? '18:00');
   const [tick, setTick]       = useState(0);
 
   useEffect(() => {
@@ -1807,7 +1810,7 @@ const NotifModal = ({ onSave, onClose }) => {
   const permission = typeof Notification !== 'undefined' ? Notification.permission : 'non supporté';
 
   const handleSave = () => {
-    const s = { enabled, value, unit };
+    const s = { enabled, value, unit, heure };
     localStorage.setItem(NOTIF_KEY, JSON.stringify(s));
     sendToSW();
     onSave(s);
@@ -1859,6 +1862,16 @@ const NotifModal = ({ onSave, onClose }) => {
               <option value="Mois">Mois</option>
             </select>
           </div>
+        </div>
+
+        <div>
+          <div style={{ fontFamily:sans, fontSize:11, fontWeight:600, letterSpacing:1, textTransform:'uppercase', color:C.muted, marginBottom:8 }}>Heure du rappel</div>
+          <input
+            type="time"
+            value={heure}
+            onChange={e => setHeure(e.target.value)}
+            style={{ width:'100%', padding:'9px 12px', border:`1.5px solid ${C.rose}`, borderRadius:8, fontFamily:sans, fontSize:14, color:C.vert, background:'white', boxSizing:'border-box' }}
+          />
         </div>
 
         <div style={{ background:C.roseL, borderRadius:10, padding:'12px 14px', display:'flex', flexDirection:'column', gap:6 }}>

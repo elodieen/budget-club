@@ -10,8 +10,10 @@ self.addEventListener('message', (event) => {
 function isDue(settings, lastSent) {
   if (!settings?.enabled) return false;
   const freqMs = (settings.value || 1) * (settings.unit === 'Semaine(s)' ? 604800000 : settings.unit === 'Mois' ? 2592000000 : 86400000);
-  if (!lastSent) return true;
-  return Date.now() - parseInt(lastSent) >= freqMs;
+  const now = Date.now();
+  if (lastSent && now - parseInt(lastSent) < freqMs) return false;
+  const h = parseInt((settings.heure || '18:00').split(':')[0], 10);
+  return new Date().getHours() >= h;
 }
 
 async function tryNotify() {
