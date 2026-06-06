@@ -524,7 +524,7 @@ export function AccueilView({ m, mi, setMi, setView, updateData }) {
   const eT   = m.expenses.filter(e => e.cat !== 'epargne_livret' && e.cat !== 'epargne_pea').reduce((s,e) => s + (e.amount||0), 0);
   const epg  = m.expenses.filter(e => (e.cat === 'epargne_livret' || e.cat === 'epargne_pea')).reduce((s,e) => s + (e.amount||0), 0);
   const reste = Math.round((rev - bT - eT - epg) * 100) / 100;
-  const pp    = rev > 0 ? Math.min(100, Math.round((bT + eT + epg) / rev * 100)) : 0;
+  const pp    = rev > 0 ? Math.min(100, Math.round(eT / rev * 100)) : 0;
 
   return (
     <>
@@ -533,13 +533,13 @@ export function AccueilView({ m, mi, setMi, setView, updateData }) {
       <div style={{ padding:'12px 16px 0', background:C.beige, flexShrink:0 }}>
         {/* Card Reste à dépenser */}
         <div style={{ background:C.vert, borderRadius:16, padding:'20px 20px 16px', textAlign:'center', marginBottom:12 }}>
-          <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:C.rose, marginBottom:6 }}>Reste à dépenser</div>
+          <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'white', marginBottom:6 }}>Reste à dépenser</div>
           {rev === 0
-            ? <div style={{ fontFamily:serif, fontSize:20, fontStyle:'italic', color:'rgba(238,196,196,0.6)', lineHeight:1.3 }}>Revenus non saisis</div>
-            : <div style={{ fontFamily:serif, fontSize:48, fontWeight:700, color:C.rose, lineHeight:1 }}>{fmtR(reste)}</div>
+            ? <div style={{ fontFamily:serif, fontSize:20, fontStyle:'italic', color:'rgba(255,255,255,0.6)', lineHeight:1.3 }}>Revenus non saisis</div>
+            : <div style={{ fontFamily:serif, fontSize:48, fontWeight:700, color:'white', lineHeight:1 }}>{fmtR(reste)}</div>
           }
-          <div style={{ height:4, background:'rgba(238,196,196,0.2)', borderRadius:2, marginTop:12, overflow:'hidden' }}>
-            <div style={{ height:'100%', width:`${pp}%`, background:C.rose, borderRadius:2 }} />
+          <div style={{ height:4, background:'rgba(255,255,255,0.2)', borderRadius:2, marginTop:12, overflow:'hidden' }}>
+            <div style={{ height:'100%', width:`${pp}%`, background:'white', borderRadius:2 }} />
           </div>
         </div>
       </div>
@@ -548,7 +548,7 @@ export function AccueilView({ m, mi, setMi, setView, updateData }) {
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:12 }}>
           {[
             { label:'Revenus',  val:fmtR(rev), icon:'ti-credit-card',  vw:'revenus' },
-            { label:'Factures', val:`${fmtP(paidAmt)} / ${fmtP(bT)}`, sub:`${pN}/${bN} prélevées`, icon:'ti-file-invoice', vw:'depenses' },
+            { label:'Factures', val:'', node:<><span style={{ color:C.rose }}>{fmtP(paidAmt)}</span><span style={{ color:C.vert }}> / {fmtP(bT)}</span></>, sub:`${pN}/${bN} prélevées`, icon:'ti-file-invoice', vw:'depenses' },
             { label:'Dépenses', val:fmtR(eT),  icon:'ti-shopping-bag', vw:'depenses' },
             { label:'Épargne',  val:fmtR(epg), icon:'ti-pig-money',    vw:'epargne'  },
           ].map(c => (
@@ -558,7 +558,7 @@ export function AccueilView({ m, mi, setMi, setView, updateData }) {
                 <span style={{ fontFamily:sans, fontSize:11, color:C.muted, fontWeight:500 }}>{c.label}</span>
                 <i className={`ti ${c.icon}`} style={{ fontSize:18, color:'rgba(28,41,28,0.25)' }} />
               </div>
-              <div style={{ fontFamily:serif, fontSize:c.sub ? 18 : 22, fontWeight:600, color:C.vert }}>{c.val}</div>
+              <div style={{ fontFamily:serif, fontSize:c.sub ? 18 : 22, fontWeight:600, color:C.vert }}>{c.node || c.val}</div>
               {c.sub && <div style={{ fontFamily:sans, fontSize:10, color:C.muted, marginTop:2 }}>{c.sub}</div>}
             </div>
           ))}
@@ -938,7 +938,7 @@ export function RevenusView({ m, mi, setMi, updateData }) {
       {/* Total fixe en haut */}
       <div style={{ background:C.vert, flexShrink:0, padding:'14px 20px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
         <span style={{ fontFamily:sans, fontSize:12, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.5)' }}>Total</span>
-        <span style={{ fontFamily:serif, fontSize:30, fontWeight:700, color:'white' }}>{fmtR(rev)}</span>
+        <span style={{ fontFamily:serif, fontSize:30, fontWeight:700, color:C.rose }}>{fmtR(rev)}</span>
       </div>
       {/* Liste scrollable */}
       <div style={{ flex:1, overflowY:'auto', padding:'12px 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
@@ -1015,7 +1015,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab }) {
             <div style={{ fontFamily:sans, fontSize:9, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.5)', marginBottom:4 }}>Reste à dépenser</div>
             {rev === 0
               ? <div style={{ fontFamily:serif, fontSize:18, fontStyle:'italic', color:'rgba(255,255,255,0.55)' }}>Revenus non saisis</div>
-              : <div style={{ fontFamily:serif, fontSize:32, fontWeight:700, color:'white' }}>{fmtR(reste)}</div>
+              : <div style={{ fontFamily:serif, fontSize:32, fontWeight:700, color:C.rose }}>{fmtR(reste)}</div>
             }
           </div>
           <div style={{ flex:1, overflowY:'auto', padding:'8px 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
@@ -1105,14 +1105,48 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab }) {
                             style={{ width:'100%', padding:8, border:`1px solid ${C.rose}`, borderRadius:7, fontSize:12, color:C.vert, background:'white', fontFamily:sans }} />
                         </div>
                       </div>
-                      <div style={{ display:'flex', gap:8 }}>
+                      <div style={{ display:'flex', gap:8, marginBottom:8 }}>
                         <button onClick={() => confBill(m.bills.indexOf(b))}
                           style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
                           ✓ Confirmer prélevée
                         </button>
+                        <button onClick={() => { updateData(mm => { mm.bills = mm.bills.filter((_,i) => i !== m.bills.indexOf(b)); }); setXBill(null); }}
+                          style={{ padding:'9px 10px', background:'#FF5252', border:'none', borderRadius:8, cursor:'pointer', color:'white', fontFamily:sans }}>
+                          <i className="ti ti-trash" style={{ fontSize:15 }} />
+                        </button>
                         <button onClick={() => setXBill(null)}
                           style={{ padding:'9px 12px', background:'white', border:`1px solid ${C.rose}`, borderRadius:8, cursor:'pointer', color:C.vert, fontFamily:sans }}>✕</button>
                       </div>
+                      <button onClick={() => {
+                        const newAmt = parseFloat(billForm.amount);
+                        if (!newAmt) return;
+                        const billId = b.id;
+                        for (let y = mi.year; y <= mi.year + 2; y++) {
+                          for (let mo = (y === mi.year ? mi.month : 0); mo < 12; mo++) {
+                            const k = `budget:${y}:${String(mo+1).padStart(2,'0')}`;
+                            const stored = localStorage.getItem(k);
+                            if (stored) {
+                              try {
+                                const d = JSON.parse(stored);
+                                const bi = d.bills.findIndex(x => x.id === billId);
+                                if (bi >= 0 && !d.bills[bi].paid) {
+                                  d.bills[bi].amount = newAmt;
+                                  d.bills[bi].realAmount = newAmt;
+                                  localStorage.setItem(k, JSON.stringify(d));
+                                }
+                              } catch {}
+                            }
+                          }
+                        }
+                        updateData(mm => {
+                          const bi = mm.bills.findIndex(x => x.id === billId);
+                          if (bi >= 0) mm.bills[bi].amount = newAmt;
+                        });
+                        setXBill(null);
+                      }}
+                        style={{ width:'100%', padding:'8px 0', background:'rgba(28,41,28,0.08)', border:`1px solid ${C.rose}`, borderRadius:8, cursor:'pointer', color:C.vert, fontFamily:sans, fontSize:12, fontWeight:600 }}>
+                        Modifier le montant par défaut
+                      </button>
                     </div>
                   </div>
                 )}
@@ -1560,7 +1594,7 @@ export function EpargneView({ currentYear }) {
                 </button>
               </div>
             </div>
-            <span style={{ fontFamily:serif, fontSize:26, fontWeight:700, color:'white', cursor:'pointer' }} onClick={() => setChartType('livret')}>{fmtP(livretTotal)}</span>
+            <span style={{ fontFamily:serif, fontSize:26, fontWeight:700, color:C.rose, cursor:'pointer' }} onClick={() => setChartType('livret')}>{fmtP(livretTotal)}</span>
           </div>
           {editSolde && (
             <div style={{ background:'rgba(28,41,28,0.92)', borderRadius:'0 0 12px 12px', padding:'10px 14px 14px', marginBottom:8 }}>
@@ -1600,23 +1634,23 @@ export function EpargneView({ currentYear }) {
           {/* ── PEA ── */}
           <div style={{ background:C.vert, borderRadius:12, padding:'12px 16px', marginBottom: editPeaSolde ? 0 : 8, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
             <div>
-              <span style={{ fontFamily:serif, fontSize:16, fontWeight:700, color:C.rose, display:'block', marginBottom:6 }}>PEA</span>
+              <span style={{ fontFamily:serif, fontSize:16, fontWeight:700, color:'white', display:'block', marginBottom:6 }}>PEA</span>
               <div style={{ display:'flex', gap:16 }}>
                 <button title="Nouveau solde" onClick={() => { setPeaSoldeForm({ montant: '', rendement: String(peaSolde?.rendement||''), pct: String(peaSolde?.pct||''), date: new Date().toISOString().split('T')[0] }); setEditPeaSolde(v => !v); }}
                   style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
-                  <i className="ti ti-pencil" style={{ fontSize:18, color: editPeaSolde ? C.gold : C.rose }} />
+                  <i className="ti ti-pencil" style={{ fontSize:18, color: editPeaSolde ? C.gold : 'white' }} />
                 </button>
                 <button onClick={() => setDetailType('pea')}
                   style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
-                  <i className="ti ti-list-details" style={{ fontSize:18, color:C.rose }} />
+                  <i className="ti ti-list-details" style={{ fontSize:18, color:'white' }} />
                 </button>
                 <button onClick={() => setChartType('pea')}
                   style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
-                  <i className="ti ti-chart-line" style={{ fontSize:18, color:C.rose }} />
+                  <i className="ti ti-chart-line" style={{ fontSize:18, color:'white' }} />
                 </button>
               </div>
             </div>
-            <span style={{ fontFamily:serif, fontSize:26, fontWeight:700, color:C.rose, cursor:'pointer' }} onClick={() => setChartType('pea')}>{fmtP(peaTotal)}</span>
+            <span style={{ fontFamily:serif, fontSize:26, fontWeight:700, color:'white', cursor:'pointer' }} onClick={() => setChartType('pea')}>{fmtP(peaTotal)}</span>
           </div>
           {editPeaSolde && (
             <div style={{ background:'rgba(28,41,28,0.08)', borderRadius:'0 0 12px 12px', padding:'10px 14px 14px', marginBottom:8, border:`1px solid ${C.rose}`, borderTop:'none' }}>
@@ -1654,16 +1688,16 @@ export function EpargneView({ currentYear }) {
           {epargneFlash === 'pea' && <div style={{ textAlign:'center', fontFamily:sans, fontSize:12, color:'#2E7D32', fontWeight:600, padding:'4px 0' }}>Sauvegardé ✓</div>}
         </div>
 
+        {/* Total année — fixe */}
+        <div style={{ flexShrink:0, display:'flex', alignItems:'center', gap:10, padding:'8px 16px', background:C.beige }}>
+          <span style={{ fontFamily:sans, fontSize:13, fontWeight:700, color:C.vert, width:36 }}>{epargneYear}</span>
+          <div style={{ flex:1, height:1, background:'rgba(28,41,28,0.2)' }} />
+          <div style={{ background:'rgba(28,41,28,0.08)', borderRadius:6, padding:'2px 10px' }}>
+            <span style={{ fontFamily:serif, fontSize:13, fontWeight:700, color:C.vert }}>{fmtP(te)}</span>
+          </div>
+        </div>
         {/* ── Jauges mensuelles scrollables ── */}
         <div style={{ flex:1, overflowY:'auto', padding:'0 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
-          {/* Total année */}
-          <div style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', marginBottom:4 }}>
-            <span style={{ fontFamily:sans, fontSize:13, fontWeight:700, color:C.vert, width:36 }}>{epargneYear}</span>
-            <div style={{ flex:1, height:1, background:'rgba(28,41,28,0.2)' }} />
-            <div style={{ background:'rgba(28,41,28,0.08)', borderRadius:6, padding:'2px 10px' }}>
-              <span style={{ fontFamily:serif, fontSize:13, fontWeight:700, color:C.vert }}>{fmtP(te)}</span>
-            </div>
-          </div>
           {/* Barres mensuelles bicolores */}
           {md.map(d => (
             <div key={d.idx} style={{ display:'flex', alignItems:'center', gap:8, padding:'4px 0' }}>
