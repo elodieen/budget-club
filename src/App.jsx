@@ -1801,20 +1801,32 @@ export function EpargneView({ currentYear }) {
 
 
 // ─── SPLASH SCREEN ───────────────────────────────────────────
-const SplashScreen = ({ out }) => {
+const SplashScreen = ({ onDone }) => {
+  const [splashOpacity, setSplashOpacity] = useState(0);
+
+  useEffect(() => {
+    let t0, t1, t2;
+    const start = () => {
+      t0 = setTimeout(() => setSplashOpacity(1), 50);
+      t1 = setTimeout(() => setSplashOpacity(0), 2000);
+      t2 = setTimeout(() => onDone(), 2500);
+    };
+    const img = new Image();
+    img.onload = start;
+    img.onerror = start;
+    img.src = '/splash-bg.png';
+    return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+
   return (
     <div style={{
-      position:'fixed', top:0, left:0, right:0, bottom:0, zIndex:9999, borderRadius:0,
+      position:'fixed', top:0, left:0, right:0, bottom:0, zIndex:9999,
       width:'100%', height:'100%', overflow:'hidden', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-start',
       paddingTop:'8%',
-      opacity: out ? 0 : 1,
-      transition: out ? 'opacity 0.5s ease' : 'none',
+      opacity: splashOpacity,
+      transition: 'opacity 0.4s ease',
     }}>
-      <div style={{
-        position:'absolute', inset:0,
-        backgroundImage:'url(/splash-bg.png)',
-        backgroundSize:'cover', backgroundPosition:'center',
-      }} />
+      <div style={{ position:'absolute', inset:0, backgroundImage:'url(/splash-bg.png)', backgroundSize:'cover', backgroundPosition:'center' }} />
       <div style={{ position:'absolute', inset:0, background:'rgba(30,51,40,0.65)' }} />
       <div style={{ position:'relative', textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center' }}>
         <div style={{ color:C.rose, fontSize:16, marginBottom:16 }}>✦</div>
@@ -1837,23 +1849,13 @@ export default function App() {
   const [depTab, setDepTab] = useState('depenses');
   const [modal, setModal]   = useState(null); // 'dep' | 'rev' | 'bill' | null
   const [showSplash, setShowSplash] = useState(true);
-  const [splashOut, setSplashOut]   = useState(false);
-  const splashShown = useRef(false);
   const { data: m, loading, updateData } = useMonthData(mi);
-
-  useEffect(() => {
-    if (splashShown.current) return;
-    splashShown.current = true;
-    const t1 = setTimeout(() => setSplashOut(true), 2000);
-    const t2 = setTimeout(() => setShowSplash(false), 2500);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, []);
 
   const addExpense = (exp)  => { if (m.closed) return; updateData(mm => { mm.expenses = [...mm.expenses, exp]; }); };
   const addRevenu  = (rev)  => { if (m.closed) return; updateData(mm => { mm.revenues = [...mm.revenues, rev]; }); };
   const addBill    = (bill) => { if (m.closed) return; updateData(mm => { mm.bills    = [...mm.bills, bill];    }); };
 
-  if (showSplash) return <SplashScreen out={splashOut} />;
+  if (showSplash) return <SplashScreen onDone={() => setShowSplash(false)} />;
 
   if (loading) return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', background:C.beige }}>
