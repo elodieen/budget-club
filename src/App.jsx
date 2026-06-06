@@ -1411,8 +1411,16 @@ export function EpargneView({ currentYear }) {
   const [peaHist, setPeaHist]       = useState(() => getPeaHist());
 
   useEffect(() => {
-    if (!getLivretSolde()) saveLivretSolde(livretSolde);
-    if (!getPeaSolde())    savePeaSolde(peaSolde);
+    const MIG = 'budget:init:2026-06';
+    if (!localStorage.getItem(MIG)) {
+      const defaultL = { amount: 1938.37, date: '2026-06-01' };
+      const defaultP = { montant: 1841.72, rendement: 259.24, pct: 16.48, date: '2026-06-01' };
+      saveLivretSolde(defaultL);
+      savePeaSolde(defaultP);
+      setLivretSolde(defaultL);
+      setPeaSolde(defaultP);
+      localStorage.setItem(MIG, '1');
+    }
   }, []);
 
   useEffect(() => {
