@@ -1158,10 +1158,11 @@ const SavingsChart = ({ data, color, title, onClose }) => {
   const W = 300, H = 160, PL = 48, PR = 12, PT = 16, PB = 28;
   const iW = W - PL - PR, iH = H - PT - PB;
   const vals = data.map(d => d.value);
-  const minV = Math.min(...vals), maxV = Math.max(...vals, minV + 1);
+  const minV = data.length ? Math.min(...vals) : 0;
+  const maxV = data.length ? Math.max(...vals, minV + 1) : 1;
   const px = i => PL + (data.length < 2 ? iW / 2 : (i / (data.length - 1)) * iW);
-  const py = v => PT + iH - ((v - minV) / (maxV - minV || 1)) * iH;
-  const d0 = data.length ? data.map((d, i) => `${i === 0 ? 'M' : 'L'}${px(i)},${py(d.value)}`).join(' ') : '';
+  const py = v => data.length <= 1 ? PT + iH / 2 : PT + iH - ((v - minV) / (maxV - minV || 1)) * iH;
+  const d0 = data.length >= 2 ? data.map((d, i) => `${i === 0 ? 'M' : 'L'}${px(i)},${py(d.value)}`).join(' ') : '';
   return (
     <div style={{ position:'absolute', inset:0, background:'rgba(28,41,28,0.55)', zIndex:30, borderRadius:20, display:'flex', alignItems:'center', justifyContent:'center' }}>
       <div style={{ background:C.beige, borderRadius:16, margin:16, padding:'18px 16px 14px', width:'100%', maxWidth:340 }}>
@@ -1169,40 +1170,53 @@ const SavingsChart = ({ data, color, title, onClose }) => {
           <span style={{ fontFamily:serif, fontSize:18, fontWeight:700, color:C.vert }}>{title}</span>
           <button onClick={onClose} style={{ background:C.roseL, border:'none', width:28, height:28, borderRadius:'50%', cursor:'pointer', fontSize:14, color:C.vert }}>✕</button>
         </div>
-        {data.length < 2 ? (
-          <div style={{ textAlign:'center', padding:24, color:C.muted, fontFamily:sans, fontSize:13 }}>Pas assez de données</div>
+        {data.length === 0 ? (
+          <div style={{ textAlign:'center', padding:24, color:C.muted, fontFamily:sans, fontSize:13 }}>Aucune donnée</div>
         ) : (
           <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display:'block', background:'white', borderRadius:10 }}>
             {[0, 1, 2].map(i => (
               <line key={i} x1={PL} x2={W - PR} y1={PT + (i * iH / 2)} y2={PT + (i * iH / 2)} stroke="rgba(28,41,28,0.06)" strokeWidth={1} />
             ))}
-            <path d={`${d0} L${px(data.length - 1)},${PT + iH} L${px(0)},${PT + iH} Z`} fill={color} fillOpacity={0.1} />
-            <path d={d0} fill="none" stroke={color} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
-            {data.map((d, i) => (
-              <circle key={i} cx={px(i)} cy={py(d.value)} r={hover === i ? 6 : 3.5} fill={color} stroke="white" strokeWidth={1.5}
-                style={{ cursor:'pointer' }}
-                onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}
-                onTouchStart={e => { e.preventDefault(); setHover(i); }} onTouchEnd={() => setTimeout(() => setHover(null), 1200)} />
-            ))}
-            {hover !== null && (() => {
-              const bx = Math.max(PL + 2, Math.min(W - PR - 84, px(hover) - 42));
-              const by = Math.max(PT + 2, py(data[hover].value) - 42);
-              return (
-                <g>
-                  <rect x={bx} y={by} width={84} height={36} rx={5} fill={C.vert} />
-                  <text x={bx + 42} y={by + 13} textAnchor="middle" fontSize={9} fill="rgba(255,255,255,0.65)" fontFamily="DM Sans, sans-serif">{data[hover].date || data[hover].label}</text>
-                  <text x={bx + 42} y={by + 28} textAnchor="middle" fontSize={10} fontWeight="bold" fill="white" fontFamily="DM Sans, sans-serif">{fmtP(data[hover].value)}</text>
-                </g>
-              );
-            })()}
-            {data.map((d, i) => (
-              (i % Math.ceil(data.length / 5) === 0 || i === data.length - 1) && (
-                <text key={i} x={px(i)} y={H - 6} textAnchor="middle" fontSize={9} fill={C.muted} fontFamily="DM Sans, sans-serif">{d.label}</text>
-              )
-            ))}
-            {[minV, Math.round((minV + maxV) / 2), maxV].map((v, i) => (
-              <text key={i} x={PL - 4} y={py(v) + 4} textAnchor="end" fontSize={9} fill={C.muted} fontFamily="DM Sans, sans-serif">{Math.round(v / 100) * 100}</text>
-            ))}
+            {data.length === 1 ? (
+              <>
+                <line x1={PL} x2={W - PR} y1={py(data[0].value)} y2={py(data[0].value)} stroke={color} strokeWidth={2} strokeDasharray="5 4" opacity={0.5} />
+                <circle cx={px(0)} cy={py(data[0].value)} r={6} fill={color} stroke="white" strokeWidth={2} />
+                <rect x={Math.max(PL, px(0) - 42)} y={Math.max(PT + 2, py(data[0].value) - 46)} width={84} height={36} rx={5} fill={C.vert} />
+                <text x={Math.max(PL + 42, px(0))} y={Math.max(PT + 15, py(data[0].value) - 33)} textAnchor="middle" fontSize={9} fill="rgba(255,255,255,0.65)" fontFamily="DM Sans, sans-serif">{data[0].date}</text>
+                <text x={Math.max(PL + 42, px(0))} y={Math.max(PT + 30, py(data[0].value) - 18)} textAnchor="middle" fontSize={10} fontWeight="bold" fill="white" fontFamily="DM Sans, sans-serif">{fmtP(data[0].value)}</text>
+                <text x={px(0)} y={H - 6} textAnchor="middle" fontSize={9} fill={C.muted} fontFamily="DM Sans, sans-serif">{data[0].label}</text>
+              </>
+            ) : (
+              <>
+                <path d={`${d0} L${px(data.length - 1)},${PT + iH} L${px(0)},${PT + iH} Z`} fill={color} fillOpacity={0.1} />
+                <path d={d0} fill="none" stroke={color} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
+                {data.map((d, i) => (
+                  <circle key={i} cx={px(i)} cy={py(d.value)} r={hover === i ? 6 : 3.5} fill={color} stroke="white" strokeWidth={1.5}
+                    style={{ cursor:'pointer' }}
+                    onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}
+                    onTouchStart={e => { e.preventDefault(); setHover(i); }} onTouchEnd={() => setTimeout(() => setHover(null), 1200)} />
+                ))}
+                {hover !== null && (() => {
+                  const bx = Math.max(PL + 2, Math.min(W - PR - 84, px(hover) - 42));
+                  const by = Math.max(PT + 2, py(data[hover].value) - 42);
+                  return (
+                    <g>
+                      <rect x={bx} y={by} width={84} height={36} rx={5} fill={C.vert} />
+                      <text x={bx + 42} y={by + 13} textAnchor="middle" fontSize={9} fill="rgba(255,255,255,0.65)" fontFamily="DM Sans, sans-serif">{data[hover].date || data[hover].label}</text>
+                      <text x={bx + 42} y={by + 28} textAnchor="middle" fontSize={10} fontWeight="bold" fill="white" fontFamily="DM Sans, sans-serif">{fmtP(data[hover].value)}</text>
+                    </g>
+                  );
+                })()}
+                {data.map((d, i) => (
+                  (i % Math.ceil(data.length / 5) === 0 || i === data.length - 1) && (
+                    <text key={i} x={px(i)} y={H - 6} textAnchor="middle" fontSize={9} fill={C.muted} fontFamily="DM Sans, sans-serif">{d.label}</text>
+                  )
+                ))}
+                {[minV, Math.round((minV + maxV) / 2), maxV].map((v, i) => (
+                  <text key={i} x={PL - 4} y={py(v) + 4} textAnchor="end" fontSize={9} fill={C.muted} fontFamily="DM Sans, sans-serif">{Math.round(v / 100) * 100}</text>
+                ))}
+              </>
+            )}
           </svg>
         )}
       </div>
@@ -1364,8 +1378,15 @@ export function EpargneView({ currentYear }) {
   const mx = Math.max(...md.map(d => d.total), 1);
 
   const peaRendTotal = peaRend.reduce((s,r) => s + (r.montant||0), 0);
-  const livretTotal  = (livretSolde?.amount || 0) + tl;
-  const peaTotal     = (peaSolde?.montant || 0) + ti + peaRendTotal;
+  // Solde actuel = dernière valeur saisie via "Nouveau solde" (historique) ou solde initial
+  const latestLivret = livretHist.length > 0
+    ? [...livretHist].sort((a,b) => new Date(b.date) - new Date(a.date))[0].montant
+    : (livretSolde?.amount || 0);
+  const latestPea = peaHist.length > 0
+    ? [...peaHist].sort((a,b) => new Date(b.date) - new Date(a.date))[0].montant
+    : (peaSolde?.montant || 0);
+  const livretTotal  = latestLivret;
+  const peaTotal     = latestPea;
   const fmtDate      = (d) => d ? d.split('-').reverse().join('/') : '';
 
   const fmtShortDate = d => {
@@ -1373,20 +1394,26 @@ export function EpargneView({ currentYear }) {
     const [, mo, da] = d.split('-');
     return `${parseInt(da)}/${parseInt(mo)}`;
   };
-  const buildChartSeries = (initialDate, initialAmt, expenses, extras = []) => {
-    const pts = [...expenses, ...extras]
-      .filter(p => p.date)
-      .map(p => ({ date: p.date, amount: p.amount || p.montant || 0 }))
+  const buildAbsoluteChartSeries = (soldeInitial, historique) => {
+    const firstPt = { date: soldeInitial?.date || '', montant: soldeInitial?.montant || 0 };
+    const sortedHist = [...historique]
+      .filter(h => h.date && h.montant !== undefined)
       .sort((a, b) => new Date(a.date) - new Date(b.date));
-    const out = [{ label: fmtShortDate(initialDate), value: initialAmt, date: initialDate }];
-    let cum = initialAmt;
-    pts.forEach(p => { cum += p.amount; out.push({ label: fmtShortDate(p.date), value: cum, date: p.date }); });
-    return out;
+    const allPts = firstPt.date ? [firstPt, ...sortedHist] : sortedHist;
+    console.log('[Chart] points:', allPts);
+    return allPts.map(p => ({ date: p.date, label: fmtShortDate(p.date), value: p.montant }));
   };
-  const livretExpenses = months.flatMap(m => m ? m.expenses.filter(e => e.cat === 'epargne_livret') : []);
-  const peaExpenses    = months.flatMap(m => m ? m.expenses.filter(e => e.cat === 'epargne_pea')    : []);
-  const livretChartData = buildChartSeries(livretSolde?.date || `${epargneYear}-01-01`, livretSolde?.amount || 0, livretExpenses);
-  const peaChartData    = buildChartSeries(peaSolde?.date   || `${epargneYear}-01-01`, peaSolde?.montant   || 0, peaExpenses, peaRend);
+
+  console.log('[Épargne] livretSolde:', livretSolde, '| livretHist:', livretHist);
+  console.log('[Épargne] peaSolde:', peaSolde, '| peaHist:', peaHist);
+  const livretChartData = buildAbsoluteChartSeries(
+    { date: livretSolde?.date, montant: livretSolde?.amount || 0 },
+    livretHist
+  );
+  const peaChartData = buildAbsoluteChartSeries(
+    { date: peaSolde?.date, montant: peaSolde?.montant || 0 },
+    peaHist
+  );
 
   const patchMonthCat = (monthIdx, catId, newAmount) => {
     const key = `budget:${epargneYear}:${String(monthIdx + 1).padStart(2, '0')}`;
@@ -1459,7 +1486,7 @@ export function EpargneView({ currentYear }) {
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
               <span style={{ fontFamily:sans, fontSize:14, fontWeight:600, color:'rgba(255,255,255,0.8)' }}>Livret A</span>
-              <button onClick={() => { setSoldeForm({ amount: String(livretSolde?.amount || ''), date: livretSolde?.date || '' }); setEditSolde(v => !v); }}
+              <button title="Nouveau solde" onClick={() => { setSoldeForm({ amount: '', date: new Date().toISOString().split('T')[0] }); setEditSolde(v => !v); }}
                 style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
                 <i className="ti ti-pencil" style={{ fontSize:13, color: editSolde ? C.gold : 'rgba(255,255,255,0.4)' }} />
               </button>
@@ -1479,8 +1506,8 @@ export function EpargneView({ currentYear }) {
           <div style={{ background:'rgba(28,41,28,0.92)', borderRadius:'0 0 12px 12px', padding:'10px 14px 14px', marginBottom:8 }}>
             <div style={{ display:'flex', gap:8, marginBottom:8 }}>
               <div style={{ flex:2 }}>
-                <Label><span style={{ color:'rgba(255,255,255,0.5)' }}>Solde initial (€)</span></Label>
-                <input type="number" step="0.01" value={soldeForm.amount} onChange={e => setSoldeForm(p => ({...p, amount:e.target.value}))}
+                <Label><span style={{ color:'rgba(255,255,255,0.5)' }}>Nouveau solde (€)</span></Label>
+                <input type="number" step="0.01" placeholder="Nouveau solde en €" value={soldeForm.amount} onChange={e => setSoldeForm(p => ({...p, amount:e.target.value}))}
                   style={{ width:'100%', padding:8, border:`1px solid rgba(255,255,255,0.2)`, borderRadius:7, fontSize:15, fontFamily:serif, color:C.vert, background:'white' }} />
               </div>
               <div style={{ flex:2 }}>
@@ -1493,10 +1520,10 @@ export function EpargneView({ currentYear }) {
               <button onClick={() => {
                 const a = parseFloat(soldeForm.amount);
                 if (!a) return;
-                const updated = { amount:a, date:soldeForm.date };
+                const updated = { ...livretSolde, amount:a, date:soldeForm.date };
                 saveLivretSolde(updated);
                 setLivretSolde(updated);
-                const entry = { id:'lh'+Date.now(), date: new Date().toISOString().split('T')[0], montant: a, label: 'Mise à jour' };
+                const entry = { id:'lh'+Date.now(), date: soldeForm.date || new Date().toISOString().split('T')[0], montant: a, label: 'Nouveau solde' };
                 const uh = [...livretHist, entry]; saveLivretHist(uh); setLivretHist(uh);
                 setEditSolde(false);
                 flashSaved('livret');
@@ -1516,7 +1543,7 @@ export function EpargneView({ currentYear }) {
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
               <span style={{ fontFamily:sans, fontSize:14, fontWeight:600, color:C.vert }}>PEA / Trade</span>
-              <button onClick={() => { setPeaSoldeForm({ montant: String(peaSolde?.montant||''), rendement: String(peaSolde?.rendement||''), pct: String(peaSolde?.pct||''), date: peaSolde?.date||'' }); setEditPeaSolde(v => !v); }}
+              <button title="Nouveau solde" onClick={() => { setPeaSoldeForm({ montant: '', rendement: String(peaSolde?.rendement||''), pct: String(peaSolde?.pct||''), date: new Date().toISOString().split('T')[0] }); setEditPeaSolde(v => !v); }}
                 style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
                 <i className="ti ti-pencil" style={{ fontSize:13, color: editPeaSolde ? C.vert : 'rgba(28,41,28,0.3)' }} />
               </button>
@@ -1537,8 +1564,8 @@ export function EpargneView({ currentYear }) {
           <div style={{ background:'rgba(28,41,28,0.08)', borderRadius:'0 0 12px 12px', padding:'10px 14px 14px', marginBottom:4, border:`1px solid ${C.rose}`, borderTop:'none' }}>
             <div style={{ display:'flex', gap:8, marginBottom:8 }}>
               <div style={{ flex:2 }}>
-                <Label>Solde initial (€)</Label>
-                <input type="number" step="0.01" value={peaSoldeForm.montant} onChange={e => setPeaSoldeForm(p => ({...p, montant:e.target.value}))}
+                <Label>Nouveau solde (€)</Label>
+                <input type="number" step="0.01" placeholder="Nouveau solde en €" value={peaSoldeForm.montant} onChange={e => setPeaSoldeForm(p => ({...p, montant:e.target.value}))}
                   style={{ width:'100%', padding:8, border:`1px solid ${C.border}`, borderRadius:7, fontSize:14, fontFamily:serif, color:C.vert, background:'white' }} />
               </div>
               <div style={{ flex:2 }}>
@@ -1547,26 +1574,14 @@ export function EpargneView({ currentYear }) {
                   style={{ width:'100%', padding:8, border:`1px solid ${C.border}`, borderRadius:7, fontSize:12, color:C.vert, background:'white', fontFamily:sans }} />
               </div>
             </div>
-            <div style={{ display:'flex', gap:8, marginBottom:8 }}>
-              <div style={{ flex:2 }}>
-                <Label>Rendements (€)</Label>
-                <input type="number" step="0.01" value={peaSoldeForm.rendement} onChange={e => setPeaSoldeForm(p => ({...p, rendement:e.target.value}))}
-                  style={{ width:'100%', padding:8, border:`1px solid ${C.border}`, borderRadius:7, fontSize:14, fontFamily:serif, color:C.vert, background:'white' }} />
-              </div>
-              <div style={{ flex:1 }}>
-                <Label>Perf. (%)</Label>
-                <input type="number" step="0.01" value={peaSoldeForm.pct} onChange={e => setPeaSoldeForm(p => ({...p, pct:e.target.value}))}
-                  style={{ width:'100%', padding:8, border:`1px solid ${C.border}`, borderRadius:7, fontSize:14, fontFamily:sans, color:C.vert, background:'white' }} />
-              </div>
-            </div>
             <div style={{ display:'flex', gap:8 }}>
               <button onClick={() => {
                 const a = parseFloat(peaSoldeForm.montant);
                 if (!a) return;
-                const updated = { montant:a, rendement:parseFloat(peaSoldeForm.rendement)||0, pct:parseFloat(peaSoldeForm.pct)||0, date:peaSoldeForm.date };
+                const updated = { ...peaSolde, montant:a, date:peaSoldeForm.date };
                 savePeaSolde(updated);
                 setPeaSolde(updated);
-                const entry = { id:'ph'+Date.now(), date: new Date().toISOString().split('T')[0], montant: a, label: 'Mise à jour' };
+                const entry = { id:'ph'+Date.now(), date: peaSoldeForm.date || new Date().toISOString().split('T')[0], montant: a, label: 'Nouveau solde' };
                 const uh = [...peaHist, entry]; savePeaHist(uh); setPeaHist(uh);
                 setEditPeaSolde(false);
                 flashSaved('pea');
