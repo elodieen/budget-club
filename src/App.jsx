@@ -227,7 +227,7 @@ const BottomNav = ({ view, setView, m }) => {
   const badges   = { revenus: m.revenues.length > 0, budget: rev > 0 && tv > 0 && nonV < 1, depenses: !!m.closed };
 
   return (
-    <div style={{ display:'flex', alignItems:'stretch', background:C.nav, flexShrink:0, paddingTop:8, paddingLeft:0, paddingRight:0, paddingBottom:'calc(12px + env(safe-area-inset-bottom))' }}>
+    <div style={{ display:'flex', alignItems:'stretch', background:C.nav, flexShrink:0, paddingTop:8, paddingLeft:0, paddingRight:0, paddingBottom:'calc(8px + env(safe-area-inset-bottom))' }}>
       {TABS.map(t => {
         const active    = view === t.id || view === t.id + '_edit';
         const col       = active ? C.gold : 'rgba(201,169,110,0.4)';
@@ -540,7 +540,7 @@ export function AccueilView({ m, mi, setMi, setView, updateData }) {
           </div>
         </div>
       </div>
-      <div style={{ flex:1, overflowY:'auto', padding:'0 16px 12px', background:C.beige }}>
+      <div style={{ flex:1, overflowY:'auto', padding:'0 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
         {/* 4 mini-cards */}
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:12 }}>
           {[
@@ -634,7 +634,7 @@ export function BudgetView({ m, mi, setMi, setView, updateData }) {
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} />
       {m.closed && <ClosedBanner />}
       <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.rose }}>✦</span> BUDGET <span style={{ color:C.rose }}>✦</span></div>
-      <div style={{ flex:1, overflowY:'auto', padding:'0 16px 12px', background:C.beige }}>
+      <div style={{ flex:1, overflowY:'auto', padding:'0 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
         {/* Card état budget */}
         <div onClick={() => setView('budget_edit')}
           style={{ background:C.vert, borderRadius:14, padding:'14px 18px', marginBottom:16, marginTop:8, display:'flex', justifyContent:'space-between', alignItems:'center', cursor:'pointer' }}>
@@ -818,7 +818,7 @@ export function BudgetEditView({ m, updateData, setView }) {
   };
 
   return (
-    <div style={{ flex:1, overflowY:'auto', padding:'0 16px 16px', background:C.beige }}>
+    <div style={{ flex:1, overflowY:'auto', padding:'0 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
       {/* Card non ventilé */}
       <div style={{ background:C.rose, borderRadius:12, padding:'14px 16px', marginBottom:16 }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
@@ -938,7 +938,7 @@ export function RevenusView({ m, mi, setMi, updateData }) {
         <span style={{ fontFamily:serif, fontSize:30, fontWeight:700, color:'white' }}>{fmtR(rev)}</span>
       </div>
       {/* Liste scrollable */}
-      <div style={{ flex:1, overflowY:'auto', padding:'12px 16px 80px', background:C.beige }}>
+      <div style={{ flex:1, overflowY:'auto', padding:'12px 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
         {m.revenues.length === 0 && (
           <div style={{ textAlign:'center', padding:32, color:C.muted, fontFamily:sans, fontSize:13 }}>Aucun revenu saisi ce mois</div>
         )}
@@ -1015,7 +1015,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab }) {
               : <div style={{ fontFamily:serif, fontSize:32, fontWeight:700, color:'white' }}>{fmtR(reste)}</div>
             }
           </div>
-          <div style={{ flex:1, overflowY:'auto', padding:'8px 16px 80px', background:C.beige }}>
+          <div style={{ flex:1, overflowY:'auto', padding:'8px 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
             {exps.length === 0 && <div style={{ textAlign:'center', padding:24, color:C.muted, fontFamily:sans, fontSize:13 }}>Aucune dépense ce mois</div>}
             {byDate(exps).map(e => {
               const cat = CATS.find(c => c.id === e.cat) || CATS[CATS.length-1];
@@ -1073,7 +1073,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab }) {
             </div>
           </div>
           {/* Liste unifiée — non cochées en haut, cochées en bas */}
-          <div style={{ flex:1, overflowY:'auto', padding:'8px 16px 80px', background:C.beige }}>
+          <div style={{ flex:1, overflowY:'auto', padding:'8px 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
             {unpaid.length > 0 && <div style={{ padding:'6px 0 8px' }}><span style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:1, textTransform:'uppercase', color:C.muted }}>À prélever — {unpaid.length}</span></div>}
             {unpaid.map((b) => (
               <div key={b.id} style={{ background:C.card, borderRadius:12, marginBottom:8, border:`0.5px solid ${C.border}` }}>
@@ -1650,7 +1650,7 @@ export function EpargneView({ currentYear }) {
         </div>
 
         {/* ── Jauges mensuelles scrollables ── */}
-        <div style={{ flex:1, overflowY:'auto', padding:'0 16px 80px', background:C.beige }}>
+        <div style={{ flex:1, overflowY:'auto', padding:'0 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
           {/* Total année */}
           <div style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', marginBottom:4 }}>
             <span style={{ fontFamily:sans, fontSize:13, fontWeight:700, color:C.vert, width:36 }}>{epargneYear}</span>
