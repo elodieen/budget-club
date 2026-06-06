@@ -236,16 +236,18 @@ const BottomNav = ({ view, setView, m }) => {
         const hasBadge  = badges[t.id];
         return (
           <button key={t.id} onClick={() => setView(t.id)}
-            style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3, border:'none', background:'none', cursor:'pointer', padding:'2px 1px' }}>
-            <div style={{ position:'relative', display:'inline-flex' }}>
-              <i className={`ti ${t.icon}`} style={{ fontSize:20, color:'white' }} />
-              {hasBadge && (
-                <div style={{ position:'absolute', top:-4, right:-6, width:13, height:13, borderRadius:'50%', background:C.rose, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  <span style={{ fontSize:7, color:C.nav, fontWeight:800, lineHeight:1 }}>✓</span>
-                </div>
-              )}
+            style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', border:'none', background:'none', cursor:'pointer', padding:'2px 1px' }}>
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3, background: active ? 'rgba(255,255,255,0.12)' : 'transparent', borderRadius:12, padding:'4px 12px', transition:'all 0.2s' }}>
+              <div style={{ position:'relative', display:'inline-flex' }}>
+                <i className={`ti ${t.icon}`} style={{ fontSize:20, color: active ? 'white' : 'rgba(255,255,255,0.4)' }} />
+                {hasBadge && (
+                  <div style={{ position:'absolute', top:-4, right:-6, width:13, height:13, borderRadius:'50%', background:C.rose, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    <span style={{ fontSize:7, color:C.nav, fontWeight:800, lineHeight:1 }}>✓</span>
+                  </div>
+                )}
+              </div>
+              <span style={{ fontSize:9, color: active ? 'white' : 'rgba(255,255,255,0.4)', fontWeight: active ? 600 : 400, fontFamily:sans }}>{t.label}</span>
             </div>
-            <span style={{ fontSize:9, color:'white', fontWeight: active ? 600 : 400, fontFamily:sans }}>{t.label}</span>
           </button>
         );
       })}
