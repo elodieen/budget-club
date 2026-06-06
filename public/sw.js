@@ -1,56 +1,42 @@
 const ICON = '/logo-budget-club-favicon-rose.png';
-let cachedSettings = null;
+let swData = null; // { settings: { enabled, value, unit }, lastSent: '1234567890' }
 
 self.addEventListener('message', (event) => {
-  if (event.data?.type === 'NOTIF_SETTINGS') {
-    cachedSettings = event.data.settings;
+  if (event.data?.type === 'NOTIF_DATA') {
+    swData = { settings: event.data.settings, lastSent: event.data.lastSent };
   }
 });
 
-function freqToDays(f) {
-  if (!f) return 1;
-  if (typeof f === 'object') {
-    return f.unit === 'week' ? f.count * 7 : f.unit === 'month' ? f.count * 30 : (f.count || 1);
-  }
-  return f === 'daily' ? 1 : f === 'every2days' ? 2 : f === 'weekly' ? 7 : 30;
+function isDue(settings, lastSent) {
+  if (!settings?.enabled) return false;
+  const freqMs = (settings.value || 1) * (settings.unit === 'Semaine(s)' ? 604800000 : settings.unit === 'Mois' ? 2592000000 : 86400000);
+  if (!lastSent) return true;
+  return Date.now() - parseInt(lastSent) >= freqMs;
 }
 
-function isDue(s) {
-  if (!s?.enabled) return false;
-  if (!s.lastSent) return true;
-  return (Date.now() - new Date(s.lastSent).getTime()) / 86400000 >= freqToDays(s.frequency);
-}
-
-async function tryNotify(s) {
-  if (!s || !isDue(s)) return;
-  const [h] = (s.time || '18:00').split(':').map(Number);
-  if (new Date().getHours() < h) return;
+async function tryNotify() {
+  if (!swData || !isDue(swData.settings, swData.lastSent)) return;
   await self.registration.showNotification('Budget Club', {
     body: 'Pensez à mettre à jour votre budget !',
     icon: ICON,
   });
-  const updated = { ...s, lastSent: new Date().toISOString() };
-  cachedSettings = updated;
+  const now = Date.now().toString();
+  if (swData) swData.lastSent = now;
   const all = await clients.matchAll({ includeUncontrolled: true, type: 'window' });
-  all.forEach(c => c.postMessage({ type: 'NOTIF_SENT', settings: updated }));
+  all.forEach(c => c.postMessage({ type: 'NOTIF_SENT', lastSent: now }));
 }
 
-// Vérification toutes les minutes tant que le SW est en vie
-setInterval(() => { if (cachedSettings) tryNotify(cachedSettings); }, 60 * 1000);
+setInterval(() => tryNotify(), 60 * 1000);
 
 self.addEventListener('periodicsync', (event) => {
-  if (event.tag === 'budget-notif') event.waitUntil(tryNotify(cachedSettings));
-});
-
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'budget-notif') event.waitUntil(tryNotify(cachedSettings));
+  if (event.tag === 'budget-notif') event.waitUntil(tryNotify());
 });
 
 self.addEventListener('push', (event) => {
-  const data = event.data ? event.data.json() : {};
+  const d = event.data ? event.data.json() : {};
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Budget Club', {
-      body: data.body || 'Pensez à mettre à jour votre budget !',
+    self.registration.showNotification(d.title || 'Budget Club', {
+      body: d.body || 'Pensez à mettre à jour votre budget !',
       icon: ICON,
     })
   );
