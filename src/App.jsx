@@ -233,20 +233,19 @@ const BottomNav = ({ view, setView, m }) => {
     <div style={{ display:'flex', alignItems:'stretch', background:C.nav, flexShrink:0, paddingTop:8, paddingBottom:'env(safe-area-inset-bottom)' }}>
       {TABS.map(t => {
         const active    = view === t.id || view === t.id + '_edit';
-        const col       = active ? C.gold : 'rgba(201,169,110,0.4)';
         const hasBadge  = badges[t.id];
         return (
           <button key={t.id} onClick={() => setView(t.id)}
             style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3, border:'none', background:'none', cursor:'pointer', padding:'2px 1px' }}>
             <div style={{ position:'relative', display:'inline-flex' }}>
-              <i className={`ti ${t.icon}`} style={{ fontSize:20, color:col }} />
+              <i className={`ti ${t.icon}`} style={{ fontSize:20, color:'white' }} />
               {hasBadge && (
-                <div style={{ position:'absolute', top:-4, right:-6, width:13, height:13, borderRadius:'50%', background:C.gold, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <div style={{ position:'absolute', top:-4, right:-6, width:13, height:13, borderRadius:'50%', background:C.rose, display:'flex', alignItems:'center', justifyContent:'center' }}>
                   <span style={{ fontSize:7, color:C.nav, fontWeight:800, lineHeight:1 }}>✓</span>
                 </div>
               )}
             </div>
-            <span style={{ fontSize:9, color:col, fontWeight: active ? 600 : 400, fontFamily:sans }}>{t.label}</span>
+            <span style={{ fontSize:9, color:'white', fontWeight: active ? 600 : 400, fontFamily:sans }}>{t.label}</span>
           </button>
         );
       })}
