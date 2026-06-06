@@ -649,8 +649,8 @@ export function BudgetView({ m, mi, setMi, setView, updateData }) {
               <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:1.5, color:'rgba(255,255,255,0.55)', textTransform:'uppercase' }}>
                 {done ? 'Budget terminé' : 'Budget en cours'}
               </div>
-              <div style={{ fontFamily:serif, fontSize:26, fontWeight:700, color:'white', lineHeight:1.1 }}>
-                {fmtP(nonV)} <span style={{ fontSize:15, fontWeight:400, color:'rgba(255,255,255,0.55)' }}>à répartir</span>
+              <div style={{ fontFamily:serif, fontSize:26, fontWeight:700, color:C.rose, lineHeight:1.1 }}>
+                {fmtP(nonV)} <span style={{ fontSize:15, fontWeight:400, color:C.rose }}>à répartir</span>
               </div>
             </div>
           </div>
@@ -1068,7 +1068,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab }) {
           <div style={{ background:C.vert, padding:'14px 18px', flexShrink:0 }}>
             <div style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.5)', letterSpacing:1, textTransform:'uppercase', marginBottom:4 }}>{pN}/{bN} prélevées</div>
             <div style={{ display:'flex', alignItems:'baseline', gap:6 }}>
-              <span style={{ fontFamily:serif, fontSize:28, fontWeight:700, color:'white' }}>{fmtP(paidAmt)}</span>
+              <span style={{ fontFamily:serif, fontSize:28, fontWeight:700, color:C.rose }}>{fmtP(paidAmt)}</span>
               <span style={{ fontFamily:sans, fontSize:13, color:'rgba(255,255,255,0.5)' }}>/ {fmtP(bT)}</span>
             </div>
             <div style={{ height:4, background:'rgba(255,255,255,0.12)', borderRadius:2, marginTop:8, overflow:'hidden' }}>
@@ -1650,7 +1650,7 @@ export function EpargneView({ currentYear }) {
                 </button>
               </div>
             </div>
-            <span style={{ fontFamily:serif, fontSize:26, fontWeight:700, color:'white', cursor:'pointer' }} onClick={() => setChartType('pea')}>{fmtP(peaTotal)}</span>
+            <span style={{ fontFamily:serif, fontSize:26, fontWeight:700, color:C.rose, cursor:'pointer' }} onClick={() => setChartType('pea')}>{fmtP(peaTotal)}</span>
           </div>
           {editPeaSolde && (
             <div style={{ background:'rgba(28,41,28,0.08)', borderRadius:'0 0 12px 12px', padding:'10px 14px 14px', marginBottom:8, border:`1px solid ${C.rose}`, borderTop:'none' }}>
