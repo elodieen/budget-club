@@ -536,7 +536,7 @@ export function AccueilView({ m, mi, setMi, setView, updateData }) {
           <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'white', marginBottom:6 }}>Reste à dépenser</div>
           {rev === 0
             ? <div style={{ fontFamily:serif, fontSize:20, fontStyle:'italic', color:'rgba(255,255,255,0.6)', lineHeight:1.3 }}>Revenus non saisis</div>
-            : <div style={{ fontFamily:serif, fontSize:48, fontWeight:700, color:'white', lineHeight:1 }}>{fmtR(reste)}</div>
+            : <div style={{ fontFamily:serif, fontSize:48, fontWeight:700, color: reste >= 0 ? C.rose : '#E8637A', lineHeight:1 }}>{fmtR(reste)}</div>
           }
           <div style={{ height:4, background:'rgba(255,255,255,0.2)', borderRadius:2, marginTop:12, overflow:'hidden' }}>
             <div style={{ height:'100%', width:`${pp}%`, background:'white', borderRadius:2 }} />
@@ -548,7 +548,7 @@ export function AccueilView({ m, mi, setMi, setView, updateData }) {
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:12 }}>
           {[
             { label:'Revenus',  val:fmtR(rev), icon:'ti-credit-card',  vw:'revenus' },
-            { label:'Factures', val:'', node:<><span style={{ color:C.rose }}>{fmtP(paidAmt)}</span><span style={{ color:C.vert }}> / {fmtP(bT)}</span></>, sub:`${pN}/${bN} prélevées`, icon:'ti-file-invoice', vw:'depenses' },
+            { label:'Factures', val:'', node:<><span style={{ color:C.vert }}>{fmtP(paidAmt)}</span><span style={{ color:C.vert }}> / {fmtP(bT)}</span></>, sub:`${pN}/${bN} prélevées`, icon:'ti-file-invoice', vw:'depenses' },
             { label:'Dépenses', val:fmtR(eT),  icon:'ti-shopping-bag', vw:'depenses' },
             { label:'Épargne',  val:fmtR(epg), icon:'ti-pig-money',    vw:'epargne'  },
           ].map(c => (
