@@ -285,7 +285,7 @@ const WarningTriangle = () => (
 
 // Bandeau mois clôturé
 const ClosedBanner = () => (
-  <div style={{ background:C.vert, padding:'7px 16px', display:'flex', alignItems:'center', justifyContent:'center', gap:8, flexShrink:0 }}>
+  <div style={{ background:C.vert, padding:'7px 16px', display:'flex', alignItems:'center', justifyContent:'center', gap:8, flexShrink:0, marginBottom:12 }}>
     <i className="ti ti-lock" style={{ fontSize:13, color:C.gold }} />
     <span style={{ fontFamily:sans, fontSize:12, fontWeight:600, color:'rgba(255,255,255,0.85)' }}>Mois clôturé 🔒</span>
   </div>
@@ -635,7 +635,7 @@ export function BudgetView({ m, setView, updateData }) {
       <div style={{ flex:1, overflowY:'auto', padding:'0 16px 12px', background:C.beige }}>
         {/* Card état budget */}
         <div onClick={() => setView('budget_edit')}
-          style={{ background:C.vert, borderRadius:14, padding:'14px 18px', marginBottom:16, display:'flex', justifyContent:'space-between', alignItems:'center', cursor:'pointer' }}>
+          style={{ background:C.vert, borderRadius:14, padding:'14px 18px', marginBottom:16, marginTop:8, display:'flex', justifyContent:'space-between', alignItems:'center', cursor:'pointer' }}>
           <div style={{ display:'flex', alignItems:'center', gap:10 }}>
             <div style={{ width:32, height:32, borderRadius:'50%', background:'rgba(255,255,255,0.12)', display:'flex', alignItems:'center', justifyContent:'center' }}>
               <i className={`ti ${done ? 'ti-circle-check' : 'ti-hourglass'}`} style={{ fontSize:16, color: done ? C.gold : C.rose }} />
@@ -1158,10 +1158,14 @@ const SavingsChart = ({ data, color, svgBg = 'white', title, onClose }) => {
   const W = 300, H = 160, PL = 48, PR = 12, PT = 16, PB = 28;
   const iW = W - PL - PR, iH = H - PT - PB;
   const vals = data.map(d => d.value);
-  const minV = data.length ? Math.min(...vals) : 0;
-  const maxV = data.length ? Math.max(...vals, minV + 1) : 1;
+  const rawMin = data.length ? Math.min(...vals) : 0;
+  const rawMax = data.length ? Math.max(...vals) : 1;
+  // Échelle adaptée aux données — zoom sur la plage réelle ±0.5%
+  const minV = data.length === 1 ? rawMin * 0.99 : (rawMin === rawMax ? rawMin * 0.995 : rawMin * 0.995);
+  const maxV = data.length === 1 ? rawMax * 1.01 : (rawMin === rawMax ? rawMax * 1.005 : rawMax * 1.005);
+  const range = maxV - minV || 1;
   const px = i => PL + (data.length < 2 ? iW / 2 : (i / (data.length - 1)) * iW);
-  const py = v => data.length <= 1 ? PT + iH / 2 : PT + iH - ((v - minV) / (maxV - minV || 1)) * iH;
+  const py = v => data.length <= 1 ? PT + iH / 2 : PT + iH - ((v - minV) / range) * iH;
   const d0 = data.length >= 2 ? data.map((d, i) => `${i === 0 ? 'M' : 'L'}${px(i)},${py(d.value)}`).join(' ') : '';
   return (
     <div style={{ position:'absolute', inset:0, background:'rgba(28,41,28,0.55)', zIndex:30, borderRadius:20, display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -1212,8 +1216,8 @@ const SavingsChart = ({ data, color, svgBg = 'white', title, onClose }) => {
                     <text key={i} x={px(i)} y={H - 6} textAnchor="middle" fontSize={9} fill={C.muted} fontFamily="DM Sans, sans-serif">{d.label}</text>
                   )
                 ))}
-                {[minV, Math.round((minV + maxV) / 2), maxV].map((v, i) => (
-                  <text key={i} x={PL - 4} y={py(v) + 4} textAnchor="end" fontSize={9} fill={C.muted} fontFamily="DM Sans, sans-serif">{Math.round(v / 100) * 100}</text>
+                {[minV, minV + range / 3, minV + (2 * range) / 3, maxV].map((v, i) => (
+                  <text key={i} x={PL - 4} y={py(v) + 4} textAnchor="end" fontSize={9} fill={C.muted} fontFamily="DM Sans, sans-serif">{Math.round(v).toLocaleString('fr-FR')}</text>
                 ))}
               </>
             )}
