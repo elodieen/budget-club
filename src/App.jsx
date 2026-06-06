@@ -1811,11 +1811,14 @@ const NotifModal = ({ onSave, onClose }) => {
 
   useEffect(() => {
     const freqMs = (value || 1) * (unit === 'Semaine(s)' ? 604800000 : unit === 'Mois' ? 2592000000 : 86400000);
-    const base = lastSentRaw ? parseInt(lastSentRaw) : Date.now();
-    const nextDate = new Date(base + freqMs);
-    const [h = 18, m = 0] = heure.split(':').map(Number);
-    nextDate.setHours(h, m, 0, 0);
-    setPreviewNext(nextDate.getTime());
+    const [h = 18, mn = 0] = heure.split(':').map(Number);
+    const now = new Date();
+    const todayAtHour = new Date();
+    todayAtHour.setHours(h, mn, 0, 0);
+    const next = todayAtHour > now
+      ? todayAtHour
+      : new Date(todayAtHour.getTime() + freqMs);
+    setPreviewNext(next.getTime());
   }, [heure, value, unit]);
 
   const handleSave = () => {
