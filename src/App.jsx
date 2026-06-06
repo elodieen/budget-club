@@ -24,6 +24,40 @@ const sans  = "'DM Sans', sans-serif";
 const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 const MS     = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
 
+// ─── PROFILS ────────────────────────────────────────────────
+let currentProfileId = 'elodie';
+const getProfiles  = () => { try { return JSON.parse(localStorage.getItem('profile:list') || 'null'); } catch { return null; } };
+const saveProfiles = (p) => localStorage.setItem('profile:list', JSON.stringify(p));
+const getSavedProfileId = () => { try { return localStorage.getItem('profile:current'); } catch { return null; } };
+const persistProfile = (id) => { currentProfileId = id; localStorage.setItem('profile:current', id); };
+const getPin  = (id) => { try { return localStorage.getItem(`profile:${id}:pin`); } catch { return null; } };
+const savePin = (id, pin) => localStorage.setItem(`profile:${id}:pin`, pin);
+
+const initProfiles = () => {
+  let profiles = getProfiles();
+  if (!profiles) {
+    profiles = [{ id:'elodie', name:'Élodie' }, { id:'ludivine', name:'Ludivine' }];
+    saveProfiles(profiles);
+  }
+  if (!getPin('elodie'))   savePin('elodie',   '123456');
+  if (!getPin('ludivine')) savePin('ludivine', '123456');
+  return profiles;
+};
+
+const migrateData = () => {
+  if (localStorage.getItem('profile:migration:v1')) return;
+  const keys = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('budget:')) keys.push(k);
+  }
+  keys.forEach(k => {
+    const v = localStorage.getItem(k);
+    if (v !== null) { localStorage.setItem(`elodie:${k}`, v); localStorage.removeItem(k); }
+  });
+  localStorage.setItem('profile:migration:v1', '1');
+};
+
 export const CATS = [
   { id:'alimentation',   label:'Alimentation',      icon:'ti-shopping-cart'   },
   { id:'quotidien',      label:'Quotidien',          icon:'ti-coffee'          },
@@ -77,12 +111,12 @@ const mkMonth = () => ({
 
 // ─── HELPERS ────────────────────────────────────────────────
 // mi = { month: 0-11, year: YYYY }
-const storageKey = (mi) => `budget:${mi.year}:${String(mi.month + 1).padStart(2, '0')}`;
+const storageKey = (mi) => `${currentProfileId}:budget:${mi.year}:${String(mi.month + 1).padStart(2, '0')}`;
 
 const loadYearData = (year) => {
   const months = [];
   for (let m = 0; m < 12; m++) {
-    const key = `budget:${year}:${String(m + 1).padStart(2, '0')}`;
+    const key = `${currentProfileId}:budget:${year}:${String(m + 1).padStart(2, '0')}`;
     try {
       const stored = localStorage.getItem(key);
       months.push(stored ? JSON.parse(stored) : null);
@@ -113,26 +147,21 @@ const fmtP = (n) => Math.round(n).toLocaleString('fr-FR') + ' €';
 
 const billValue      = (b) => b.paid ? (b.realAmount || b.amount) : b.amount;
 const byDate         = (arr) => [...arr].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
-const getCustomCats  = () => { try { return JSON.parse(localStorage.getItem('budget:categories:custom') || '[]'); } catch { return []; } };
-const saveCustomCats = (cats) => localStorage.setItem('budget:categories:custom', JSON.stringify(cats));
+const getCustomCats  = () => { try { return JSON.parse(localStorage.getItem(`${currentProfileId}:budget:categories:custom`) || '[]'); } catch { return []; } };
+const saveCustomCats = (cats) => localStorage.setItem(`${currentProfileId}:budget:categories:custom`, JSON.stringify(cats));
 
-const LIVRET_SOLDE_KEY = 'budget:livret:soldeInitial';
-const getLivretSolde  = () => { try { const s = localStorage.getItem(LIVRET_SOLDE_KEY); return s ? JSON.parse(s) : null; } catch { return null; } };
-const saveLivretSolde = (v) => localStorage.setItem(LIVRET_SOLDE_KEY, JSON.stringify(v));
+const getLivretSolde  = () => { try { const s = localStorage.getItem(`${currentProfileId}:budget:livret:soldeInitial`); return s ? JSON.parse(s) : null; } catch { return null; } };
+const saveLivretSolde = (v) => localStorage.setItem(`${currentProfileId}:budget:livret:soldeInitial`, JSON.stringify(v));
 
-const PEA_SOLDE_KEY = 'budget:pea:soldeInitial';
-const PEA_REND_KEY  = 'budget:pea:rendements';
-const getPeaSolde   = () => { try { const s = localStorage.getItem(PEA_SOLDE_KEY); return s ? JSON.parse(s) : null; } catch { return null; } };
-const savePeaSolde  = (v) => localStorage.setItem(PEA_SOLDE_KEY, JSON.stringify(v));
-const getPeaRend    = () => { try { const s = localStorage.getItem(PEA_REND_KEY);  return s ? JSON.parse(s) : []; } catch { return []; } };
-const savePeaRend   = (v) => localStorage.setItem(PEA_REND_KEY,  JSON.stringify(v));
+const getPeaSolde   = () => { try { const s = localStorage.getItem(`${currentProfileId}:budget:pea:soldeInitial`); return s ? JSON.parse(s) : null; } catch { return null; } };
+const savePeaSolde  = (v) => localStorage.setItem(`${currentProfileId}:budget:pea:soldeInitial`, JSON.stringify(v));
+const getPeaRend    = () => { try { const s = localStorage.getItem(`${currentProfileId}:budget:pea:rendements`);  return s ? JSON.parse(s) : []; } catch { return []; } };
+const savePeaRend   = (v) => localStorage.setItem(`${currentProfileId}:budget:pea:rendements`,  JSON.stringify(v));
 
-const LIVRET_HIST_KEY = 'budget:livret:historique';
-const PEA_HIST_KEY    = 'budget:pea:historique';
-const getLivretHist  = () => { try { const s = localStorage.getItem(LIVRET_HIST_KEY); return s ? JSON.parse(s) : []; } catch { return []; } };
-const saveLivretHist = (v) => localStorage.setItem(LIVRET_HIST_KEY, JSON.stringify(v));
-const getPeaHist     = () => { try { const s = localStorage.getItem(PEA_HIST_KEY);    return s ? JSON.parse(s) : []; } catch { return []; } };
-const savePeaHist    = (v) => localStorage.setItem(PEA_HIST_KEY,    JSON.stringify(v));
+const getLivretHist  = () => { try { const s = localStorage.getItem(`${currentProfileId}:budget:livret:historique`); return s ? JSON.parse(s) : []; } catch { return []; } };
+const saveLivretHist = (v) => localStorage.setItem(`${currentProfileId}:budget:livret:historique`, JSON.stringify(v));
+const getPeaHist     = () => { try { const s = localStorage.getItem(`${currentProfileId}:budget:pea:historique`);    return s ? JSON.parse(s) : []; } catch { return []; } };
+const savePeaHist    = (v) => localStorage.setItem(`${currentProfileId}:budget:pea:historique`,    JSON.stringify(v));
 
 
 // ─── HOOK STORAGE ────────────────────────────────────────────
@@ -190,8 +219,137 @@ const CatIcon = ({ catId, size = 42, gray = false }) => {
   );
 };
 
+// ─── PROFIL MENU & BADGE ─────────────────────────────────────
+
+const PIN_KEYS = ['1','2','3','4','5','6','7','8','9','','0','del'];
+
+const ProfileMenu = ({ onClose, onSwitch, onCreateProfile }) => {
+  const profiles = getProfiles() || [];
+  const profile  = profiles.find(p => p.id === currentProfileId);
+  const [stage,      setStage]      = useState(null); // null | 'old' | 'new' | 'confirm'
+  const [pinInput,   setPinInput]   = useState('');
+  const [newPinVal,  setNewPinVal]  = useState('');
+  const [pinError,   setPinError]   = useState('');
+  const [pinSuccess, setPinSuccess] = useState(false);
+
+  const handlePinKey = (k) => {
+    if (k === 'del') { setPinInput(p => p.slice(0,-1)); return; }
+    if (pinInput.length >= 6) return;
+    const next = pinInput + k;
+    setPinInput(next);
+    if (next.length < 6) return;
+    if (stage === 'old') {
+      if (next === getPin(currentProfileId)) { setNewPinVal(''); setStage('new'); setPinInput(''); setPinError(''); }
+      else { setPinError('Code incorrect'); setTimeout(() => { setPinInput(''); setPinError(''); }, 800); }
+    } else if (stage === 'new') {
+      setNewPinVal(next); setStage('confirm'); setPinInput('');
+    } else if (stage === 'confirm') {
+      if (next === newPinVal) {
+        savePin(currentProfileId, next);
+        setPinSuccess(true);
+        setTimeout(() => { setStage(null); setPinInput(''); setPinSuccess(false); }, 1200);
+      } else {
+        setPinError('Les codes ne correspondent pas');
+        setTimeout(() => { setPinInput(''); setPinError(''); setStage('new'); setNewPinVal(''); }, 800);
+      }
+    }
+  };
+
+  return (
+    <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(28,41,28,0.5)', zIndex:300, display:'flex', alignItems:'flex-end' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{ background:C.card, borderRadius:'20px 20px 0 0', width:'100%', padding:'20px 20px', paddingBottom:'calc(20px + env(safe-area-inset-bottom))' }}>
+        {!stage ? (
+          <>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+              <span style={{ fontFamily:serif, fontSize:20, fontWeight:700, color:C.vert }}>Mon profil</span>
+              <button onClick={onClose} style={{ background:C.roseL, border:'none', width:30, height:30, borderRadius:'50%', cursor:'pointer', fontSize:15, color:C.vert }}>✕</button>
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 0', borderBottom:`1px solid ${C.border}`, marginBottom:12 }}>
+              <div style={{ width:46, height:46, borderRadius:'50%', background:C.vert, border:`2px solid ${C.rose}`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <span style={{ fontFamily:serif, fontSize:20, fontWeight:700, color:C.rose }}>{profile?.name[0].toUpperCase()}</span>
+              </div>
+              <div>
+                <div style={{ fontFamily:serif, fontSize:18, fontWeight:600, color:C.vert }}>{profile?.name}</div>
+                <div style={{ fontFamily:sans, fontSize:11, color:C.muted }}>Profil actif</div>
+              </div>
+            </div>
+            {[
+              { icon:'ti-switch-horizontal', label:'Changer de profil',   action: onSwitch },
+              { icon:'ti-key',               label:'Changer mon code PIN', action: () => { setStage('old'); setPinInput(''); } },
+              { icon:'ti-user-plus',         label:'Ajouter un profil',    action: onCreateProfile },
+            ].map(btn => (
+              <button key={btn.label} onClick={btn.action}
+                style={{ width:'100%', display:'flex', alignItems:'center', gap:12, padding:'12px 10px', background:'none', border:'none', cursor:'pointer', borderRadius:10, marginBottom:4, textAlign:'left' }}>
+                <div style={{ width:36, height:36, borderRadius:10, background:C.roseL, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <i className={`ti ${btn.icon}`} style={{ fontSize:16, color:C.vert }} />
+                </div>
+                <span style={{ fontFamily:sans, fontSize:14, fontWeight:500, color:C.vert }}>{btn.label}</span>
+                <i className="ti ti-chevron-right" style={{ fontSize:14, color:C.muted, marginLeft:'auto' }} />
+              </button>
+            ))}
+          </>
+        ) : (
+          <>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+              <button onClick={() => { setStage(null); setPinInput(''); setPinError(''); }}
+                style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:22, padding:'0 4px' }}>‹</button>
+              <span style={{ fontFamily:serif, fontSize:17, fontWeight:700, color:C.vert }}>
+                {stage === 'old' ? 'Ancien code PIN' : stage === 'new' ? 'Nouveau code PIN' : 'Confirmer le code'}
+              </span>
+              <div style={{ width:30 }} />
+            </div>
+            {pinSuccess ? (
+              <div style={{ textAlign:'center', padding:24, fontFamily:sans, fontSize:14, color:'#2E7D32', fontWeight:600 }}>Code PIN modifié ✓</div>
+            ) : (
+              <>
+                <div style={{ display:'flex', justifyContent:'center', gap:12, marginBottom:16, marginTop:8 }}>
+                  {Array.from({ length:6 }).map((_,i) => (
+                    <div key={i} style={{ width:12, height:12, borderRadius:'50%', background: i < pinInput.length ? C.vert : 'rgba(28,41,28,0.15)', border:`1.5px solid ${i < pinInput.length ? C.vert : 'rgba(28,41,28,0.2)'}`, transition:'background 0.15s' }} />
+                  ))}
+                </div>
+                {pinError && <div style={{ textAlign:'center', color:'#E8637A', fontFamily:sans, fontSize:12, marginBottom:10 }}>{pinError}</div>}
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8 }}>
+                  {PIN_KEYS.map((k, i) => (
+                    k === '' ? <div key={i} /> :
+                    <button key={i} onClick={() => handlePinKey(k)}
+                      style={{ height:52, borderRadius:10, background:C.roseL, border:`1px solid ${C.border}`, fontFamily: k === 'del' ? sans : serif, fontSize: k === 'del' ? 13 : 20, color:C.vert, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      {k === 'del' ? '⌫' : k}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const ProfileBadge = ({ onSwitch, onCreateProfile }) => {
+  const [open, setOpen] = useState(false);
+  const profiles = getProfiles() || [];
+  const profile  = profiles.find(p => p.id === currentProfileId);
+  const initial  = profile ? profile.name[0].toUpperCase() : '?';
+  return (
+    <>
+      <button onClick={() => setOpen(true)} style={{ width:36, height:36, borderRadius:'50%', background:C.vert, border:`2px solid ${C.rose}`, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+        <span style={{ fontFamily:serif, fontSize:14, color:C.rose, fontWeight:700, lineHeight:1 }}>{initial}</span>
+      </button>
+      {open && (
+        <ProfileMenu
+          onClose={() => setOpen(false)}
+          onSwitch={() => { setOpen(false); onSwitch(); }}
+          onCreateProfile={() => { setOpen(false); onCreateProfile(); }}
+        />
+      )}
+    </>
+  );
+};
+
 // Header avec logo + navigation mois (sans limite)
-const MonthHeader = ({ mi, setMi, closed }) => {
+const MonthHeader = ({ mi, setMi, closed, onProfileAction }) => {
   const prev = () => setMi(p => p.month === 0 ? { month:11, year:p.year-1 } : { month:p.month-1, year:p.year });
   const next = () => setMi(p => p.month === 11 ? { month:0, year:p.year+1 } : { month:p.month+1, year:p.year });
   return (
@@ -206,7 +364,7 @@ const MonthHeader = ({ mi, setMi, closed }) => {
           style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>›</button>
       </div>
       <div style={{ width:38, display:'flex', justifyContent:'flex-end' }}>
-        <i className="ti ti-bell" style={{ fontSize:20, color:C.vert }} />
+        <ProfileBadge onSwitch={() => onProfileAction?.('select')} onCreateProfile={() => onProfileAction?.('create')} />
       </div>
     </div>
   );
@@ -514,7 +672,7 @@ export const AddPeaRendementModal = ({ onAdd, onClose }) => {
 // ─── VUES ────────────────────────────────────────────────────
 
 // Vue ACCUEIL
-export function AccueilView({ m, mi, setMi, setView, updateData }) {
+export function AccueilView({ m, mi, setMi, setView, updateData, onProfileAction }) {
   const [confirmClose, setConfirmClose] = useState(false);
   const rev       = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
   const allBills  = m.bills.filter(b => b.selected !== false);
@@ -529,7 +687,7 @@ export function AccueilView({ m, mi, setMi, setView, updateData }) {
 
   return (
     <>
-      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} />
+      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
       <div style={{ padding:'12px 16px 0', background:C.beige, flexShrink:0 }}>
         {/* Card Reste à dépenser */}
@@ -608,7 +766,7 @@ export function AccueilView({ m, mi, setMi, setView, updateData }) {
 }
 
 // Vue BUDGET
-export function BudgetView({ m, mi, setMi, setView, updateData }) {
+export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction }) {
   const cb   = m.catBudgets || {};
   const [customCats, setCustomCats]       = useState(getCustomCats);
   const [showEnv, setShowEnv]             = useState(false);
@@ -635,7 +793,7 @@ export function BudgetView({ m, mi, setMi, setView, updateData }) {
 
   return (
     <>
-      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} />
+      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
       <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.rose }}>✦</span> BUDGET <span style={{ color:C.rose }}>✦</span></div>
       <div style={{ flex:1, overflowY:'auto', padding:'0 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
@@ -926,14 +1084,14 @@ function RevenueRow({ r, i, onUpdate, onDelete, closed }) {
   );
 }
 
-export function RevenusView({ m, mi, setMi, updateData }) {
+export function RevenusView({ m, mi, setMi, updateData, onProfileAction }) {
   const rev = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
   const del = (i)         => updateData(mm => { mm.revenues = mm.revenues.filter((_,idx) => idx !== i); });
   const upd = (i, updated) => updateData(mm => { mm.revenues = mm.revenues.map((r, idx) => idx === i ? updated : r); });
 
   return (
     <>
-      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} />
+      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
       <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.rose }}>✦</span> REVENUS <span style={{ color:C.rose }}>✦</span></div>
       {/* Total fixe en haut */}
@@ -955,7 +1113,7 @@ export function RevenusView({ m, mi, setMi, updateData }) {
 }
 
 // Vue DÉPENSES + FACTURES
-export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab }) {
+export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onProfileAction }) {
   const exps    = m.expenses;
   const bills   = m.bills.filter(b => b.selected !== false);
   const unpaid  = bills.filter(b => !b.paid);
@@ -992,7 +1150,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab }) {
 
   return (
     <>
-      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} />
+      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
       <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.rose }}>✦</span> DÉPENSES <span style={{ color:C.rose }}>✦</span></div>
       {/* Switcher capsule */}
@@ -1124,7 +1282,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab }) {
                         const billId = b.id;
                         for (let y = mi.year; y <= mi.year + 2; y++) {
                           for (let mo = (y === mi.year ? mi.month : 0); mo < 12; mo++) {
-                            const k = `budget:${y}:${String(mo+1).padStart(2,'0')}`;
+                            const k = `${currentProfileId}:budget:${y}:${String(mo+1).padStart(2,'0')}`;
                             const stored = localStorage.getItem(k);
                             if (stored) {
                               try {
@@ -1386,7 +1544,7 @@ const SavingsDetail = ({ type, histItems, soldeItem, onSaveHist, onDeleteHist, o
 };
 
 // Vue ÉPARGNE — navigation année indépendante
-export function EpargneView({ currentYear }) {
+export function EpargneView({ currentYear, onProfileAction }) {
   const [epargneYear, setEpargneYear] = useState(currentYear);
   const [months, setMonths] = useState(() => loadYearData(currentYear));
 
@@ -1411,7 +1569,7 @@ export function EpargneView({ currentYear }) {
   const [peaHist, setPeaHist]       = useState(() => getPeaHist());
 
   useEffect(() => {
-    const MIG = 'budget:init:2026-06';
+    const MIG = `${currentProfileId}:budget:init:2026-06`;
     if (!localStorage.getItem(MIG)) {
       const defaultL = { amount: 1938.37, date: '2026-06-01' };
       const defaultP = { montant: 1841.72, rendement: 259.24, pct: 16.48, date: '2026-06-01' };
@@ -1495,7 +1653,7 @@ export function EpargneView({ currentYear }) {
   );
 
   const patchMonthCat = (monthIdx, catId, newAmount) => {
-    const key = `budget:${epargneYear}:${String(monthIdx + 1).padStart(2, '0')}`;
+    const key = `${currentProfileId}:budget:${epargneYear}:${String(monthIdx + 1).padStart(2, '0')}`;
     try {
       const stored = localStorage.getItem(key); if (!stored) return;
       const data = JSON.parse(stored);
@@ -1507,7 +1665,7 @@ export function EpargneView({ currentYear }) {
     } catch {}
   };
   const deleteMonthCat = (monthIdx, catId) => {
-    const key = `budget:${epargneYear}:${String(monthIdx + 1).padStart(2, '0')}`;
+    const key = `${currentProfileId}:budget:${epargneYear}:${String(monthIdx + 1).padStart(2, '0')}`;
     try {
       const stored = localStorage.getItem(key); if (!stored) return;
       const data = JSON.parse(stored);
@@ -1557,7 +1715,7 @@ export function EpargneView({ currentYear }) {
             style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>›</button>
         </div>
         <div style={{ width:38, display:'flex', justifyContent:'flex-end' }}>
-          <i className="ti ti-bell" style={{ fontSize:20, color:C.vert }} />
+          <ProfileBadge onSwitch={() => onProfileAction?.('select')} onCreateProfile={() => onProfileAction?.('create')} />
         </div>
       </div>
 
@@ -1800,6 +1958,192 @@ export function EpargneView({ currentYear }) {
 }
 
 
+// ─── AUTH SCREENS ────────────────────────────────────────────
+
+const SplashBg = ({ children }) => (
+  <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, zIndex:9999, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-start', paddingTop:'8%', overflow:'hidden' }}>
+    <div style={{ position:'absolute', inset:0, backgroundImage:'url(/splash-bg.png)', backgroundSize:'cover', backgroundPosition:'center' }} />
+    <div style={{ position:'absolute', inset:0, background:'rgba(30,51,40,0.65)' }} />
+    <div style={{ position:'relative', textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center', width:'100%', padding:'0 24px' }}>
+      {children}
+    </div>
+  </div>
+);
+
+const SplashLogo = ({ size = 110, titleSize = 48, spacing = '8px' }) => (
+  <>
+    <div style={{ color:C.rose, fontSize:16, marginBottom:14 }}>✦</div>
+    <img src="/logo-budget-club-rose.png" style={{ width:size, height:size, objectFit:'contain' }} />
+    <div style={{ marginTop:14, fontFamily:serif, fontSize:titleSize, fontWeight:700, color:'white', letterSpacing:spacing, textTransform:'uppercase', lineHeight:1.1 }}>
+      BUDGET<br />CLUB
+    </div>
+    <div style={{ marginTop:12, fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.65)', letterSpacing:'3px', textTransform:'uppercase' }}>
+      GÉREZ VOS FINANCES AVEC ÉLÉGANCE
+    </div>
+  </>
+);
+
+const ProfileSelectScreen = ({ profiles, onSelect, onCreateProfile }) => (
+  <SplashBg>
+    <SplashLogo />
+    <div style={{ width:'100%', height:1, background:'rgba(238,196,196,0.3)', margin:'22px 0 16px' }} />
+    <div style={{ fontFamily:serif, fontSize:17, fontWeight:700, color:C.rose, letterSpacing:'3px', textTransform:'uppercase', marginBottom:20 }}>
+      CHOISIR UN PROFIL
+    </div>
+    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, width:'100%' }}>
+      {profiles.map(p => (
+        <button key={p.id} onClick={() => onSelect(p)}
+          style={{ background:'rgba(255,255,255,0.10)', border:`1.5px solid ${C.rose}`, borderRadius:16, padding:'18px 12px', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
+          <div style={{ width:54, height:54, borderRadius:'50%', background:C.vert, border:`2px solid ${C.rose}`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <span style={{ fontFamily:serif, fontSize:22, fontWeight:700, color:C.rose }}>{p.name[0].toUpperCase()}</span>
+          </div>
+          <span style={{ fontFamily:sans, fontSize:13, fontWeight:600, color:'white' }}>{p.name}</span>
+        </button>
+      ))}
+      {profiles.length < 4 && (
+        <button onClick={onCreateProfile}
+          style={{ background:'rgba(255,255,255,0.05)', border:`1.5px dashed rgba(238,196,196,0.35)`, borderRadius:16, padding:'18px 12px', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
+          <div style={{ width:54, height:54, borderRadius:'50%', background:'rgba(255,255,255,0.08)', border:`1.5px dashed rgba(238,196,196,0.35)`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <i className="ti ti-user-plus" style={{ fontSize:22, color:'rgba(238,196,196,0.55)' }} />
+          </div>
+          <span style={{ fontFamily:sans, fontSize:12, color:'rgba(255,255,255,0.45)' }}>Ajouter</span>
+        </button>
+      )}
+    </div>
+  </SplashBg>
+);
+
+const PinScreen = ({ profile, onSuccess, onForgot }) => {
+  const [pin,   setPin]   = useState('');
+  const [error, setError] = useState(false);
+  const [shake, setShake] = useState(false);
+
+  const handleKey = (k) => {
+    if (k === 'del') { setPin(p => p.slice(0,-1)); return; }
+    if (pin.length >= 6) return;
+    const next = pin + k;
+    setPin(next);
+    if (next.length === 6) {
+      if (next === getPin(profile.id)) { onSuccess(profile); }
+      else {
+        setShake(true); setError(true);
+        setTimeout(() => { setShake(false); setPin(''); setError(false); }, 800);
+      }
+    }
+  };
+
+  return (
+    <SplashBg>
+      <SplashLogo size={80} titleSize={30} spacing="6px" />
+      <div style={{ marginTop:26, fontFamily:serif, fontSize:20, fontWeight:600, color:C.rose }}>{profile.name}</div>
+      <div style={{
+        display:'flex', gap:12, marginTop:16, marginBottom:20,
+        animation: shake ? 'pinShake 0.5s' : 'none',
+      }}>
+        {Array.from({ length:6 }).map((_,i) => (
+          <div key={i} style={{ width:13, height:13, borderRadius:'50%', background: i < pin.length ? C.rose : 'rgba(255,255,255,0.2)', border:`1.5px solid ${i < pin.length ? C.rose : 'rgba(255,255,255,0.3)'}`, transition:'background 0.15s' }} />
+        ))}
+      </div>
+      {error && <div style={{ fontFamily:sans, fontSize:12, color:C.rose, marginBottom:8 }}>Code incorrect</div>}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, width:'100%', maxWidth:280 }}>
+        {PIN_KEYS.map((k, i) => (
+          k === '' ? <div key={i} /> :
+          <button key={i} onClick={() => handleKey(k)}
+            style={{ height:56, borderRadius:12, background:'rgba(255,255,255,0.12)', border:'none', fontFamily: k === 'del' ? sans : serif, fontSize: k === 'del' ? 14 : 22, color:'white', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            {k === 'del' ? '⌫' : k}
+          </button>
+        ))}
+      </div>
+      {onForgot && (
+        <button onClick={onForgot}
+          style={{ marginTop:20, background:'none', border:'none', color:'rgba(255,255,255,0.45)', fontFamily:sans, fontSize:12, cursor:'pointer', textDecoration:'underline' }}>
+          Code oublié ?
+        </button>
+      )}
+      <style>{`@keyframes pinShake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} }`}</style>
+    </SplashBg>
+  );
+};
+
+const CreateProfileScreen = ({ onCreated, onCancel }) => {
+  const [name,       setName]       = useState('');
+  const [pin,        setPin]        = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
+  const [stage,      setStage]      = useState('name'); // 'name' | 'pin' | 'confirm'
+  const [error,      setError]      = useState('');
+
+  const handlePinKey = (k) => {
+    const cur     = stage === 'pin' ? pin        : confirmPin;
+    const setCur  = stage === 'pin' ? setPin     : setConfirmPin;
+    if (k === 'del') { setCur(p => p.slice(0,-1)); return; }
+    if (cur.length >= 6) return;
+    const next = cur + k;
+    setCur(next);
+    if (next.length < 6) return;
+    if (stage === 'pin') { setStage('confirm'); }
+    else {
+      if (next !== pin) {
+        setError('Les codes ne correspondent pas');
+        setConfirmPin('');
+        setTimeout(() => setError(''), 2000);
+      } else {
+        const id = 'user_' + Date.now();
+        const newProfile = { id, name: name.trim() };
+        const profiles = getProfiles() || [];
+        saveProfiles([...profiles, newProfile]);
+        savePin(id, pin);
+        onCreated(newProfile);
+      }
+    }
+  };
+
+  const curPin = stage === 'pin' ? pin : confirmPin;
+
+  return (
+    <SplashBg>
+      <button onClick={onCancel} style={{ position:'absolute', top:0, left:0, background:'none', border:'none', color:'rgba(255,255,255,0.6)', fontSize:24, cursor:'pointer', padding:'2px 8px' }}>‹</button>
+      <SplashLogo size={80} titleSize={28} spacing="5px" />
+      {stage === 'name' ? (
+        <>
+          <div style={{ marginTop:26, fontFamily:serif, fontSize:18, color:C.rose, fontWeight:600 }}>Nouveau profil</div>
+          <input
+            placeholder="Prénom" value={name} onChange={e => setName(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && name.trim()) { setError(''); setStage('pin'); } }}
+            style={{ marginTop:16, width:'100%', padding:'12px 16px', background:'rgba(255,255,255,0.12)', border:`1px solid ${C.rose}`, borderRadius:10, fontFamily:serif, fontSize:18, color:'white', textAlign:'center', outline:'none' }}
+          />
+          {error && <div style={{ color:C.rose, fontFamily:sans, fontSize:12, marginTop:8 }}>{error}</div>}
+          <button onClick={() => { if (name.trim()) { setError(''); setStage('pin'); } else setError('Entrez un prénom'); }}
+            style={{ marginTop:16, width:'100%', padding:'13px 0', background:C.rose, border:'none', borderRadius:10, fontFamily:sans, fontSize:14, fontWeight:600, color:C.vert, cursor:'pointer' }}>
+            Continuer
+          </button>
+        </>
+      ) : (
+        <>
+          <div style={{ marginTop:22, fontFamily:serif, fontSize:16, color:C.rose, fontWeight:600 }}>
+            {stage === 'pin' ? 'Choisissez un code PIN' : 'Confirmez votre code PIN'}
+          </div>
+          <div style={{ fontFamily:sans, fontSize:12, color:'rgba(255,255,255,0.5)', marginTop:4 }}>{name}</div>
+          <div style={{ display:'flex', gap:12, marginTop:14, marginBottom:18 }}>
+            {Array.from({ length:6 }).map((_,i) => (
+              <div key={i} style={{ width:13, height:13, borderRadius:'50%', background: i < curPin.length ? C.rose : 'rgba(255,255,255,0.2)', border:`1.5px solid ${i < curPin.length ? C.rose : 'rgba(255,255,255,0.3)'}`, transition:'background 0.15s' }} />
+            ))}
+          </div>
+          {error && <div style={{ color:C.rose, fontFamily:sans, fontSize:12, marginBottom:10 }}>{error}</div>}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, width:'100%', maxWidth:280 }}>
+            {PIN_KEYS.map((k, i) => (
+              k === '' ? <div key={i} /> :
+              <button key={i} onClick={() => handlePinKey(k)}
+                style={{ height:56, borderRadius:12, background:'rgba(255,255,255,0.12)', border:'none', fontFamily: k === 'del' ? sans : serif, fontSize: k === 'del' ? 14 : 22, color:'white', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                {k === 'del' ? '⌫' : k}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </SplashBg>
+  );
+};
+
 // ─── SPLASH SCREEN ───────────────────────────────────────────
 const SplashScreen = ({ onDone }) => {
   const [splashOpacity, setSplashOpacity] = useState(0);
@@ -1842,20 +2186,17 @@ const SplashScreen = ({ onDone }) => {
   );
 };
 
-// ─── APP ROOT ────────────────────────────────────────────────
-export default function App() {
+// ─── MAIN APP (rendu après login) ───────────────────────────
+function MainApp({ onProfileAction }) {
   const [mi, setMi]         = useState(getInitialMonth);
   const [view, setView]     = useState('accueil');
   const [depTab, setDepTab] = useState('depenses');
-  const [modal, setModal]   = useState(null); // 'dep' | 'rev' | 'bill' | null
-  const [showSplash, setShowSplash] = useState(true);
+  const [modal, setModal]   = useState(null);
   const { data: m, loading, updateData } = useMonthData(mi);
 
   const addExpense = (exp)  => { if (m.closed) return; updateData(mm => { mm.expenses = [...mm.expenses, exp]; }); };
   const addRevenu  = (rev)  => { if (m.closed) return; updateData(mm => { mm.revenues = [...mm.revenues, rev]; }); };
   const addBill    = (bill) => { if (m.closed) return; updateData(mm => { mm.bills    = [...mm.bills, bill];    }); };
-
-  if (showSplash) return <SplashScreen onDone={() => setShowSplash(false)} />;
 
   if (loading) return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', background:C.beige }}>
@@ -1865,59 +2206,118 @@ export default function App() {
 
   const renderView = () => {
     switch (view) {
-      case 'accueil':     return <AccueilView  m={m} mi={mi} setMi={setMi} setView={setView} updateData={updateData} />;
-      case 'budget':      return <BudgetView   m={m} mi={mi} setMi={setMi} setView={setView} updateData={updateData} />;
+      case 'accueil':     return <AccueilView  m={m} mi={mi} setMi={setMi} setView={setView} updateData={updateData} onProfileAction={onProfileAction} />;
+      case 'budget':      return <BudgetView   m={m} mi={mi} setMi={setMi} setView={setView} updateData={updateData} onProfileAction={onProfileAction} />;
       case 'budget_edit': return <BudgetEditView m={m} updateData={updateData} setView={setView} />;
-      case 'revenus':     return <RevenusView  m={m} mi={mi} setMi={setMi} updateData={updateData} />;
-      case 'depenses':    return <DepensesView m={m} mi={mi} setMi={setMi} updateData={updateData} depTab={depTab} setDepTab={setDepTab} />;
-      case 'epargne':     return <EpargneView  currentYear={mi.year} />;
+      case 'revenus':     return <RevenusView  m={m} mi={mi} setMi={setMi} updateData={updateData} onProfileAction={onProfileAction} />;
+      case 'depenses':    return <DepensesView m={m} mi={mi} setMi={setMi} updateData={updateData} depTab={depTab} setDepTab={setDepTab} onProfileAction={onProfileAction} />;
+      case 'epargne':     return <EpargneView  currentYear={mi.year} onProfileAction={onProfileAction} />;
       default:            return null;
     }
   };
 
   return (
     <>
-      {/* Google Fonts */}
       <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
-
-      {/* App wrapper — plein écran mobile, 430px max sur desktop */}
       <div style={{ background:C.beige, height:'100dvh', display:'flex', flexDirection:'column', width:'100%', maxWidth:430, margin:'0 auto', position:'relative', overflow:'hidden', fontFamily:sans }}>
-
-          {/* En-tête page (sauf accueil, épargne, budget, revenus, dépenses qui gèrent le leur) */}
-          {!['accueil','budget_edit','epargne','budget','revenus','depenses'].includes(view) && (
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px 8px', background:C.beige, flexShrink:0 }}>
-              <button onClick={() => setView('accueil')} style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:22, width:32 }}>‹</button>
-              <span style={{ fontFamily:serif, fontSize:20, fontWeight:600, color:C.vert, letterSpacing:1, textTransform:'uppercase' }}>
-                {view === 'budget' ? 'Budget' : view === 'revenus' ? 'Revenus' : 'Dépenses'}
-              </span>
-              <span style={{ fontSize:20, color:C.muted, letterSpacing:2, width:32, textAlign:'right' }}>···</span>
-            </div>
-          )}
-          {view === 'budget_edit' && (
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px 8px', background:C.beige, flexShrink:0 }}>
-              <button onClick={() => setView('budget')} style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:22, width:32 }}>‹</button>
-              <span style={{ fontFamily:serif, fontSize:20, fontWeight:600, color:C.vert, letterSpacing:1, textTransform:'uppercase' }}>Non ventilé par catégorie</span>
-              <span style={{ width:32 }} />
-            </div>
-          )}
-
-          {/* Contenu principal */}
-          <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
-            {renderView()}
+        {!['accueil','budget_edit','epargne','budget','revenus','depenses'].includes(view) && (
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px 8px', background:C.beige, flexShrink:0 }}>
+            <button onClick={() => setView('accueil')} style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:22, width:32 }}>‹</button>
+            <span style={{ fontFamily:serif, fontSize:20, fontWeight:600, color:C.vert, letterSpacing:1, textTransform:'uppercase' }}>
+              {view === 'budget' ? 'Budget' : view === 'revenus' ? 'Revenus' : 'Dépenses'}
+            </span>
+            <span style={{ fontSize:20, color:C.muted, letterSpacing:2, width:32, textAlign:'right' }}>···</span>
           </div>
-
-          {/* FAB */}
-          {!['budget_edit'].includes(view) && !m.closed && <FAB view={view} setModal={setModal} setView={setView} depTab={depTab} />}
-
-          {/* Nav */}
-          <BottomNav view={view} setView={setView} m={m} />
-
-          {/* Modals */}
-          {!m.closed && modal === 'dep'  && <AddExpenseModal onAdd={addExpense} onClose={() => setModal(null)} />}
-          {!m.closed && modal === 'rev'  && <AddRevenuModal  onAdd={addRevenu}  onClose={() => setModal(null)} />}
-          {!m.closed && modal === 'bill' && <AddBillModal    onAdd={addBill}    onClose={() => setModal(null)} />}
+        )}
+        {view === 'budget_edit' && (
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px 8px', background:C.beige, flexShrink:0 }}>
+            <button onClick={() => setView('budget')} style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:22, width:32 }}>‹</button>
+            <span style={{ fontFamily:serif, fontSize:20, fontWeight:600, color:C.vert, letterSpacing:1, textTransform:'uppercase' }}>Non ventilé par catégorie</span>
+            <span style={{ width:32 }} />
+          </div>
+        )}
+        <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+          {renderView()}
+        </div>
+        {!['budget_edit'].includes(view) && !m.closed && <FAB view={view} setModal={setModal} setView={setView} depTab={depTab} />}
+        <BottomNav view={view} setView={setView} m={m} />
+        {!m.closed && modal === 'dep'  && <AddExpenseModal onAdd={addExpense} onClose={() => setModal(null)} />}
+        {!m.closed && modal === 'rev'  && <AddRevenuModal  onAdd={addRevenu}  onClose={() => setModal(null)} />}
+        {!m.closed && modal === 'bill' && <AddBillModal    onAdd={addBill}    onClose={() => setModal(null)} />}
       </div>
     </>
   );
+}
+
+// ─── APP ROOT (gestion auth + profils) ──────────────────────
+export default function App() {
+  const [appStage,       setAppStage]       = useState('splash'); // 'splash'|'select'|'pin'|'create'|'app'
+  const [pendingProfile, setPendingProfile] = useState(null);
+
+  const handleSplashDone = () => {
+    migrateData();
+    const profiles = initProfiles();
+    const savedId  = getSavedProfileId();
+    if (savedId) {
+      const p = profiles.find(x => x.id === savedId);
+      if (p) { setPendingProfile(p); setAppStage('pin'); return; }
+    }
+    setAppStage('select');
+  };
+
+  const handleProfileAction = (action) => {
+    if (action === 'select') {
+      localStorage.removeItem('profile:current');
+      window.location.reload();
+    } else if (action === 'create') {
+      setAppStage('create');
+    }
+  };
+
+  if (appStage === 'splash') return <SplashScreen onDone={handleSplashDone} />;
+
+  if (appStage === 'select') {
+    const profiles = getProfiles() || [];
+    return (
+      <>
+        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+        <ProfileSelectScreen
+          profiles={profiles}
+          onSelect={p => { setPendingProfile(p); setAppStage('pin'); }}
+          onCreateProfile={() => setAppStage('create')}
+        />
+      </>
+    );
+  }
+
+  if (appStage === 'pin' && pendingProfile) {
+    return (
+      <>
+        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+        <PinScreen
+          profile={pendingProfile}
+          onSuccess={profile => { persistProfile(profile.id); setAppStage('app'); }}
+          onForgot={() => { localStorage.removeItem('profile:current'); setAppStage('select'); }}
+        />
+      </>
+    );
+  }
+
+  if (appStage === 'create') {
+    return (
+      <>
+        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+        <CreateProfileScreen
+          onCreated={profile => { setPendingProfile(profile); setAppStage('pin'); }}
+          onCancel={() => setAppStage('select')}
+        />
+      </>
+    );
+  }
+
+  return <MainApp onProfileAction={handleProfileAction} />;
 }
