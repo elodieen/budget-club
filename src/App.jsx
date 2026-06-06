@@ -633,7 +633,7 @@ export function BudgetView({ m, mi, setMi, setView, updateData }) {
     <>
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} />
       {m.closed && <ClosedBanner />}
-      <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.gold }}>✦</span> BUDGET <span style={{ color:C.gold }}>✦</span></div>
+      <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.rose }}>✦</span> BUDGET <span style={{ color:C.rose }}>✦</span></div>
       <div style={{ flex:1, overflowY:'auto', padding:'0 16px 12px', background:C.beige }}>
         {/* Card état budget */}
         <div onClick={() => setView('budget_edit')}
@@ -931,7 +931,7 @@ export function RevenusView({ m, mi, setMi, updateData }) {
     <>
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} />
       {m.closed && <ClosedBanner />}
-      <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.gold }}>✦</span> REVENUS <span style={{ color:C.gold }}>✦</span></div>
+      <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.rose }}>✦</span> REVENUS <span style={{ color:C.rose }}>✦</span></div>
       {/* Total fixe en haut */}
       <div style={{ background:C.vert, flexShrink:0, padding:'14px 20px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
         <span style={{ fontFamily:sans, fontSize:12, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.5)' }}>Total</span>
@@ -990,7 +990,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab }) {
     <>
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} />
       {m.closed && <ClosedBanner />}
-      <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.gold }}>✦</span> DÉPENSES <span style={{ color:C.gold }}>✦</span></div>
+      <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.rose }}>✦</span> DÉPENSES <span style={{ color:C.rose }}>✦</span></div>
       {/* Switcher capsule */}
       <div style={{ padding:'10px 16px', background:C.beige, flexShrink:0, display:'flex', gap:10 }}>
         {[{id:'factures',label:'Factures'},{id:'depenses',label:'Dépenses'}].map(t => (
@@ -1521,8 +1521,8 @@ export function EpargneView({ currentYear }) {
       )}
 
       <div style={{ textAlign:'center', padding:'4px 16px 10px', background:C.beige, flexShrink:0 }}>
-        <div style={{ fontFamily:serif, fontSize:18, fontWeight:600, letterSpacing:3, textTransform:'uppercase', color:C.vert }}>
-          Épargne &amp;<br />Investissement
+        <div style={{ fontFamily:serif, fontSize:16, letterSpacing:'3px', color:C.vert }}>
+          <span style={{ color:C.rose }}>✦</span> ÉPARGNE &amp; INVESTISSEMENT <span style={{ color:C.rose }}>✦</span>
         </div>
       </div>
 
