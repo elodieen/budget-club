@@ -1153,7 +1153,7 @@ export function DepensesView({ m, updateData, depTab, setDepTab }) {
 }
 
 // Graphique épargne SVG pur
-const SavingsChart = ({ data, color, title, onClose }) => {
+const SavingsChart = ({ data, color, svgBg = 'white', title, onClose }) => {
   const [hover, setHover] = useState(null);
   const W = 300, H = 160, PL = 48, PR = 12, PT = 16, PB = 28;
   const iW = W - PL - PR, iH = H - PT - PB;
@@ -1173,7 +1173,7 @@ const SavingsChart = ({ data, color, title, onClose }) => {
         {data.length === 0 ? (
           <div style={{ textAlign:'center', padding:24, color:C.muted, fontFamily:sans, fontSize:13 }}>Aucune donnée</div>
         ) : (
-          <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display:'block', background:'white', borderRadius:10 }}>
+          <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display:'block', background:svgBg, borderRadius:10 }}>
             {[0, 1, 2].map(i => (
               <line key={i} x1={PL} x2={W - PR} y1={PT + (i * iH / 2)} y2={PT + (i * iH / 2)} stroke="rgba(28,41,28,0.06)" strokeWidth={1} />
             ))}
@@ -1478,161 +1478,163 @@ export function EpargneView({ currentYear }) {
         </div>
       </div>
 
-      <div style={{ flex:1, overflowY:'auto', padding:'0 16px 16px', background:C.beige }}>
-        <div style={{ fontFamily:sans, fontSize:11, color:C.muted, marginBottom:8, fontWeight:500 }}>Total à date — {epargneYear}</div>
+      {/* Wrapper : cards fixes + jauges scrollables */}
+      <div style={{ display:'flex', flexDirection:'column', flex:1, overflow:'hidden', background:C.beige }}>
 
-        {/* ── Livret A ── */}
-        <div style={{ background:C.vert, borderRadius:12, padding:'14px 20px', marginBottom: editSolde ? 0 : 8 }}>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-              <span style={{ fontFamily:sans, fontSize:14, fontWeight:600, color:'rgba(255,255,255,0.8)' }}>Livret A</span>
+        {/* ── Cards fixes ── */}
+        <div style={{ flexShrink:0, padding:'0 16px', background:C.beige }}>
+          <div style={{ fontFamily:sans, fontSize:11, color:C.muted, margin:'4px 0 8px', fontWeight:500 }}>Total à date — {epargneYear}</div>
+
+          {/* ── Livret A ── */}
+          <div style={{ background:C.vert, borderRadius:12, padding:'16px 20px', marginBottom: editSolde ? 0 : 8 }}>
+            <div style={{ textAlign:'center', marginBottom:4 }}>
+              <span style={{ fontFamily:serif, fontSize:18, fontWeight:700, color:'white' }}>Livret A</span>
+            </div>
+            <div style={{ textAlign:'center', marginBottom:10 }}>
+              <span onClick={() => setChartType('livret')} style={{ fontFamily:serif, fontSize:32, fontWeight:700, color:'white', cursor:'pointer' }}>{fmtP(livretTotal)}</span>
+            </div>
+            <div style={{ display:'flex', justifyContent:'center', gap:12 }}>
               <button title="Nouveau solde" onClick={() => { setSoldeForm({ amount: '', date: new Date().toISOString().split('T')[0] }); setEditSolde(v => !v); }}
-                style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
-                <i className="ti ti-pencil" style={{ fontSize:13, color: editSolde ? C.gold : 'rgba(255,255,255,0.4)' }} />
+                style={{ background:'rgba(255,255,255,0.15)', border:'none', cursor:'pointer', padding:'7px 18px', borderRadius:20 }}>
+                <i className="ti ti-pencil" style={{ fontSize:15, color: editSolde ? C.gold : 'rgba(255,255,255,0.75)' }} />
               </button>
-              <button onClick={() => setDetailType('livret')} style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
-                <i className="ti ti-list-details" style={{ fontSize:13, color:'rgba(255,255,255,0.4)' }} />
+              <button onClick={() => setDetailType('livret')}
+                style={{ background:'rgba(255,255,255,0.15)', border:'none', cursor:'pointer', padding:'7px 18px', borderRadius:20 }}>
+                <i className="ti ti-list-details" style={{ fontSize:15, color:'rgba(255,255,255,0.75)' }} />
               </button>
-            </div>
-            <span onClick={() => setChartType('livret')} style={{ fontFamily:serif, fontSize:28, fontWeight:700, color:'white', cursor:'pointer' }}>{fmtP(livretTotal)}</span>
-          </div>
-          {livretSolde && !editSolde && (
-            <div style={{ fontFamily:sans, fontSize:11, color:'rgba(255,255,255,0.45)', marginTop:4 }}>
-              dont {fmtR(livretSolde.amount)} solde au {fmtDate(livretSolde.date)}
-            </div>
-          )}
-        </div>
-        {editSolde && (
-          <div style={{ background:'rgba(28,41,28,0.92)', borderRadius:'0 0 12px 12px', padding:'10px 14px 14px', marginBottom:8 }}>
-            <div style={{ display:'flex', gap:8, marginBottom:8 }}>
-              <div style={{ flex:2 }}>
-                <Label><span style={{ color:'rgba(255,255,255,0.5)' }}>Nouveau solde (€)</span></Label>
-                <input type="number" step="0.01" placeholder="Nouveau solde en €" value={soldeForm.amount} onChange={e => setSoldeForm(p => ({...p, amount:e.target.value}))}
-                  style={{ width:'100%', padding:8, border:`1px solid rgba(255,255,255,0.2)`, borderRadius:7, fontSize:15, fontFamily:serif, color:C.vert, background:'white' }} />
-              </div>
-              <div style={{ flex:2 }}>
-                <Label><span style={{ color:'rgba(255,255,255,0.5)' }}>Date du solde</span></Label>
-                <input type="date" value={soldeForm.date} onChange={e => setSoldeForm(p => ({...p, date:e.target.value}))}
-                  style={{ width:'100%', padding:8, border:`1px solid rgba(255,255,255,0.2)`, borderRadius:7, fontSize:12, color:C.vert, background:'white', fontFamily:sans }} />
-              </div>
-            </div>
-            <div style={{ display:'flex', gap:8 }}>
-              <button onClick={() => {
-                const a = parseFloat(soldeForm.amount);
-                if (!a) return;
-                const updated = { ...livretSolde, amount:a, date:soldeForm.date };
-                saveLivretSolde(updated);
-                setLivretSolde(updated);
-                const entry = { id:'lh'+Date.now(), date: soldeForm.date || new Date().toISOString().split('T')[0], montant: a, label: 'Nouveau solde' };
-                const uh = [...livretHist, entry]; saveLivretHist(uh); setLivretHist(uh);
-                setEditSolde(false);
-                flashSaved('livret');
-              }} style={{ flex:1, padding:9, background:C.gold, color:C.nav, border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
-                Enregistrer
-              </button>
-              <button onClick={() => setEditSolde(false)}
-                style={{ padding:'9px 12px', background:'rgba(255,255,255,0.1)', border:'none', borderRadius:8, cursor:'pointer', color:'white', fontFamily:sans }}>✕</button>
             </div>
           </div>
-        )}
-
-        {epargneFlash === 'livret' && <div style={{ textAlign:'center', fontFamily:sans, fontSize:12, color:'#2E7D32', fontWeight:600, padding:'4px 0' }}>Sauvegardé ✓</div>}
-
-        {/* ── PEA / Trade ── */}
-        <div style={{ background:C.rose, borderRadius:12, padding:'14px 20px', marginBottom: editPeaSolde ? 0 : 4 }}>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-              <span style={{ fontFamily:sans, fontSize:14, fontWeight:600, color:C.vert }}>PEA / Trade</span>
-              <button title="Nouveau solde" onClick={() => { setPeaSoldeForm({ montant: '', rendement: String(peaSolde?.rendement||''), pct: String(peaSolde?.pct||''), date: new Date().toISOString().split('T')[0] }); setEditPeaSolde(v => !v); }}
-                style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
-                <i className="ti ti-pencil" style={{ fontSize:13, color: editPeaSolde ? C.vert : 'rgba(28,41,28,0.3)' }} />
-              </button>
-              <button onClick={() => setDetailType('pea')} style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
-                <i className="ti ti-list-details" style={{ fontSize:13, color:'rgba(28,41,28,0.3)' }} />
-              </button>
-            </div>
-            <span onClick={() => setChartType('pea')} style={{ fontFamily:serif, fontSize:28, fontWeight:700, color:C.vert, cursor:'pointer' }}>{fmtP(peaTotal)}</span>
-          </div>
-          {peaSolde && !editPeaSolde && (peaRendTotal > 0 || peaSolde.rendement > 0) && (
-            <div style={{ fontFamily:sans, fontSize:11, color:'rgba(28,41,28,0.5)', marginTop:4 }}>
-              dont {fmtR(peaSolde.rendement + peaRendTotal)} de rendements
-              {peaSolde.pct ? ` (+${peaSolde.pct}%)` : ''}
-            </div>
-          )}
-        </div>
-        {editPeaSolde && (
-          <div style={{ background:'rgba(28,41,28,0.08)', borderRadius:'0 0 12px 12px', padding:'10px 14px 14px', marginBottom:4, border:`1px solid ${C.rose}`, borderTop:'none' }}>
-            <div style={{ display:'flex', gap:8, marginBottom:8 }}>
-              <div style={{ flex:2 }}>
-                <Label>Nouveau solde (€)</Label>
-                <input type="number" step="0.01" placeholder="Nouveau solde en €" value={peaSoldeForm.montant} onChange={e => setPeaSoldeForm(p => ({...p, montant:e.target.value}))}
-                  style={{ width:'100%', padding:8, border:`1px solid ${C.border}`, borderRadius:7, fontSize:14, fontFamily:serif, color:C.vert, background:'white' }} />
-              </div>
-              <div style={{ flex:2 }}>
-                <Label>Date</Label>
-                <input type="date" value={peaSoldeForm.date} onChange={e => setPeaSoldeForm(p => ({...p, date:e.target.value}))}
-                  style={{ width:'100%', padding:8, border:`1px solid ${C.border}`, borderRadius:7, fontSize:12, color:C.vert, background:'white', fontFamily:sans }} />
-              </div>
-            </div>
-            <div style={{ display:'flex', gap:8 }}>
-              <button onClick={() => {
-                const a = parseFloat(peaSoldeForm.montant);
-                if (!a) return;
-                const updated = { ...peaSolde, montant:a, date:peaSoldeForm.date };
-                savePeaSolde(updated);
-                setPeaSolde(updated);
-                const entry = { id:'ph'+Date.now(), date: peaSoldeForm.date || new Date().toISOString().split('T')[0], montant: a, label: 'Nouveau solde' };
-                const uh = [...peaHist, entry]; savePeaHist(uh); setPeaHist(uh);
-                setEditPeaSolde(false);
-                flashSaved('pea');
-              }} style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
-                Enregistrer
-              </button>
-              <button onClick={() => setEditPeaSolde(false)}
-                style={{ padding:'9px 12px', background:'white', border:`1px solid ${C.rose}`, borderRadius:8, cursor:'pointer', color:C.vert, fontFamily:sans }}>✕</button>
-            </div>
-          </div>
-        )}
-
-        {epargneFlash === 'pea' && <div style={{ textAlign:'center', fontFamily:sans, fontSize:12, color:'#2E7D32', fontWeight:600, padding:'4px 0' }}>Sauvegardé ✓</div>}
-        {showPeaRend && (
-          <AddPeaRendementModal
-            onAdd={r => { const updated = [...peaRend, r]; savePeaRend(updated); setPeaRend(updated); setShowPeaRend(false); setDetailType('pea'); }}
-            onClose={() => setShowPeaRend(false)}
-          />
-        )}
-
-        {/* Total année */}
-        <div style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', marginBottom:4 }}>
-          <span style={{ fontFamily:sans, fontSize:13, fontWeight:700, color:C.vert, width:36 }}>{epargneYear}</span>
-          <div style={{ flex:1, height:1, background:'rgba(28,41,28,0.2)' }} />
-          <div style={{ background:'rgba(28,41,28,0.08)', borderRadius:6, padding:'2px 10px' }}>
-            <span style={{ fontFamily:serif, fontSize:13, fontWeight:700, color:C.vert }}>{fmtP(te)}</span>
-          </div>
-        </div>
-        {/* Barres mensuelles bicolores */}
-        {md.map(d => (
-          <div key={d.idx} style={{ display:'flex', alignItems:'center', gap:8, padding:'4px 0' }}>
-            <span style={{ fontFamily:sans, fontSize:11, fontWeight: d.total > 0 ? 600 : 400, color:C.vert, width:36 }}>{MS[d.idx]}</span>
-            <div style={{ flex:1, height:7, background:'rgba(28,41,28,0.07)', borderRadius:4, overflow:'hidden' }}>
-              {d.total > 0 && (
-                <div style={{ height:'100%', width:`${Math.round(d.total/mx*100)}%`, display:'flex', borderRadius:4, overflow:'hidden' }}>
-                  {d.livret > 0 && <div style={{ flex: Math.round(d.livret/d.total*100), background:C.vert }} />}
-                  {d.invest > 0 && <div style={{ flex: Math.round(d.invest/d.total*100), background:C.rose }} />}
+          {editSolde && (
+            <div style={{ background:'rgba(28,41,28,0.92)', borderRadius:'0 0 12px 12px', padding:'10px 14px 14px', marginBottom:8 }}>
+              <div style={{ display:'flex', gap:8, marginBottom:8 }}>
+                <div style={{ flex:2 }}>
+                  <Label><span style={{ color:'rgba(255,255,255,0.5)' }}>Nouveau solde (€)</span></Label>
+                  <input type="number" step="0.01" placeholder="Nouveau solde en €" value={soldeForm.amount} onChange={e => setSoldeForm(p => ({...p, amount:e.target.value}))}
+                    style={{ width:'100%', padding:8, border:`1px solid rgba(255,255,255,0.2)`, borderRadius:7, fontSize:15, fontFamily:serif, color:C.vert, background:'white' }} />
                 </div>
-              )}
+                <div style={{ flex:2 }}>
+                  <Label><span style={{ color:'rgba(255,255,255,0.5)' }}>Date du solde</span></Label>
+                  <input type="date" value={soldeForm.date} onChange={e => setSoldeForm(p => ({...p, date:e.target.value}))}
+                    style={{ width:'100%', padding:8, border:`1px solid rgba(255,255,255,0.2)`, borderRadius:7, fontSize:12, color:C.vert, background:'white', fontFamily:sans }} />
+                </div>
+              </div>
+              <div style={{ display:'flex', gap:8 }}>
+                <button onClick={() => {
+                  const a = parseFloat(soldeForm.amount);
+                  if (!a) return;
+                  const updated = { ...livretSolde, amount:a, date:soldeForm.date };
+                  saveLivretSolde(updated);
+                  setLivretSolde(updated);
+                  const entry = { id:'lh'+Date.now(), date: soldeForm.date || new Date().toISOString().split('T')[0], montant: a, label: 'Nouveau solde' };
+                  const uh = [...livretHist, entry]; saveLivretHist(uh); setLivretHist(uh);
+                  setEditSolde(false);
+                  flashSaved('livret');
+                }} style={{ flex:1, padding:9, background:C.gold, color:C.nav, border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                  Enregistrer
+                </button>
+                <button onClick={() => setEditSolde(false)}
+                  style={{ padding:'9px 12px', background:'rgba(255,255,255,0.1)', border:'none', borderRadius:8, cursor:'pointer', color:'white', fontFamily:sans }}>✕</button>
+              </div>
             </div>
-            <div style={{ background: d.total > 0 ? 'rgba(28,41,28,0.07)' : 'transparent', borderRadius:5, padding:'1px 8px', minWidth:52, textAlign:'right' }}>
-              <span style={{ fontFamily:serif, fontSize:12, fontWeight:700, color: d.total > 0 ? C.vert : 'rgba(28,41,28,0.3)' }}>{d.total > 0 ? fmtP(d.total) : '–'}</span>
+          )}
+          {epargneFlash === 'livret' && <div style={{ textAlign:'center', fontFamily:sans, fontSize:12, color:'#2E7D32', fontWeight:600, padding:'4px 0' }}>Sauvegardé ✓</div>}
+
+          {/* ── PEA / Trade ── */}
+          <div style={{ background:C.rose, borderRadius:12, padding:'16px 20px', marginBottom: editPeaSolde ? 0 : 8 }}>
+            <div style={{ textAlign:'center', marginBottom:4 }}>
+              <span style={{ fontFamily:serif, fontSize:18, fontWeight:700, color:C.vert }}>PEA / Trade</span>
+            </div>
+            <div style={{ textAlign:'center', marginBottom:10 }}>
+              <span onClick={() => setChartType('pea')} style={{ fontFamily:serif, fontSize:32, fontWeight:700, color:C.vert, cursor:'pointer' }}>{fmtP(peaTotal)}</span>
+            </div>
+            <div style={{ display:'flex', justifyContent:'center', gap:12 }}>
+              <button title="Nouveau solde" onClick={() => { setPeaSoldeForm({ montant: '', rendement: String(peaSolde?.rendement||''), pct: String(peaSolde?.pct||''), date: new Date().toISOString().split('T')[0] }); setEditPeaSolde(v => !v); }}
+                style={{ background:'rgba(28,41,28,0.1)', border:'none', cursor:'pointer', padding:'7px 18px', borderRadius:20 }}>
+                <i className="ti ti-pencil" style={{ fontSize:15, color: editPeaSolde ? C.vert : 'rgba(28,41,28,0.45)' }} />
+              </button>
+              <button onClick={() => setDetailType('pea')}
+                style={{ background:'rgba(28,41,28,0.1)', border:'none', cursor:'pointer', padding:'7px 18px', borderRadius:20 }}>
+                <i className="ti ti-list-details" style={{ fontSize:15, color:'rgba(28,41,28,0.45)' }} />
+              </button>
             </div>
           </div>
-        ))}
+          {editPeaSolde && (
+            <div style={{ background:'rgba(28,41,28,0.08)', borderRadius:'0 0 12px 12px', padding:'10px 14px 14px', marginBottom:8, border:`1px solid ${C.rose}`, borderTop:'none' }}>
+              <div style={{ display:'flex', gap:8, marginBottom:8 }}>
+                <div style={{ flex:2 }}>
+                  <Label>Nouveau solde (€)</Label>
+                  <input type="number" step="0.01" placeholder="Nouveau solde en €" value={peaSoldeForm.montant} onChange={e => setPeaSoldeForm(p => ({...p, montant:e.target.value}))}
+                    style={{ width:'100%', padding:8, border:`1px solid ${C.border}`, borderRadius:7, fontSize:14, fontFamily:serif, color:C.vert, background:'white' }} />
+                </div>
+                <div style={{ flex:2 }}>
+                  <Label>Date</Label>
+                  <input type="date" value={peaSoldeForm.date} onChange={e => setPeaSoldeForm(p => ({...p, date:e.target.value}))}
+                    style={{ width:'100%', padding:8, border:`1px solid ${C.border}`, borderRadius:7, fontSize:12, color:C.vert, background:'white', fontFamily:sans }} />
+                </div>
+              </div>
+              <div style={{ display:'flex', gap:8 }}>
+                <button onClick={() => {
+                  const a = parseFloat(peaSoldeForm.montant);
+                  if (!a) return;
+                  const updated = { ...peaSolde, montant:a, date:peaSoldeForm.date };
+                  savePeaSolde(updated);
+                  setPeaSolde(updated);
+                  const entry = { id:'ph'+Date.now(), date: peaSoldeForm.date || new Date().toISOString().split('T')[0], montant: a, label: 'Nouveau solde' };
+                  const uh = [...peaHist, entry]; savePeaHist(uh); setPeaHist(uh);
+                  setEditPeaSolde(false);
+                  flashSaved('pea');
+                }} style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                  Enregistrer
+                </button>
+                <button onClick={() => setEditPeaSolde(false)}
+                  style={{ padding:'9px 12px', background:'white', border:`1px solid ${C.rose}`, borderRadius:8, cursor:'pointer', color:C.vert, fontFamily:sans }}>✕</button>
+              </div>
+            </div>
+          )}
+          {epargneFlash === 'pea' && <div style={{ textAlign:'center', fontFamily:sans, fontSize:12, color:'#2E7D32', fontWeight:600, padding:'4px 0' }}>Sauvegardé ✓</div>}
+        </div>
+
+        {/* ── Jauges mensuelles scrollables ── */}
+        <div style={{ flex:1, overflowY:'auto', padding:'0 16px 16px', background:C.beige }}>
+          {/* Total année */}
+          <div style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', marginBottom:4 }}>
+            <span style={{ fontFamily:sans, fontSize:13, fontWeight:700, color:C.vert, width:36 }}>{epargneYear}</span>
+            <div style={{ flex:1, height:1, background:'rgba(28,41,28,0.2)' }} />
+            <div style={{ background:'rgba(28,41,28,0.08)', borderRadius:6, padding:'2px 10px' }}>
+              <span style={{ fontFamily:serif, fontSize:13, fontWeight:700, color:C.vert }}>{fmtP(te)}</span>
+            </div>
+          </div>
+          {/* Barres mensuelles bicolores */}
+          {md.map(d => (
+            <div key={d.idx} style={{ display:'flex', alignItems:'center', gap:8, padding:'4px 0' }}>
+              <span style={{ fontFamily:sans, fontSize:11, fontWeight: d.total > 0 ? 600 : 400, color:C.vert, width:36 }}>{MS[d.idx]}</span>
+              <div style={{ flex:1, height:7, background:'rgba(28,41,28,0.07)', borderRadius:4, overflow:'hidden' }}>
+                {d.total > 0 && (
+                  <div style={{ height:'100%', width:`${Math.round(d.total/mx*100)}%`, display:'flex', borderRadius:4, overflow:'hidden' }}>
+                    {d.livret > 0 && <div style={{ flex: Math.round(d.livret/d.total*100), background:C.vert }} />}
+                    {d.invest > 0 && <div style={{ flex: Math.round(d.invest/d.total*100), background:C.rose }} />}
+                  </div>
+                )}
+              </div>
+              <div style={{ background: d.total > 0 ? 'rgba(28,41,28,0.07)' : 'transparent', borderRadius:5, padding:'1px 8px', minWidth:52, textAlign:'right' }}>
+                <span style={{ fontFamily:serif, fontSize:12, fontWeight:700, color: d.total > 0 ? C.vert : 'rgba(28,41,28,0.3)' }}>{d.total > 0 ? fmtP(d.total) : '–'}</span>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
+      {showPeaRend && (
+        <AddPeaRendementModal
+          onAdd={r => { const updated = [...peaRend, r]; savePeaRend(updated); setPeaRend(updated); setShowPeaRend(false); setDetailType('pea'); }}
+          onClose={() => setShowPeaRend(false)}
+        />
+      )}
       {chartType && (
         <SavingsChart
           data={chartType === 'livret' ? livretChartData : peaChartData}
-          color={chartType === 'livret' ? C.vert : '#C0392B'}
+          color={C.vert}
+          svgBg={chartType === 'livret' ? 'white' : C.roseL}
           title={chartType === 'livret' ? 'Livret A' : 'PEA / Trade'}
           onClose={() => setChartType(null)}
         />
