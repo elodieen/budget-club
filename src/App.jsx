@@ -1401,8 +1401,9 @@ export function EpargneView({ currentYear }) {
   };
 
   // Virements mensuels issus des dépenses épargne
+  const PEA_START = new Date('2026-06-10');
   const allLivretVirements = months.flatMap(mo => mo ? mo.expenses.filter(e => e.cat === 'epargne_livret') : []);
-  const allPeaVirements    = months.flatMap(mo => mo ? mo.expenses.filter(e => e.cat === 'epargne_pea')    : []);
+  const allPeaVirements    = months.flatMap(mo => mo ? mo.expenses.filter(e => e.cat === 'epargne_pea' && new Date(e.date) >= PEA_START) : []);
 
   // Total = dernier solde manuel + virements postérieurs, ou solde initial + tous virements
   const computeTotal = (initialAmount, manualHist, virements) => {
