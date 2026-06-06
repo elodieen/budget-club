@@ -1015,7 +1015,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab }) {
           <div style={{ background:C.vert, padding:'14px 18px', flexShrink:0, textAlign:'center' }}>
             <div style={{ fontFamily:sans, fontSize:9, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.5)', marginBottom:4 }}>Reste à dépenser</div>
             {rev === 0
-              ? <div style={{ fontFamily:serif, fontSize:18, fontStyle:'italic', color:'rgba(255,255,255,0.55)' }}>Revenus non saisis</div>
+              ? <div style={{ fontFamily:serif, fontSize:24, fontStyle:'italic', color:C.rose }}>Revenus non saisis</div>
               : <div style={{ fontFamily:serif, fontSize:32, fontWeight:700, color:C.rose }}>{fmtR(reste)}</div>
             }
           </div>
