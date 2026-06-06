@@ -693,7 +693,7 @@ export function BudgetView({ m, mi, setMi, setView, updateData }) {
                     {ov && <WarningTriangle />}
                   </div>
                   <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                    <span style={{ fontFamily:sans, fontSize:12, color: ov ? '#C0392B' : C.muted }}>{fmtR(sp)} / {fmtP(bg)}</span>
+                    <span style={{ fontFamily:sans, fontSize:12, color: ov ? '#E8637A' : C.muted }}>{fmtR(sp)} / {fmtP(bg)}</span>
                     {!m.closed && (
                       <button onClick={() => setConfirmDelCat(cat.id)}
                         style={{ background:'none', border:'none', cursor:'pointer', padding:'1px 3px', color:'rgba(192,57,43,0.4)' }}>
@@ -1045,7 +1045,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab }) {
                     <div style={{ fontFamily:sans, fontSize:11, color:C.muted }}>{cat.label}</div>
                   </div>
                   <div style={{ textAlign:'right', flexShrink:0 }}>
-                    <div style={{ fontFamily:serif, fontSize:16, fontWeight:600, color:'#C0392B' }}>-{fmtR(e.amount)}</div>
+                    <div style={{ fontFamily:serif, fontSize:16, fontWeight:600, color:'#E8637A' }}>-{fmtR(e.amount)}</div>
                     <div style={{ fontFamily:sans, fontSize:10, color:C.muted }}>{e.date ? new Date(e.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : ''}</div>
                   </div>
                   {!m.closed && (
