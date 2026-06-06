@@ -2003,9 +2003,9 @@ const SplashBg = ({ children }) => (
       {children}
     </div>
     <div style={{ position:'absolute', bottom:20, width:'100%', textAlign:'center', fontFamily:sans, fontSize:10, pointerEvents:'none' }}>
-      <span style={{ color:C.rose }}>✦</span>
+      <span style={{ color:'white' }}>✦</span>
       <span style={{ color:'rgba(255,255,255,0.6)' }}> Built different. Built by Elodie. </span>
-      <span style={{ color:C.rose }}>✦</span>
+      <span style={{ color:'white' }}>✦</span>
     </div>
   </div>
 );
