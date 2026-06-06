@@ -1822,9 +1822,8 @@ export default function App() {
       <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
 
-      {/* Wrapper desktop centré */}
-      <div style={{ background:'#2A1F1A', minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', padding:12, fontFamily:sans }}>
-        <div style={{ background:C.beige, borderRadius:24, overflow:'hidden', display:'flex', flexDirection:'column', width:'100%', maxWidth:390, height:'90vh', maxHeight:780, position:'relative', boxShadow:'0 20px 60px rgba(0,0,0,0.35)' }}>
+      {/* App wrapper — plein écran mobile, 430px max sur desktop */}
+      <div style={{ background:C.beige, minHeight:'100dvh', display:'flex', flexDirection:'column', width:'100%', maxWidth:430, margin:'0 auto', position:'relative', overflow:'hidden', fontFamily:sans }}>
 
           {/* En-tête page (sauf accueil, épargne, budget, revenus, dépenses qui gèrent le leur) */}
           {!['accueil','budget_edit','epargne','budget','revenus','depenses'].includes(view) && (
@@ -1862,7 +1861,6 @@ export default function App() {
           {!m.closed && modal === 'dep'  && <AddExpenseModal onAdd={addExpense} onClose={() => setModal(null)} />}
           {!m.closed && modal === 'rev'  && <AddRevenuModal  onAdd={addRevenu}  onClose={() => setModal(null)} />}
           {!m.closed && modal === 'bill' && <AddBillModal    onAdd={addBill}    onClose={() => setModal(null)} />}
-        </div>
       </div>
     </>
   );
