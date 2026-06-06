@@ -9,7 +9,6 @@ const C = {
   vert:   '#1E3328',
   nav:    '#1C291C',
   rose:   '#EEC4C4',
-  roseM:  '#F2D4D4',
   roseL:  '#F9EDED',
   beige:  '#F5EDE1',
   gold:   '#C9A96E',
@@ -574,7 +573,7 @@ export function AccueilView({ m, mi, setMi, setView, updateData, onBellClick, no
       {m.closed && <ClosedBanner />}
       <div style={{ padding:'12px 16px 0', background:C.beige, flexShrink:0 }}>
         {/* Card Reste à dépenser */}
-        <div style={{ background:C.roseM, borderRadius:16, padding:'20px 20px 16px', textAlign:'center', marginBottom:12 }}>
+        <div style={{ background:C.rose, borderRadius:16, padding:'20px 20px 16px', textAlign:'center', marginBottom:12 }}>
           <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:C.vert, marginBottom:6 }}>Reste à dépenser</div>
           {rev === 0
             ? <div style={{ fontFamily:serif, fontSize:20, fontStyle:'italic', color:C.muted, lineHeight:1.3 }}>Revenus non saisis</div>
@@ -617,7 +616,7 @@ export function AccueilView({ m, mi, setMi, setView, updateData, onBellClick, no
         <div style={{ paddingTop:12 }}>
           {m.closed ? (
             <button onClick={() => updateData(mm => { mm.closed = false; })}
-              style={{ width:'100%', padding:'10px 0', background:C.roseM, border:'none', borderRadius:10, fontFamily:sans, fontSize:13, fontWeight:600, color:C.vert, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+              style={{ width:'100%', padding:'10px 0', background:C.rose, border:'none', borderRadius:10, fontFamily:sans, fontSize:13, fontWeight:600, color:C.vert, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
               <i className="ti ti-lock-open" style={{ fontSize:15 }} /> Réouvrir le mois
             </button>
           ) : confirmClose ? (
@@ -865,7 +864,7 @@ export function BudgetEditView({ m, updateData, setView }) {
   return (
     <div style={{ flex:1, overflowY:'auto', padding:'0 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
       {/* Card non ventilé */}
-      <div style={{ background:C.roseM, borderRadius:12, padding:'14px 16px', marginBottom:16 }}>
+      <div style={{ background:C.rose, borderRadius:12, padding:'14px 16px', marginBottom:16 }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
           <span style={{ fontFamily:sans, fontSize:12, color:C.vert, fontWeight:500 }}>Reste à ventiler sur {fmtP(rpe)}</span>
           <span style={{ fontFamily:serif, fontSize:22, fontWeight:700, color: lft >= 0 ? C.vert : '#C0392B' }}>{fmtP(lft)}</span>
@@ -1643,7 +1642,7 @@ export function EpargneView({ currentYear, onBellClick, notifActive }) {
           {epargneFlash === 'livret' && <div style={{ textAlign:'center', fontFamily:sans, fontSize:12, color:'#2E7D32', fontWeight:600, padding:'4px 0' }}>Sauvegardé ✓</div>}
 
           {/* ── PEA ── */}
-          <div style={{ background:C.roseM, borderRadius:12, padding:'12px 16px', marginBottom: editPeaSolde ? 0 : 8, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <div style={{ background:C.rose, borderRadius:12, padding:'12px 16px', marginBottom: editPeaSolde ? 0 : 8, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
             <div>
               <span style={{ fontFamily:serif, fontSize:16, fontWeight:700, color:C.vert, display:'block', marginBottom:6 }}>PEA</span>
               <div style={{ display:'flex', gap:16 }}>
