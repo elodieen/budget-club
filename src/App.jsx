@@ -289,7 +289,7 @@ const WarningTriangle = () => (
 
 // Bandeau mois clôturé
 const ClosedBanner = () => (
-  <div style={{ background:C.vert, padding:'7px 16px', display:'flex', alignItems:'center', justifyContent:'center', gap:8, flexShrink:0, marginBottom:12 }}>
+  <div style={{ background:C.vert, padding:'7px 16px', display:'flex', alignItems:'center', justifyContent:'center', gap:8, flexShrink:0, marginBottom:12, marginTop:8 }}>
     <i className="ti ti-lock" style={{ fontSize:13, color:C.gold }} />
     <span style={{ fontFamily:sans, fontSize:12, fontWeight:600, color:'rgba(255,255,255,0.85)' }}>Mois clôturé</span>
   </div>
