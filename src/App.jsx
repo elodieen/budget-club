@@ -141,8 +141,14 @@ const saveNotifSettings = (v) => localStorage.setItem(NOTIF_KEY, JSON.stringify(
 const shouldSendNotif = (s) => {
   if (!s?.enabled) return false;
   if (!s.lastSent) return true;
-  const diff = (Date.now() - new Date(s.lastSent).getTime()) / 86400000;
-  return s.frequency === 'daily' ? diff >= 1 : s.frequency === 'every2days' ? diff >= 2 : s.frequency === 'weekly' ? diff >= 7 : diff >= 30;
+  const diffDays = (Date.now() - new Date(s.lastSent).getTime()) / 86400000;
+  const f = s.frequency;
+  if (f && typeof f === 'object') {
+    const days = f.unit === 'week' ? f.count * 7 : f.unit === 'month' ? f.count * 30 : f.count;
+    return diffDays >= days;
+  }
+  // legacy string format
+  return f === 'daily' ? diffDays >= 1 : f === 'every2days' ? diffDays >= 2 : f === 'weekly' ? diffDays >= 7 : diffDays >= 30;
 };
 
 // ─── HOOK STORAGE ────────────────────────────────────────────
@@ -311,10 +317,10 @@ const ClosedBanner = () => (
 
 const ModalShell = ({ title, onClose, children }) => (
   <div style={{
-    position:'absolute', inset:0, background:'rgba(28,41,28,0.5)',
-    display:'flex', alignItems:'flex-end', borderRadius:20, zIndex:20,
+    position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(28,41,28,0.5)',
+    display:'flex', alignItems:'flex-end', zIndex:200,
   }}>
-    <div style={{ background:C.card, borderRadius:'20px 20px 0 0', padding:'22px 18px', width:'100%', maxHeight:'88%', overflowY:'auto' }}>
+    <div style={{ background:C.card, borderRadius:'20px 20px 0 0', padding:'22px 18px', paddingBottom:'calc(22px + env(safe-area-inset-bottom))', width:'100%', maxHeight:'88%', overflowY:'auto' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
         <span style={{ fontFamily:serif, fontSize:22, fontWeight:700, color:C.vert }}>{title}</span>
         <button onClick={onClose}
@@ -1190,7 +1196,7 @@ const SavingsChart = ({ data, color, svgBg = 'white', title, onClose }) => {
   const py = v => data.length <= 1 ? PT + iH / 2 : PT + iH - ((v - minV) / range) * iH;
   const d0 = data.length >= 2 ? data.map((d, i) => `${i === 0 ? 'M' : 'L'}${px(i)},${py(d.value)}`).join(' ') : '';
   return (
-    <div style={{ position:'absolute', inset:0, background:'rgba(28,41,28,0.55)', zIndex:30, borderRadius:20, display:'flex', alignItems:'center', justifyContent:'center' }}>
+    <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(28,41,28,0.55)', zIndex:200, display:'flex', alignItems:'center', justifyContent:'center' }}>
       <div style={{ background:C.beige, borderRadius:16, margin:16, padding:'18px 16px 14px', width:'100%', maxWidth:340 }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
           <span style={{ fontFamily:serif, fontSize:18, fontWeight:700, color:C.vert }}>{title}</span>
@@ -1274,8 +1280,8 @@ const SavingsDetail = ({ type, histItems, soldeItem, onSaveHist, onDeleteHist, o
   const sorted = [...histItems].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   return (
-    <div style={{ position:'absolute', inset:0, background:'rgba(28,41,28,0.5)', zIndex:30, borderRadius:20, display:'flex', alignItems:'flex-end' }}>
-      <div style={{ background:C.card, borderRadius:'20px 20px 0 0', width:'100%', maxHeight:'78%', display:'flex', flexDirection:'column', padding:'20px 18px 16px' }}>
+    <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(28,41,28,0.5)', zIndex:200, display:'flex', alignItems:'flex-end' }}>
+      <div style={{ background:C.card, borderRadius:'20px 20px 0 0', width:'100%', maxHeight:'88%', display:'flex', flexDirection:'column', padding:'20px 18px', paddingBottom:'calc(20px + env(safe-area-inset-bottom))' }}>
 
         {/* Header */}
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12, flexShrink:0 }}>
@@ -1764,19 +1770,20 @@ export function EpargneView({ currentYear, onBellClick, notifActive }) {
 
 // ─── NOTIFICATION MODAL ──────────────────────────────────────
 const NotifModal = ({ settings, onSave, onClose }) => {
-  const [enabled, setEnabled]     = useState(settings?.enabled ?? false);
-  const [frequency, setFrequency] = useState(settings?.frequency ?? 'daily');
-  const [time, setTime]           = useState(settings?.time ?? '18:00');
+  const [enabled, setEnabled]   = useState(settings?.enabled ?? false);
+  const [freqCount, setFreqCount] = useState(() => { const f = settings?.frequency; return (f && typeof f === 'object') ? (f.count ?? 1) : 1; });
+  const [freqUnit, setFreqUnit]   = useState(() => { const f = settings?.frequency; return (f && typeof f === 'object') ? (f.unit ?? 'day') : 'day'; });
+  const [time, setTime]         = useState(settings?.time ?? '18:00');
 
   const handleSave = () => {
-    const s = { enabled, frequency, time, lastSent: settings?.lastSent ?? null };
+    const s = { enabled, frequency: { count: freqCount, unit: freqUnit }, time, lastSent: settings?.lastSent ?? null };
     saveNotifSettings(s);
     onSave(s);
   };
 
   return (
-    <div style={{ position:'absolute', inset:0, background:'rgba(28,41,28,0.5)', zIndex:50, display:'flex', alignItems:'flex-end' }}>
-      <div style={{ background:'#fff', borderRadius:'20px 20px 0 0', width:'100%', padding:'24px 20px', paddingBottom:'calc(24px + env(safe-area-inset-bottom))', display:'flex', flexDirection:'column', gap:20 }}>
+    <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(28,41,28,0.5)', zIndex:200, display:'flex', alignItems:'flex-end' }}>
+      <div style={{ background:'#fff', borderRadius:'20px 20px 0 0', width:'100%', padding:'24px 20px', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', display:'flex', flexDirection:'column', gap:20 }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
           <span style={{ fontFamily:serif, fontSize:19, fontWeight:700, color:C.vert }}>Rappels</span>
           <button onClick={onClose} style={{ background:C.roseL, border:'none', width:28, height:28, borderRadius:'50%', cursor:'pointer', fontSize:14, color:C.vert }}>✕</button>
@@ -1791,10 +1798,17 @@ const NotifModal = ({ settings, onSave, onClose }) => {
 
         <div>
           <div style={{ fontFamily:sans, fontSize:11, fontWeight:600, letterSpacing:1, textTransform:'uppercase', color:C.muted, marginBottom:8 }}>Fréquence</div>
-          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-            {[['daily','Quotidien'],['every2days','Tous les 2 j'],['weekly','Hebdomadaire'],['monthly','Mensuel']].map(([id, label]) => (
-              <button key={id} onClick={() => setFrequency(id)} style={{ padding:'6px 12px', borderRadius:20, border:`1.5px solid ${frequency === id ? C.vert : C.border}`, background: frequency === id ? C.vert : 'white', color: frequency === id ? 'white' : C.vert, fontFamily:sans, fontSize:12, cursor:'pointer' }}>{label}</button>
-            ))}
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <div style={{ display:'flex', alignItems:'center', border:`1px solid ${C.border}`, borderRadius:8, overflow:'hidden' }}>
+              <button onClick={() => setFreqCount(n => Math.max(1, n - 1))} style={{ padding:'8px 12px', background:'white', border:'none', color:C.vert, fontSize:16, cursor:'pointer', fontWeight:600 }}>−</button>
+              <span style={{ padding:'8px 10px', fontFamily:sans, fontSize:15, color:C.vert, minWidth:30, textAlign:'center' }}>{freqCount}</span>
+              <button onClick={() => setFreqCount(n => Math.min(99, n + 1))} style={{ padding:'8px 12px', background:'white', border:'none', color:C.vert, fontSize:16, cursor:'pointer', fontWeight:600 }}>+</button>
+            </div>
+            <select value={freqUnit} onChange={e => setFreqUnit(e.target.value)} style={{ flex:1, padding:'9px 10px', border:`1px solid ${C.border}`, borderRadius:8, fontFamily:sans, fontSize:14, color:C.vert, background:'white', cursor:'pointer' }}>
+              <option value="day">Jour(s)</option>
+              <option value="week">Semaine(s)</option>
+              <option value="month">Mois</option>
+            </select>
           </div>
         </div>
 
@@ -1872,7 +1886,7 @@ export default function App() {
     if (s?.enabled && shouldSendNotif(s) && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
       const [h] = (s.time || '18:00').split(':').map(Number);
       if (new Date().getHours() >= h) {
-        new Notification('Budget Club 💰', { body: 'Pensez à mettre à jour votre budget !', icon: '/logo-budget-club-favicon2.png' });
+        new Notification('Budget Club 💰', { body: 'Pensez à mettre à jour votre budget !', icon: '/logo-budget-club-favicon-rose.png' });
         const updated = { ...s, lastSent: new Date().toISOString() };
         saveNotifSettings(updated);
         setNotifSettings(updated);
@@ -1909,7 +1923,7 @@ export default function App() {
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
 
       {/* App wrapper — plein écran mobile, 430px max sur desktop */}
-      <div style={{ background:C.beige, minHeight:'100dvh', display:'flex', flexDirection:'column', width:'100%', maxWidth:430, margin:'0 auto', position:'relative', overflow:'hidden', fontFamily:sans }}>
+      <div style={{ background:C.beige, height:'100dvh', display:'flex', flexDirection:'column', width:'100%', maxWidth:430, margin:'0 auto', position:'relative', overflow:'hidden', fontFamily:sans }}>
 
           {/* En-tête page (sauf accueil, épargne, budget, revenus, dépenses qui gèrent le leur) */}
           {!['accueil','budget_edit','epargne','budget','revenus','depenses'].includes(view) && (
