@@ -196,7 +196,7 @@ const MonthHeader = ({ mi, setMi, closed }) => {
   const next = () => setMi(p => p.month === 11 ? { month:0, year:p.year+1 } : { month:p.month+1, year:p.year });
   return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px 0', background:C.beige, flexShrink:0 }}>
-      <img src="/logo-budget-club-accueil.png" style={{ width:38, height:38, borderRadius:'50%', objectFit:'cover' }} />
+      <img src="/logo-budget-club-favicon-rose.png" style={{ width:38, height:38, borderRadius:'50%', objectFit:'cover' }} />
       <div style={{ display:'flex', alignItems:'center', gap:4 }}>
         <button onClick={prev}
           style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>‹</button>
@@ -536,7 +536,7 @@ export function AccueilView({ m, mi, setMi, setView, updateData }) {
         <div style={{ background:C.vert, borderRadius:16, padding:'20px 20px 16px', textAlign:'center', marginBottom:12 }}>
           <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'white', marginBottom:6 }}>Reste à dépenser</div>
           {rev === 0
-            ? <div style={{ fontFamily:serif, fontSize:20, fontStyle:'italic', color:'rgba(255,255,255,0.6)', lineHeight:1.3 }}>Revenus non saisis</div>
+            ? <div style={{ fontFamily:serif, fontSize:28, fontStyle:'italic', color:C.rose, lineHeight:1.3 }}>Revenus non saisis</div>
             : <div style={{ fontFamily:serif, fontSize:48, fontWeight:700, color: reste >= 0 ? C.rose : '#E8637A', lineHeight:1 }}>{fmtR(reste)}</div>
           }
           <div style={{ height:4, background:'rgba(255,255,255,0.2)', borderRadius:2, marginTop:12, overflow:'hidden' }}>
@@ -1535,7 +1535,7 @@ export function EpargneView({ currentYear }) {
     <>
       {/* Header avec navigation année */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px 10px', background:C.beige, flexShrink:0 }}>
-        <img src="/logo-budget-club-accueil.png" style={{ width:38, height:38, borderRadius:'50%', objectFit:'cover' }} />
+        <img src="/logo-budget-club-favicon-rose.png" style={{ width:38, height:38, borderRadius:'50%', objectFit:'cover' }} />
         <div style={{ display:'flex', alignItems:'center', gap:4 }}>
           <button onClick={prevYear}
             style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>‹</button>
