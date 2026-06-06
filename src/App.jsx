@@ -1521,8 +1521,8 @@ export function EpargneView({ currentYear }) {
       )}
 
       <div style={{ textAlign:'center', padding:'4px 16px 10px', background:C.beige, flexShrink:0 }}>
-        <div style={{ fontFamily:serif, fontSize:16, letterSpacing:'3px', color:C.vert }}>
-          <span style={{ color:C.rose }}>✦</span> ÉPARGNE &amp; INVESTISSEMENT <span style={{ color:C.rose }}>✦</span>
+        <div style={{ fontFamily:serif, fontSize:16, letterSpacing:'3px', color:C.vert, textAlign:'center', lineHeight:1.5 }}>
+          <span style={{ color:C.rose }}>✦</span> ÉPARGNE &amp;<br />INVESTISSEMENT <span style={{ color:C.rose }}>✦</span>
         </div>
       </div>
 
