@@ -642,8 +642,8 @@ export function BudgetView({ m, mi, setMi, setView, updateData }) {
         <div onClick={() => setView('budget_edit')}
           style={{ background:C.vert, borderRadius:14, padding:'14px 18px', marginBottom:16, marginTop:8, display:'flex', justifyContent:'space-between', alignItems:'center', cursor:'pointer' }}>
           <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            <div style={{ width:32, height:32, borderRadius:'50%', background:'rgba(255,255,255,0.12)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <i className={`ti ${done ? 'ti-circle-check' : 'ti-hourglass'}`} style={{ fontSize:16, color: done ? C.gold : C.rose }} />
+            <div style={{ width:32, height:32, borderRadius:'50%', background: done ? C.rose : 'rgba(255,255,255,0.12)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <i className={`ti ${done ? 'ti-circle-check' : 'ti-hourglass'}`} style={{ fontSize:16, color: done ? C.vert : C.rose }} />
             </div>
             <div>
               <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:1.5, color:'rgba(255,255,255,0.55)', textTransform:'uppercase' }}>
