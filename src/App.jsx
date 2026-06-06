@@ -11,7 +11,7 @@ const C = {
   rose:   '#EEC4C4',
   roseL:  '#F9EDED',
   beige:  '#F5EDE1',
-  gold:   '#C9A96E',
+  gold:   '#EEC4C4',
   card:   '#FFFFFF',
   text:   '#2A2A2A',
   muted:  '#8A9A8A',
@@ -1812,9 +1812,9 @@ const SplashScreen = ({ onDone }) => {
       }} />
       <div style={{ position:'absolute', inset:0, background:'rgba(30,51,40,0.65)' }} />
       <div style={{ position:'relative', textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center' }}>
-        <div style={{ color:C.gold, fontSize:16, marginBottom:16 }}>✦</div>
-        <img src="/logo-budget-club.png" style={{ width:110, height:110, objectFit:'contain' }} />
-        <div style={{ marginTop:16, fontFamily:serif, fontSize:48, fontWeight:700, color:C.gold, letterSpacing:'8px', textTransform:'uppercase', lineHeight:1.1 }}>
+        <div style={{ color:C.rose, fontSize:16, marginBottom:16 }}>✦</div>
+        <img src="/logo-budget-club-rose.png" style={{ width:110, height:110, objectFit:'contain' }} />
+        <div style={{ marginTop:16, fontFamily:serif, fontSize:48, fontWeight:700, color:'white', letterSpacing:'8px', textTransform:'uppercase', lineHeight:1.1 }}>
           BUDGET<br />CLUB
         </div>
         <div style={{ marginTop:14, fontFamily:sans, fontSize:11, color:'rgba(255,255,255,0.7)', letterSpacing:'3px', textTransform:'uppercase' }}>
