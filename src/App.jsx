@@ -45,13 +45,24 @@ const initProfiles = () => {
   if (!getPin('elodie'))   savePin('elodie',   '123456');
   if (!getPin('ludivine')) savePin('ludivine', '123456');
   // Soldes initiaux à 0 pour tous les profils non-elodie
+  // (reset forcé si les valeurs d'Elodie se sont glissées dedans)
   const today = new Date().toISOString().split('T')[0];
+  const RESET_FLAG = 'profile:init-soldes:v2';
+  const needsReset = !localStorage.getItem(RESET_FLAG);
   profiles.filter(p => p.id !== 'elodie').forEach(p => {
-    if (!localStorage.getItem(`${p.id}:budget:livret:soldeInitial`))
-      localStorage.setItem(`${p.id}:budget:livret:soldeInitial`, JSON.stringify({ amount: 0, date: today }));
-    if (!localStorage.getItem(`${p.id}:budget:pea:soldeInitial`))
-      localStorage.setItem(`${p.id}:budget:pea:soldeInitial`, JSON.stringify({ montant: 0, rendement: 0, pct: 0, date: today }));
+    const livretRaw = localStorage.getItem(`${p.id}:budget:livret:soldeInitial`);
+    const peaRaw    = localStorage.getItem(`${p.id}:budget:pea:soldeInitial`);
+    let badLivret = !livretRaw;
+    let badPea    = !peaRaw;
+    if (livretRaw) { try { if (JSON.parse(livretRaw).amount > 0) badLivret = needsReset; } catch { badLivret = true; } }
+    if (peaRaw)    { try { if (JSON.parse(peaRaw).montant  > 0) badPea    = needsReset; } catch { badPea    = true; } }
+    if (badLivret) localStorage.setItem(`${p.id}:budget:livret:soldeInitial`, JSON.stringify({ amount: 0, date: today }));
+    if (badPea)    localStorage.setItem(`${p.id}:budget:pea:soldeInitial`,    JSON.stringify({ montant: 0, rendement: 0, pct: 0, date: today }));
+    // Empêche la migration EpargneView d'écraser avec les defaults d'Elodie
+    if (!localStorage.getItem(`${p.id}:budget:init:2026-06`))
+      localStorage.setItem(`${p.id}:budget:init:2026-06`, '1');
   });
+  if (needsReset) localStorage.setItem(RESET_FLAG, '1');
   return profiles;
 };
 
@@ -1573,12 +1584,12 @@ export function EpargneView({ currentYear, onProfileAction }) {
   const [months, setMonths] = useState(() => loadYearData(currentYear));
 
   // Livret A
-  const [livretSolde, setLivretSolde] = useState(() => getLivretSolde() || { amount: 1938.37, date: '2026-06-01' });
+  const [livretSolde, setLivretSolde] = useState(() => getLivretSolde() || { amount: 0, date: new Date().toISOString().split('T')[0] });
   const [editSolde, setEditSolde]     = useState(false);
   const [soldeForm, setSoldeForm]     = useState({ amount:'', date:'' });
 
   // PEA solde initial
-  const [peaSolde, setPeaSolde]       = useState(() => getPeaSolde() || { montant:1841.72, rendement:259.24, pct:16.48, date:'2026-06-01' });
+  const [peaSolde, setPeaSolde]       = useState(() => getPeaSolde() || { montant: 0, rendement: 0, pct: 0, date: new Date().toISOString().split('T')[0] });
   const [editPeaSolde, setEditPeaSolde] = useState(false);
   const [peaSoldeForm, setPeaSoldeForm] = useState({ montant:'', rendement:'', pct:'', date:'' });
 
@@ -2179,6 +2190,7 @@ const CreateProfileScreen = ({ onCreated, onCancel }) => {
         const today = new Date().toISOString().split('T')[0];
         localStorage.setItem(`${id}:budget:livret:soldeInitial`, JSON.stringify({ amount: 0, date: today }));
         localStorage.setItem(`${id}:budget:pea:soldeInitial`, JSON.stringify({ montant: 0, rendement: 0, pct: 0, date: today }));
+        localStorage.setItem(`${id}:budget:init:2026-06`, '1');
         onCreated(newProfile);
       }
     }
@@ -2268,6 +2280,11 @@ const SplashScreen = ({ onDone }) => {
         <div style={{ marginTop:14, fontFamily:sans, fontSize:11, color:'rgba(255,255,255,0.7)', letterSpacing:'3px', textTransform:'uppercase' }}>
           GÉREZ VOS FINANCES AVEC ÉLÉGANCE
         </div>
+      </div>
+      <div style={{ position:'absolute', bottom:20, width:'100%', textAlign:'center', fontFamily:sans, fontSize:10, pointerEvents:'none' }}>
+        <span style={{ color:'white' }}>✦</span>
+        <span style={{ color:'rgba(255,255,255,0.6)' }}> Built different. Built by Elodie. </span>
+        <span style={{ color:'white' }}>✦</span>
       </div>
     </div>
   );
