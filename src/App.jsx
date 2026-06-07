@@ -1989,11 +1989,6 @@ export function EpargneView({ currentYear, onProfileAction }) {
 
         {/* ── Cards fixes ── */}
         <div style={{ flexShrink:0, padding:'0 16px', background:C.beige }}>
-          <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', margin:'4px 0 8px' }}>
-            <span style={{ fontFamily:sans, fontSize:10, color:C.muted }}>Total à date&nbsp;: <span style={{ fontFamily:serif, fontSize:13, fontWeight:700, color:C.vert }}>{fmtP(livretTotal + peaTotal)}</span></span>
-            <span style={{ fontFamily:sans, fontSize:10, color:C.muted }}>{lastUpdateDate ? `Dernière maj le ${lastUpdateDate}` : ''}</span>
-          </div>
-
           {/* ── Livret A ── */}
           <div style={{ background:C.vert, borderRadius:12, padding:'12px 16px', marginBottom: editSolde ? 0 : 8, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
             <div>
@@ -2137,6 +2132,12 @@ export function EpargneView({ currentYear, onProfileAction }) {
             </div>
           )}
           {epargneFlash === 'pea' && <div style={{ textAlign:'center', fontFamily:sans, fontSize:12, color:'#2E7D32', fontWeight:600, padding:'4px 0' }}>Sauvegardé ✓</div>}
+
+          {/* Ligne info : Dernière maj + Total à date */}
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', marginTop:8, marginBottom:8 }}>
+            <span style={{ fontFamily:sans, fontSize:10, color:C.muted }}>{lastUpdateDate ? `Dernière maj le ${lastUpdateDate}` : ''}</span>
+            <span style={{ fontFamily:serif, fontSize:12, fontWeight:700, color:C.vert }}>Total à date&nbsp;: {fmtP(livretTotal + peaTotal)}</span>
+          </div>
         </div>
 
         {/* Total année — fixe */}
