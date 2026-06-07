@@ -567,9 +567,9 @@ const MonthHeader = ({ mi, setMi, closed, onProfileAction }) => {
 // Barre de navigation 5 onglets
 const TABS = [
   { id:'accueil',  icon:'ti-home',        label:'Accueil'  },
-  { id:'budget',   icon:'ti-chart-bar',   label:'Budget'   },
   { id:'revenus',  icon:'ti-cash',        label:'Revenus'  },
-  { id:'depenses', icon:'ti-list',        label:'Suivi' },
+  { id:'budget',   icon:'ti-chart-bar',   label:'Budget'   },
+  { id:'depenses', icon:'ti-list',        label:'Suivi'    },
   { id:'epargne',  icon:'ti-trending-up', label:'Épargne'  },
 ];
 
