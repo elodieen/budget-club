@@ -1322,6 +1322,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
     if (m.closed) return;
     updateData(mm => {
       mm.bills[realI] = { ...mm.bills[realI], paid:true, realAmount: parseFloat(billForm.amount)||mm.bills[realI].amount, paidDate: billForm.date };
+      mm.facturesValidees = true;
     });
     setXBill(null);
   };
