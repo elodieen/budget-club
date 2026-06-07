@@ -1266,7 +1266,7 @@ export function RevenusView({ m, mi, setMi, updateData, onProfileAction }) {
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
       <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.vert }}>❧</span> REVENUS <span style={{ color:C.vert }}>❧</span></div>
-      <div style={{ textAlign:'center', padding:'4px 16px 8px', fontFamily:serif, fontSize:12, fontStyle:'italic', color:C.muted, flexShrink:0, background:C.beige }}>Ce n'est pas ce qu'on gagne qui compte, c'est ce qu'on en fait.</div>
+      <div style={{ textAlign:'center', padding:'4px 16px 8px', fontFamily:serif, fontSize:12, fontStyle:'italic', color:C.muted, flexShrink:0, background:C.beige, marginBottom:8 }}>Ce n'est pas ce qu'on gagne qui compte, c'est ce qu'on en fait.</div>
       {/* Total fixe en haut */}
       <div style={{ background:C.vert, flexShrink:0, padding:'14px 20px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
         <span style={{ fontFamily:sans, fontSize:12, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.5)' }}>Total</span>
