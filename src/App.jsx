@@ -1158,7 +1158,7 @@ export function BudgetEditView({ m, updateData, setView }) {
       {/* Card non ventilé */}
       <div style={{ background:C.vert, borderRadius:12, padding:'14px 16px', marginBottom:16 }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-          <span style={{ fontFamily:sans, fontSize:12, color:C.rose, fontWeight:500 }}>Reste à ventiler</span>
+          <span style={{ fontFamily:sans, fontSize:12, color:'white', fontWeight:500 }}>Reste à ventiler</span>
           {rev > 0 && <span style={{ fontFamily:serif, fontSize:22, fontWeight:700, color: lft >= 0 ? C.rose : '#FF8A80' }}>{fmtP(lft)}</span>}
         </div>
         {rev === 0 && <div style={{ fontFamily:sans, fontSize:12, fontStyle:'italic', color:C.rose, marginTop:4 }}>Revenus non saisis</div>}
