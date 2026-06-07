@@ -569,10 +569,10 @@ const MonthHeader = ({ mi, setMi, closed, onProfileAction }) => {
       <div style={{ flex:1, display:'flex', alignItems:'center' }}>
         <img src="/logo-budget-club-favicon-rose.png" style={{ width:38, height:38, borderRadius:'50%', objectFit:'cover' }} />
       </div>
-      <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:4 }}>
+      <div style={{ flex:1, minWidth:0, display:'flex', alignItems:'center', justifyContent:'center', gap:4 }}>
         <button onClick={prev}
           style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>‹</button>
-        <span style={{ fontFamily:serif, fontSize:16, fontWeight:600, color:C.vert, whiteSpace:'nowrap' }}>{MONTHS[mi.month]} {mi.year}</span>
+        <span style={{ fontFamily:serif, fontSize:'clamp(12px, 3.5vw, 16px)', fontWeight:600, color:C.vert, whiteSpace:'nowrap' }}>{MONTHS[mi.month]} {mi.year}</span>
         {closed && <i className="ti ti-lock" style={{ fontSize:13, color:C.gold, marginLeft:2 }} />}
         <button onClick={next}
           style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>›</button>
