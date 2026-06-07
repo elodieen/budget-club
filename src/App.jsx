@@ -1336,7 +1336,9 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
       <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.vert }}>❧</span> SUIVI <span style={{ color:C.vert }}>❧</span></div>
-      <div style={{ textAlign:'center', padding:'4px 16px 8px', fontFamily:serif, fontSize:12, fontStyle:'italic', color:C.muted, flexShrink:0, background:C.beige }}>Le luxe, c'est de ne jamais être surpris par ses comptes.</div>
+      <div style={{ textAlign:'center', padding:'4px 16px 8px', fontFamily:serif, fontSize:12, fontStyle:'italic', color:C.muted, flexShrink:0, background:C.beige }}>
+        {depTab === 'factures' ? 'Maîtrisez vos charges. Elles ne vous surprendront plus.' : 'Le luxe, c\'est de ne jamais être surpris par ses comptes.'}
+      </div>
       {/* Switcher capsule */}
       <div style={{ padding:'10px 16px', background:C.beige, flexShrink:0, display:'flex', gap:10 }}>
         {[{id:'factures',label:'Factures'},{id:'depenses',label:'Dépenses'}].map(t => (
