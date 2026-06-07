@@ -468,8 +468,8 @@ const ProfileBadge = ({ onSwitch, onCreateProfile }) => {
   const initial  = profile ? profile.name[0].toUpperCase() : '?';
   return (
     <>
-      <button onClick={() => setOpen(true)} style={{ width:36, height:36, borderRadius:'50%', background:C.beige, border:`2px solid ${C.vert}`, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-        <span style={{ fontFamily:serif, fontSize:14, color:C.vert, fontWeight:700, lineHeight:1 }}>{initial}</span>
+      <button onClick={() => setOpen(true)} style={{ width:36, height:36, borderRadius:'50%', background:C.vert, border:`2px solid ${C.rose}`, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+        <span style={{ fontFamily:serif, fontSize:14, color:C.rose, fontWeight:700, lineHeight:1 }}>{initial}</span>
       </button>
       {open && (
         <ProfileMenu
@@ -2289,7 +2289,7 @@ const ProfileSelectScreen = ({ profiles, onSelect, onCreateProfile }) => {
       </select>
       <button
         onClick={() => { const p = profiles.find(x => x.id === selected); if (p) onSelect(p); }}
-        style={{ marginTop:14, width:'100%', padding:'13px 0', background:C.rose, border:'none', borderRadius:10, fontFamily:sans, fontSize:14, fontWeight:700, color:C.vert, cursor:'pointer', letterSpacing:1 }}>
+        style={{ marginTop:14, width:'100%', padding:'13px 0', background:'white', border:'1px solid rgba(255,255,255,0.3)', borderRadius:10, fontFamily:sans, fontSize:14, fontWeight:700, color:C.vert, cursor:'pointer', letterSpacing:1 }}>
         Continuer
       </button>
     </SplashBg>
@@ -2352,7 +2352,7 @@ const PinScreen = ({ profile, onSuccess }) => {
       <SplashLogo size={80} titleSize={30} spacing="6px" />
       {!resetStage ? (
         <>
-          <div style={{ marginTop:26, fontFamily:serif, fontSize:20, fontWeight:600, color:C.rose }}>{profile.name}</div>
+          <div style={{ marginTop:26, fontFamily:serif, fontSize:20, fontWeight:600, color:'white' }}>{profile.name}</div>
           <div style={{ display:'flex', gap:12, marginTop:16, marginBottom:20, animation: shake ? 'pinShake 0.5s' : 'none' }}>
             {Array.from({ length:6 }).map((_,i) => (
               <div key={i} style={{ width:13, height:13, borderRadius:'50%', background: i < pin.length ? C.rose : 'rgba(255,255,255,0.2)', border:`1.5px solid ${i < pin.length ? C.rose : 'rgba(255,255,255,0.3)'}`, transition:'background 0.15s' }} />
