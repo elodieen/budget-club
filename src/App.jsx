@@ -2635,7 +2635,7 @@ const SplashScreen = ({ onDone }) => {
     <div style={{
       position:'fixed', top:0, left:0, right:0, bottom:0, zIndex:9999,
       width:'100%', height:'100%', overflow:'hidden', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-start',
-      paddingTop:'35%',
+      paddingTop:'25%',
       opacity: splashOpacity,
       transition: 'opacity 0.4s ease',
     }}>
