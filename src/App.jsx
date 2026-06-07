@@ -1356,7 +1356,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
       {depTab === 'depenses' ? (
         <>
           {/* Card reste à dépenser */}
-          <div style={{ background:C.vert, padding:'10px 18px', flexShrink:0, textAlign:'center' }}>
+          <div style={{ background:C.vert, padding:'10px 18px', flexShrink:0, textAlign:'center', marginTop:8 }}>
             <div style={{ fontFamily:sans, fontSize:9, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.5)', marginBottom:4 }}>Reste à dépenser</div>
             {rev === 0
               ? <div style={{ fontFamily:serif, fontSize:24, fontStyle:'italic', color:C.rose }}>Revenus non saisis</div>
@@ -1410,7 +1410,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
       ) : (
         <>
           {/* Card récap factures */}
-          <div style={{ background:C.vert, padding:'14px 18px', flexShrink:0 }}>
+          <div style={{ background:C.vert, padding:'14px 18px', flexShrink:0, marginTop:8 }}>
             <div style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.5)', letterSpacing:1, textTransform:'uppercase', marginBottom:4 }}>{pN}/{bN} prélevées</div>
             <div style={{ display:'flex', alignItems:'baseline', gap:6 }}>
               <span style={{ fontFamily:serif, fontSize:28, fontWeight:700, color:C.rose }}>{fmtP(paidAmt)}</span>
