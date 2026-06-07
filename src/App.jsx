@@ -186,6 +186,12 @@ const fmtR = (n) => {
     : v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 };
 const fmtP = (n) => Math.round(n).toLocaleString('fr-FR') + ' €';
+const fmtDateTime = (d) => {
+  if (!d) return '';
+  const dt = new Date(d);
+  const date = dt.toLocaleDateString('fr-FR');
+  return d.includes('T') ? date + ' à ' + dt.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' }) : date;
+};
 
 const billValue      = (b) => b.paid ? (b.realAmount || b.amount) : b.amount;
 const byDate         = (arr) => [...arr].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
@@ -1930,12 +1936,6 @@ export function EpargneView({ currentYear, onProfileAction }) {
 
   const peaRendTotal = peaRend.reduce((s,r) => s + (r.montant||0), 0);
   const fmtDate      = (d) => d ? d.split('-').reverse().join('/') : '';
-  const fmtDateTime  = (d) => {
-    if (!d) return '';
-    const dt = new Date(d);
-    const date = dt.toLocaleDateString('fr-FR');
-    return d.includes('T') ? `${date} à ${dt.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })}` : date;
-  };
 
   const fmtShortDate = d => {
     if (!d) return '';
