@@ -281,7 +281,30 @@ const ProfileMenu = ({ onClose, onSwitch, onCreateProfile }) => {
   const [pinError,      setPinError]      = useState('');
   const [pinSuccess,    setPinSuccess]    = useState(false);
   const [startDayVal,   setStartDayVal]   = useState(() => getStartDay());
+  const [savedFlash,    setSavedFlash]    = useState(false);
   const importRef = useRef(null);
+
+  const handleSave = () => {
+    const data = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(`${currentProfileId}:`) && k !== `${currentProfileId}:auto-backup`)
+        data[k] = localStorage.getItem(k);
+    }
+    localStorage.setItem(`${currentProfileId}:auto-backup`, JSON.stringify({ timestamp: new Date().toISOString(), data }));
+    setSavedFlash(true);
+    setTimeout(() => setSavedFlash(false), 1500);
+  };
+
+  const lastBackupLabel = (() => {
+    try {
+      const raw = localStorage.getItem(`${currentProfileId}:auto-backup`);
+      if (!raw) return 'Aucune sauvegarde effectuée';
+      const { timestamp } = JSON.parse(raw);
+      const d = new Date(timestamp);
+      return `Dernière sauvegarde : ${d.toLocaleDateString('fr-FR')} à ${d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })}`;
+    } catch { return 'Aucune sauvegarde effectuée'; }
+  })();
 
   const handleExport = () => {
     const data = {};
@@ -435,6 +458,20 @@ const ProfileMenu = ({ onClose, onSwitch, onCreateProfile }) => {
                 <i className="ti ti-chevron-right" style={{ fontSize:14, color:C.muted, marginLeft:'auto' }} />
               </button>
             ))}
+            <div style={{ borderTop:`1px solid ${C.border}`, marginTop:4, paddingTop:4 }}>
+              <button onClick={handleSave}
+                style={{ width:'100%', display:'flex', alignItems:'center', gap:12, padding:'12px 10px', background:'none', border:'none', cursor:'pointer', borderRadius:10, marginBottom:2, textAlign:'left' }}>
+                <div style={{ width:36, height:36, borderRadius:10, background:C.roseL, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <i className="ti ti-device-floppy" style={{ fontSize:16, color:C.vert }} />
+                </div>
+                <span style={{ fontFamily:sans, fontSize:14, fontWeight:500, color:C.vert }}>Sauvegarder mes données</span>
+                {savedFlash
+                  ? <span style={{ fontFamily:sans, fontSize:12, fontWeight:600, color:'#2E7D32', marginLeft:'auto' }}>Sauvegardé ✓</span>
+                  : <i className="ti ti-chevron-right" style={{ fontSize:14, color:C.muted, marginLeft:'auto' }} />
+                }
+              </button>
+              <div style={{ fontFamily:sans, fontSize:11, color:C.muted, textAlign:'center', paddingBottom:4 }}>{lastBackupLabel}</div>
+            </div>
           </>
         ) : stage === 'settings' ? (
           <>
@@ -552,18 +589,6 @@ const ProfileBadge = ({ onSwitch, onCreateProfile }) => {
 const MonthHeader = ({ mi, setMi, closed, onProfileAction }) => {
   const prev = () => setMi(p => p.month === 0 ? { month:11, year:p.year-1 } : { month:p.month-1, year:p.year });
   const next = () => setMi(p => p.month === 11 ? { month:0, year:p.year+1 } : { month:p.month+1, year:p.year });
-  const [saved, setSaved] = useState(false);
-  const handleSave = () => {
-    const data = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith(`${currentProfileId}:`) && k !== `${currentProfileId}:auto-backup`)
-        data[k] = localStorage.getItem(k);
-    }
-    localStorage.setItem(`${currentProfileId}:auto-backup`, JSON.stringify({ timestamp: new Date().toISOString(), data }));
-    setSaved(true);
-    setTimeout(() => setSaved(false), 1500);
-  };
   return (
     <div style={{ display:'flex', alignItems:'center', padding:'14px 16px 0', background:C.beige, flexShrink:0 }}>
       <div style={{ flex:1, display:'flex', alignItems:'center' }}>
@@ -577,14 +602,7 @@ const MonthHeader = ({ mi, setMi, closed, onProfileAction }) => {
         <button onClick={next}
           style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>›</button>
       </div>
-      <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'flex-end', gap:8 }}>
-        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', paddingLeft:5, transform:'translateX(5px)' }}>
-          <button onClick={handleSave}
-            style={{ background:'none', border:'none', cursor:'pointer', padding:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <i className="ti ti-device-floppy" style={{ fontSize:20, color:C.vert }} />
-          </button>
-          <span style={{ fontFamily:sans, fontSize:9, fontWeight:600, color:C.vert, whiteSpace:'nowrap', visibility: saved ? 'visible' : 'hidden' }}>Sauvegardé ✓</span>
-        </div>
+      <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'flex-end' }}>
         <ProfileBadge onSwitch={() => onProfileAction?.('select')} onCreateProfile={() => onProfileAction?.('create')} />
       </div>
     </div>
