@@ -880,8 +880,8 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
         </div>
         {/* Card verte : titre + 5 étapes */}
         <div style={{ background:C.vert, borderRadius:14, padding:'10px 14px', flexShrink:0, display:'flex', flexDirection:'column', justifyContent:'center' }}>
-          <div style={{ textAlign:'center', fontFamily:serif, fontSize:13, fontWeight:600, color:'white', letterSpacing:'1px', marginTop:0, marginBottom:8 }}>
-            <span style={{ color:'white' }}>✦</span> Mon mois en 5 étapes <span style={{ color:'white' }}>✦</span>
+          <div style={{ textAlign:'center', fontFamily:sans, fontSize:10, fontWeight:600, color:'white', letterSpacing:'3px', textTransform:'uppercase', marginTop:0, marginBottom:8 }}>
+            Mon mois en 5 étapes
           </div>
           {steps.map((step, i) => (
             <div key={step.num} onClick={step.action}
