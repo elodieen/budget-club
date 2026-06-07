@@ -36,14 +36,17 @@ const savePin = (id, pin) => localStorage.setItem(`profile:${id}:pin`, pin);
 const initProfiles = () => {
   let profiles = getProfiles();
   if (!profiles) {
-    profiles = [{ id:'elodie', name:'Elodie' }, { id:'ludivine', name:'Ludivine' }];
+    profiles = [{ id:'elodie', name:'Elodie' }, { id:'ludivine', name:'Ludivine' }, { id:'demo', name:'Démo' }];
     saveProfiles(profiles);
   }
   // Correction orthographe Élodie → Elodie
   profiles = profiles.map(p => p.id === 'elodie' && p.name === 'Élodie' ? { ...p, name:'Elodie' } : p);
+  // Ajout du profil Démo pour les utilisateurs existants
+  if (!profiles.find(p => p.id === 'demo')) profiles = [...profiles, { id:'demo', name:'Démo' }];
   saveProfiles(profiles);
   if (!getPin('elodie'))   savePin('elodie',   '123456');
   if (!getPin('ludivine')) savePin('ludivine', '123456');
+  if (!getPin('demo'))     savePin('demo',     '000000');
   // Soldes initiaux à 0 pour tous les profils non-elodie
   // (reset forcé si les valeurs d'Elodie se sont glissées dedans)
   const today = new Date().toISOString().split('T')[0];
@@ -89,6 +92,90 @@ const clearLudivineData = () => {
   }
   keys.forEach(k => localStorage.removeItem(k));
   localStorage.setItem('profile:clear-ludivine:v1', '1');
+};
+
+const seedDemoProfile = () => {
+  const FLAG = 'profile:demo:seeded:v1';
+  if (localStorage.getItem(FLAG)) return;
+
+  const mkDemoBills = (dateStr) => [
+    { id:'b5',  name:'Orange Fibre',          amount:52,  realAmount:52,  paid:true, paidDate:dateStr },
+    { id:'b7',  name:'Disney',                amount:16,  realAmount:16,  paid:true, paidDate:dateStr },
+    { id:'b10', name:'Amazon Prime',          amount:9,   realAmount:9,   paid:true, paidDate:dateStr },
+    { id:'b12', name:'Netflix',               amount:14,  realAmount:14,  paid:true, paidDate:dateStr },
+    { id:'b15', name:'Assurance Voiture GMF', amount:40,  realAmount:40,  paid:true, paidDate:dateStr },
+    { id:'b20', name:'EDF',                   amount:46,  realAmount:46,  paid:true, paidDate:dateStr },
+  ];
+
+  const months = [
+    {
+      key: 'demo:budget:2026:03',
+      data: {
+        catBudgets: { alimentation:350, quotidien:100, sortie:150, shopping:120, sante:50, divers:80 },
+        revenues:   [{ id:'r1', name:'Salaire', amount:2450 }],
+        bills:      mkDemoBills('2026-03-10'),
+        expenses:   [
+          { id:'e1', name:'Carrefour',     amount:87.50, cat:'alimentation',   date:'2026-03-05' },
+          { id:'e2', name:'Lidl',          amount:45.30, cat:'alimentation',   date:'2026-03-12' },
+          { id:'e3', name:'Marché',        amount:28.60, cat:'alimentation',   date:'2026-03-19' },
+          { id:'e4', name:'Café',          amount:18.50, cat:'quotidien',      date:'2026-03-08' },
+          { id:'e5', name:'Pharmacie',     amount:14.90, cat:'sante',          date:'2026-03-14' },
+          { id:'e6', name:'Sushi Shop',    amount:42.00, cat:'sortie',         date:'2026-03-15' },
+          { id:'e7', name:'Zara',          amount:64.90, cat:'shopping',       date:'2026-03-22' },
+          { id:'e8', name:'Livret A',      amount:100,   cat:'epargne_livret', date:'2026-03-28' },
+        ],
+        closed: true,
+      },
+    },
+    {
+      key: 'demo:budget:2026:04',
+      data: {
+        catBudgets: { alimentation:350, quotidien:100, sortie:150, shopping:100, sante:50, divers:80 },
+        revenues:   [{ id:'r1', name:'Salaire', amount:2450 }],
+        bills:      mkDemoBills('2026-04-10'),
+        expenses:   [
+          { id:'e1', name:'Carrefour',     amount:92.40, cat:'alimentation',   date:'2026-04-03' },
+          { id:'e2', name:'Monoprix',      amount:38.70, cat:'alimentation',   date:'2026-04-10' },
+          { id:'e3', name:'Marché',        amount:22.50, cat:'alimentation',   date:'2026-04-17' },
+          { id:'e4', name:'Café',          amount:12.00, cat:'quotidien',      date:'2026-04-07' },
+          { id:'e5', name:'Médecin',       amount:30.00, cat:'sante',          date:'2026-04-11' },
+          { id:'e6', name:'Restaurant',    amount:56.00, cat:'sortie',         date:'2026-04-19' },
+          { id:'e7', name:'Vinted',        amount:29.99, cat:'shopping',       date:'2026-04-24' },
+          { id:'e8', name:'Livret A',      amount:150,   cat:'epargne_livret', date:'2026-04-28' },
+        ],
+        closed: true,
+      },
+    },
+    {
+      key: 'demo:budget:2026:05',
+      data: {
+        catBudgets: { alimentation:350, quotidien:100, sortie:200, shopping:150, sante:50, vacances:300, divers:80 },
+        revenues:   [{ id:'r1', name:'Salaire', amount:2450 }, { id:'r2', name:'Prime', amount:300 }],
+        bills:      mkDemoBills('2026-05-10'),
+        expenses:   [
+          { id:'e1', name:'Carrefour',     amount:76.20, cat:'alimentation',   date:'2026-05-06' },
+          { id:'e2', name:'Lidl',          amount:53.40, cat:'alimentation',   date:'2026-05-13' },
+          { id:'e3', name:'Marché',        amount:31.00, cat:'alimentation',   date:'2026-05-20' },
+          { id:'e4', name:'Café & Divers', amount:22.50, cat:'quotidien',      date:'2026-05-08' },
+          { id:'e5', name:'Billet train',  amount:89.00, cat:'vacances',       date:'2026-05-02' },
+          { id:'e6', name:'Hôtel',         amount:180.00,cat:'vacances',       date:'2026-05-16' },
+          { id:'e7', name:'Brunch amis',   amount:34.00, cat:'sortie',         date:'2026-05-11' },
+          { id:'e8', name:'H&M',           amount:47.90, cat:'shopping',       date:'2026-05-25' },
+          { id:'e9', name:'Livret A',      amount:200,   cat:'epargne_livret', date:'2026-05-28' },
+        ],
+        closed: true,
+      },
+    },
+  ];
+
+  months.forEach(({ key, data }) => {
+    if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify(data));
+  });
+
+  localStorage.setItem('demo:budget:livret:soldeInitial', JSON.stringify({ amount: 0, date: '2026-06-01' }));
+  localStorage.setItem('demo:budget:pea:soldeInitial',    JSON.stringify({ montant: 0, rendement: 0, pct: 0, date: '2026-06-01' }));
+  localStorage.setItem('demo:budget:init:2026-06', '1');
+  localStorage.setItem(FLAG, '1');
 };
 
 export const CATS = [
@@ -2805,6 +2892,7 @@ export default function App() {
   const handleSplashDone = () => {
     migrateData();
     clearLudivineData();
+    seedDemoProfile();
     const profiles = initProfiles();
     const savedId  = getSavedProfileId();
     if (savedId) {
