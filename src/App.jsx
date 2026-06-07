@@ -572,7 +572,7 @@ const MonthHeader = ({ mi, setMi, closed, onProfileAction }) => {
       <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:4 }}>
         <button onClick={prev}
           style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>‹</button>
-        <span style={{ fontFamily:serif, fontSize:16, fontWeight:600, color:C.vert }}>{MONTHS[mi.month]} {mi.year}</span>
+        <span style={{ fontFamily:serif, fontSize:16, fontWeight:600, color:C.vert, whiteSpace:'nowrap' }}>{MONTHS[mi.month]} {mi.year}</span>
         {closed && <i className="ti ti-lock" style={{ fontSize:13, color:C.gold, marginLeft:2 }} />}
         <button onClick={next}
           style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>›</button>
@@ -580,7 +580,7 @@ const MonthHeader = ({ mi, setMi, closed, onProfileAction }) => {
       <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'flex-end', gap:8 }}>
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center' }}>
           <button onClick={handleSave}
-            style={{ background:'none', border:'none', cursor:'pointer', padding:'2px 4px', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            style={{ background:'none', border:'none', cursor:'pointer', padding:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
             <i className="ti ti-device-floppy" style={{ fontSize:20, color:C.vert }} />
           </button>
           <span style={{ fontFamily:sans, fontSize:9, fontWeight:600, color:C.vert, whiteSpace:'nowrap', visibility: saved ? 'visible' : 'hidden' }}>Sauvegardé ✓</span>
