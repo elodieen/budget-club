@@ -842,22 +842,20 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
     <>
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
-      <div style={{ padding:'12px 16px 0', background:C.beige, flexShrink:0 }}>
+      <div style={{ display:'flex', flexDirection:'column', flex:1, justifyContent:'space-between', padding:'8px 16px', paddingBottom:'calc(10px + env(safe-area-inset-bottom))', background:C.beige, overflow:'hidden' }}>
         {/* Card Reste à dépenser */}
-        <div style={{ background:C.vert, borderRadius:16, padding:'14px 14px 12px', textAlign:'center', marginBottom:12 }}>
-          <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'white', marginBottom:6 }}>Reste à dépenser</div>
+        <div style={{ background:C.vert, borderRadius:16, padding:'12px 14px 10px', textAlign:'center' }}>
+          <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'white', marginBottom:4 }}>Reste à dépenser</div>
           {rev === 0
-            ? <div style={{ fontFamily:serif, fontSize:28, fontStyle:'italic', color:C.rose, lineHeight:1.3 }}>Revenus non saisis</div>
-            : <div style={{ fontFamily:serif, fontSize:40, fontWeight:700, color: reste >= 0 ? C.rose : '#E8637A', lineHeight:1 }}>{fmtR(reste)}</div>
+            ? <div style={{ fontFamily:serif, fontSize:26, fontStyle:'italic', color:C.rose, lineHeight:1.3 }}>Revenus non saisis</div>
+            : <div style={{ fontFamily:serif, fontSize:38, fontWeight:700, color: reste >= 0 ? C.rose : '#E8637A', lineHeight:1 }}>{fmtR(reste)}</div>
           }
-          <div style={{ height:4, background:'rgba(255,255,255,0.2)', borderRadius:2, marginTop:12, overflow:'hidden' }}>
+          <div style={{ height:3, background:'rgba(255,255,255,0.2)', borderRadius:2, marginTop:8, overflow:'hidden' }}>
             <div style={{ height:'100%', width:`${pp}%`, background:'white', borderRadius:2 }} />
           </div>
         </div>
-      </div>
-      <div style={{ flex:1, overflowY:'auto', padding:'0 16px', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
         {/* 4 mini-cards */}
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:12 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
           {[
             { label:'Revenus',  val:fmtR(rev), icon:'ti-credit-card',  vw:'revenus' },
             { label:'Factures', val:'', node:<><span style={{ color:C.vert }}>{fmtP(paidAmt)}</span><span style={{ color:C.vert }}> / {fmtP(bT)}</span></>, sub:`${pN}/${bN} prélevées`, icon:'ti-file-invoice', vw:'depenses' },
@@ -865,18 +863,22 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
             { label:'Épargne',  val:fmtR(epg), icon:'ti-pig-money',    vw:'epargne'  },
           ].map(c => (
             <div key={c.label} onClick={() => setView(c.vw)}
-              style={{ background:C.card, borderRadius:14, padding:10, border:`0.5px solid ${C.border}`, cursor:'pointer' }}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
+              style={{ background:C.card, borderRadius:12, padding:10, border:`0.5px solid ${C.border}`, cursor:'pointer' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4 }}>
                 <span style={{ fontFamily:sans, fontSize:11, color:C.muted, fontWeight:500 }}>{c.label}</span>
-                <i className={`ti ${c.icon}`} style={{ fontSize:16, color:'rgba(28,41,28,0.25)' }} />
+                <i className={`ti ${c.icon}`} style={{ fontSize:15, color:'rgba(28,41,28,0.25)' }} />
               </div>
-              <div style={{ fontFamily:serif, fontSize:c.sub ? 15 : 18, fontWeight:600, color:C.vert }}>{c.node || c.val}</div>
-              {c.sub && <div style={{ fontFamily:sans, fontSize:10, color:C.muted, marginTop:2 }}>{c.sub}</div>}
+              <div style={{ fontFamily:serif, fontSize:c.sub ? 14 : 17, fontWeight:600, color:C.vert }}>{c.node || c.val}</div>
+              {c.sub && <div style={{ fontFamily:sans, fontSize:10, color:C.muted, marginTop:1 }}>{c.sub}</div>}
             </div>
           ))}
         </div>
+        {/* Citation */}
+        <div style={{ textAlign:'center', fontFamily:serif, fontSize:11, fontStyle:'italic', color:C.muted, padding:'6px 16px' }}>
+          Gérez l'ordinaire pour vous offrir l'extraordinaire.
+        </div>
         {/* Card verte : titre + 5 étapes */}
-        <div style={{ background:C.vert, borderRadius:14, padding:'10px 14px', marginBottom:12 }}>
+        <div style={{ background:C.vert, borderRadius:14, padding:'10px 14px', flex:1, display:'flex', flexDirection:'column', justifyContent:'center' }}>
           <div style={{ textAlign:'center', fontFamily:serif, fontSize:13, fontWeight:600, color:'white', letterSpacing:'1px', marginBottom:4 }}>
             <span style={{ color:'white' }}>✦</span> Mon mois en 5 étapes <span style={{ color:'white' }}>✦</span>
           </div>
@@ -896,7 +898,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
         </div>
 
         {/* Clôture du mois */}
-        <div ref={closeRef} style={{ paddingTop:12 }}>
+        <div ref={closeRef} style={{ paddingTop:8 }}>
           {m.closed ? (
             <button onClick={() => updateData(mm => { mm.closed = false; })}
               style={{ width:'100%', padding:'10px 0', background:C.rose, border:'none', borderRadius:10, fontFamily:sans, fontSize:13, fontWeight:600, color:C.vert, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
