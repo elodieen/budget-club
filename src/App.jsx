@@ -371,7 +371,7 @@ const ProfileMenu = ({ onClose, onSwitch, onCreateProfile }) => {
               <button onClick={onClose} style={{ background:C.roseL, border:'none', width:30, height:30, borderRadius:'50%', cursor:'pointer', fontSize:15, color:C.vert }}>✕</button>
             </div>
             <div style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 0', borderBottom:`1px solid ${C.border}`, marginBottom:12 }}>
-              <div style={{ width:46, height:46, borderRadius:'50%', background:C.vert, border:`2px solid ${C.rose}`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <div style={{ width:46, height:46, borderRadius:'50%', background:C.vert, border:'none', display:'flex', alignItems:'center', justifyContent:'center' }}>
                 <span style={{ fontFamily:serif, fontSize:20, fontWeight:700, color:C.rose }}>{profile?.name[0].toUpperCase()}</span>
               </div>
               <div>
@@ -468,7 +468,7 @@ const ProfileBadge = ({ onSwitch, onCreateProfile }) => {
   const initial  = profile ? profile.name[0].toUpperCase() : '?';
   return (
     <>
-      <button onClick={() => setOpen(true)} style={{ width:36, height:36, borderRadius:'50%', background:C.vert, border:'2px solid #FFFFFF', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+      <button onClick={() => setOpen(true)} style={{ width:36, height:36, borderRadius:'50%', background:C.vert, border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
         <span style={{ fontFamily:serif, fontSize:14, color:C.rose, fontWeight:700, lineHeight:1 }}>{initial}</span>
       </button>
       {open && (
