@@ -968,7 +968,23 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
         {/* Clôture du mois */}
         <div ref={closeRef} style={{ marginTop:8 }}>
           {m.closed ? (
-            <button onClick={() => updateData(mm => { mm.closed = false; })}
+            <button onClick={() => {
+              updateData(mm => { mm.closed = false; delete mm.soldeFinal; });
+              const nextMonth = mi.month === 11 ? 0 : mi.month + 1;
+              const nextYear  = mi.month === 11 ? mi.year + 1 : mi.year;
+              const nextKey   = `${currentProfileId}:budget:${nextYear}:${String(nextMonth + 1).padStart(2, '0')}`;
+              const reportId  = `r-report-${mi.year}-${String(mi.month + 1).padStart(2, '0')}`;
+              try {
+                const nextRaw = localStorage.getItem(nextKey);
+                if (nextRaw) {
+                  const nextData = JSON.parse(nextRaw);
+                  if (nextData.revenues?.some(r => r.id === reportId)) {
+                    nextData.revenues = nextData.revenues.filter(r => r.id !== reportId);
+                    localStorage.setItem(nextKey, JSON.stringify(nextData));
+                  }
+                }
+              } catch {}
+            }}
               style={{ width:'100%', padding:'10px 0', background:C.rose, border:'none', borderRadius:10, fontFamily:sans, fontSize:13, fontWeight:600, color:C.vert, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
               <i className="ti ti-lock-open" style={{ fontSize:15 }} /> Réouvrir le mois
             </button>
