@@ -843,9 +843,9 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
     <>
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
-      <div style={{ display:'flex', flexDirection:'column', flex:1, justifyContent:'space-between', padding:'8px 16px', paddingBottom:'calc(10px + env(safe-area-inset-bottom))', background:C.beige, overflow:'hidden' }}>
+      <div style={{ position:'relative', display:'flex', flexDirection:'column', flex:1, gap:8, padding:'8px 16px', paddingBottom:'calc(58px + env(safe-area-inset-bottom))', background:C.beige, overflow:'hidden' }}>
         {/* Card Reste à dépenser */}
-        <div style={{ background:C.vert, borderRadius:16, padding:'12px 14px 10px', textAlign:'center', marginBottom:12 }}>
+        <div style={{ background:C.vert, borderRadius:16, padding:'12px 14px 10px', textAlign:'center' }}>
           <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'white', marginBottom:4 }}>Reste à dépenser</div>
           {rev === 0
             ? <div style={{ fontFamily:serif, fontSize:26, fontStyle:'italic', color:C.rose, lineHeight:1.3 }}>Revenus non saisis</div>
@@ -875,11 +875,11 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
           ))}
         </div>
         {/* Citation */}
-        <div style={{ textAlign:'center', fontFamily:serif, fontSize:11, fontStyle:'italic', color:C.muted, padding:'6px 16px' }}>
+        <div style={{ textAlign:'center', fontFamily:serif, fontSize:11, fontStyle:'italic', color:C.muted }}>
           Gérez l'ordinaire pour vous offrir l'extraordinaire.
         </div>
         {/* Card verte : titre + 5 étapes */}
-        <div style={{ background:C.vert, borderRadius:14, padding:'10px 14px', flexShrink:0, display:'flex', flexDirection:'column', justifyContent:'center', marginTop:2, marginBottom:2 }}>
+        <div style={{ background:C.vert, borderRadius:14, padding:'10px 14px', flexShrink:0, display:'flex', flexDirection:'column', justifyContent:'center' }}>
           <div style={{ textAlign:'center', fontFamily:serif, fontSize:13, fontWeight:600, color:'white', letterSpacing:'1px', marginTop:0, marginBottom:8 }}>
             <span style={{ color:'white' }}>✦</span> Mon mois en 5 étapes <span style={{ color:'white' }}>✦</span>
           </div>
@@ -898,8 +898,8 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
           ))}
         </div>
 
-        {/* Clôture du mois */}
-        <div ref={closeRef} style={{ paddingTop:8 }}>
+        {/* Clôture du mois — hors flux, épinglé en bas */}
+        <div ref={closeRef} style={{ position:'absolute', bottom:'calc(10px + env(safe-area-inset-bottom))', left:16, right:16 }}>
           {m.closed ? (
             <button onClick={() => updateData(mm => { mm.closed = false; })}
               style={{ width:'100%', padding:'10px 0', background:C.rose, border:'none', borderRadius:10, fontFamily:sans, fontSize:13, fontWeight:600, color:C.vert, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
