@@ -1340,7 +1340,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
         {depTab === 'factures' ? 'Maîtrisez vos charges. Elles ne vous surprendront plus.' : 'Le luxe, c\'est de ne jamais être surpris par ses comptes.'}
       </div>
       {/* Switcher capsule */}
-      <div style={{ padding:'10px 16px', background:C.beige, flexShrink:0, display:'flex', gap:10 }}>
+      <div style={{ padding:'6px 16px', background:C.beige, flexShrink:0, display:'flex', gap:10 }}>
         {[{id:'factures',label:'Factures'},{id:'depenses',label:'Dépenses'}].map(t => (
           <button key={t.id} onClick={() => setDepTab(t.id)}
             style={{ flex:1, padding:'10px 0', borderRadius:30, fontSize:13, fontWeight:700, cursor:'pointer',
@@ -1356,7 +1356,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
       {depTab === 'depenses' ? (
         <>
           {/* Card reste à dépenser */}
-          <div style={{ background:C.vert, padding:'14px 18px', flexShrink:0, textAlign:'center' }}>
+          <div style={{ background:C.vert, padding:'10px 18px', flexShrink:0, textAlign:'center' }}>
             <div style={{ fontFamily:sans, fontSize:9, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.5)', marginBottom:4 }}>Reste à dépenser</div>
             {rev === 0
               ? <div style={{ fontFamily:serif, fontSize:24, fontStyle:'italic', color:C.rose }}>Revenus non saisis</div>
