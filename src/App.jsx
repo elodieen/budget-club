@@ -960,7 +960,7 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
     <>
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
-      <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.rose }}>❧</span> BUDGET <span style={{ color:C.rose }}>❧</span></div>
+      <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.vert }}>❧</span> BUDGET <span style={{ color:C.vert }}>❧</span></div>
       <div style={{ textAlign:'center', padding:'6px 16px', fontFamily:serif, fontSize:12, fontStyle:'italic', color:C.muted, flexShrink:0, background:C.beige }}>
         Un bon budget est la première étape vers la liberté financière.
       </div>
