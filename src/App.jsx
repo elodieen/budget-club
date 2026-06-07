@@ -868,6 +868,7 @@ export const AddPeaRendementModal = ({ onAdd, onClose }) => {
 // Vue ACCUEIL
 export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onProfileAction }) {
   const [confirmClose, setConfirmClose] = useState(false);
+  const [soldeFinalInput, setSoldeFinalInput] = useState('');
   const closeRef = useRef(null);
   const rev       = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
   const allBills  = m.bills.filter(b => b.selected !== false);
@@ -967,17 +968,30 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
             </button>
           ) : confirmClose ? (
             <div style={{ background:'white', border:'1px solid rgba(28,41,28,0.1)', borderRadius:10, padding:'12px 14px' }}>
-              <div style={{ fontFamily:sans, fontSize:12, color:C.vert, marginBottom:10, textAlign:'center' }}>
-                Confirmer la clôture ? Cette action verrouille le mois.
-              </div>
+              <div style={{ fontFamily:sans, fontSize:12, fontWeight:600, color:C.vert, marginBottom:6, textAlign:'center' }}>Clôturer le mois</div>
+              <div style={{ fontFamily:sans, fontSize:11, color:C.muted, marginBottom:8 }}>Solde sur votre compte à la clôture</div>
+              <input
+                type="number" step="0.01" placeholder="ex : 1 250"
+                value={soldeFinalInput}
+                onChange={e => setSoldeFinalInput(e.target.value)}
+                style={{ width:'100%', padding:'9px 12px', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, fontSize:15, fontFamily:serif, color:C.vert, background:'white', marginBottom:10, boxSizing:'border-box' }}
+              />
               <div style={{ display:'flex', gap:8 }}>
-                <button onClick={() => { updateData(mm => { mm.closed = true; }); setConfirmClose(false); }}
+                <button onClick={() => {
+                  const sf = parseFloat(soldeFinalInput);
+                  updateData(mm => { mm.closed = true; if (sf) mm.soldeFinal = sf; });
+                  setConfirmClose(false); setSoldeFinalInput('');
+                }}
                   style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
                   Confirmer
                 </button>
-                <button onClick={() => setConfirmClose(false)}
-                  style={{ padding:'9px 14px', background:'white', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, cursor:'pointer', color:C.vert, fontFamily:sans, fontSize:13 }}>
-                  Annuler
+                <button onClick={() => { updateData(mm => { mm.closed = true; }); setConfirmClose(false); setSoldeFinalInput(''); }}
+                  style={{ padding:'9px 12px', background:'white', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, cursor:'pointer', color:C.muted, fontFamily:sans, fontSize:13 }}>
+                  Passer
+                </button>
+                <button onClick={() => { setConfirmClose(false); setSoldeFinalInput(''); }}
+                  style={{ padding:'9px 12px', background:'white', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, cursor:'pointer', color:C.muted, fontFamily:sans, fontSize:13 }}>
+                  ✕
                 </button>
               </div>
             </div>
@@ -2644,6 +2658,26 @@ function MainApp({ onProfileAction }) {
     Object.entries(autoBackupOffer.data).forEach(([k, v]) => localStorage.setItem(k, v));
     window.location.reload();
   };
+
+  // Auto-add "Reste mois précédent" revenue if previous month has soldeFinal
+  useEffect(() => {
+    if (loading) return;
+    const prevMonth = mi.month === 0 ? 11 : mi.month - 1;
+    const prevYear  = mi.month === 0 ? mi.year - 1 : mi.year;
+    const prevKey   = `${currentProfileId}:budget:${prevYear}:${String(prevMonth + 1).padStart(2, '0')}`;
+    try {
+      const prevRaw = localStorage.getItem(prevKey);
+      if (!prevRaw) return;
+      const prevData = JSON.parse(prevRaw);
+      const sf = prevData.soldeFinal;
+      if (!sf) return;
+      const reportId = `r-report-${prevYear}-${String(prevMonth + 1).padStart(2, '0')}`;
+      if (m.revenues.some(r => r.id === reportId)) return;
+      updateData(mm => {
+        mm.revenues = [...mm.revenues, { id: reportId, name: 'Reste mois précédent', amount: sf }];
+      });
+    } catch {}
+  }, [mi, loading]);
 
   const addExpense = (exp)  => { if (m.closed) return; updateData(mm => { mm.expenses = [...mm.expenses, exp]; }); };
   const addRevenu  = (rev)  => { if (m.closed) return; updateData(mm => { mm.revenues = [...mm.revenues, rev]; }); };
