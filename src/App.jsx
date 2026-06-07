@@ -989,7 +989,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
               <i className="ti ti-lock-open" style={{ fontSize:15 }} /> Réouvrir le mois
             </button>
           ) : confirmClose ? (
-            <div style={{ background:'white', border:'1px solid rgba(28,41,28,0.1)', borderRadius:10, padding:'12px 14px' }}>
+            <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:200, background:'white', border:'1px solid rgba(28,41,28,0.1)', borderRadius:'10px 10px 0 0', padding:'12px 14px', paddingBottom:'calc(80px + env(safe-area-inset-bottom))' }}>
               <div style={{ fontFamily:sans, fontSize:12, fontWeight:600, color:C.vert, marginBottom:6, textAlign:'center' }}>Clôturer le mois</div>
               <div style={{ fontFamily:sans, fontSize:11, color:C.muted, marginBottom:8 }}>Solde sur votre compte à la clôture</div>
               <input
