@@ -855,7 +855,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
           </div>
         </div>
       </div>
-      <div style={{ flex:1, overflowY:'auto', padding:'0 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
+      <div style={{ display:'flex', flexDirection:'column', flex:1, justifyContent:'space-between', padding:'0 16px', paddingBottom:'calc(12px + env(safe-area-inset-bottom))', background:C.beige }}>
         {/* 4 mini-cards */}
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:12 }}>
           {[
@@ -875,10 +875,10 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
             </div>
           ))}
         </div>
-        {/* Card verte : citation + 5 étapes */}
-        <div style={{ background:C.vert, borderRadius:14, padding:'16px 18px', marginBottom:0 }}>
-          <div style={{ fontFamily:serif, fontSize:13, fontStyle:'italic', color:'rgba(255,255,255,0.7)', lineHeight:1.6, textAlign:'center', marginBottom:14 }}>
-            Un bon budget est la première étape vers la liberté financière.
+        {/* Card verte : titre + 5 étapes */}
+        <div style={{ background:C.vert, borderRadius:14, padding:'14px 18px' }}>
+          <div style={{ textAlign:'center', fontFamily:serif, fontSize:13, fontWeight:600, color:'white', letterSpacing:'1px', marginBottom:12 }}>
+            <span style={{ color:C.rose }}>✦</span> Mon mois en 5 étapes <span style={{ color:C.rose }}>✦</span>
           </div>
           {steps.map((step, i) => (
             <div key={step.num} onClick={step.action}
@@ -893,7 +893,6 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
               }
             </div>
           ))}
-          <div style={{ textAlign:'center', color:C.rose, fontSize:14, marginTop:12 }}>❧</div>
         </div>
 
         {/* Clôture du mois */}
