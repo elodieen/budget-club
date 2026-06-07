@@ -1453,22 +1453,22 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
                 </div>
                 {editBillIdx === m.bills.indexOf(b) && !m.facturesValidees && (
                   <div style={{ padding:'0 14px 12px' }}>
-                    <div style={{ background:C.roseL, border:`1px solid ${C.rose}`, borderRadius:10, padding:12 }}>
+                    <div style={{ background:C.beige, border:'1px solid rgba(28,41,28,0.1)', borderRadius:10, padding:12 }}>
                       <div style={{ display:'flex', gap:8, marginBottom:8 }}>
                         <div style={{ flex:2 }}>
                           <Label>Nom</Label>
                           <input type="text" value={editBillForm.name} onChange={e => setEditBillForm(p => ({...p, name:e.target.value}))}
-                            style={{ width:'100%', padding:8, border:`1px solid ${C.rose}`, borderRadius:7, fontSize:13, fontFamily:sans, color:C.vert, background:'white' }} />
+                            style={{ width:'100%', padding:8, border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, fontSize:13, fontFamily:sans, color:C.vert, background:'white' }} />
                         </div>
                         <div style={{ flex:1 }}>
                           <Label>Montant prévu</Label>
                           <input type="number" step="0.01" value={editBillForm.amount} onChange={e => setEditBillForm(p => ({...p, amount:e.target.value}))}
-                            style={{ width:'100%', padding:8, border:`1px solid ${C.rose}`, borderRadius:7, fontSize:14, fontWeight:600, fontFamily:serif, color:C.vert, background:'white' }} />
+                            style={{ width:'100%', padding:8, border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, fontSize:14, fontWeight:600, fontFamily:serif, color:C.vert, background:'white' }} />
                         </div>
                       </div>
                       <div style={{ display:'flex', gap:8 }}>
                         <button onClick={() => { const ri = editBillIdx; updateData(mm => { mm.bills = mm.bills.filter((_,i) => i !== ri); }); setEditBillIdx(null); }}
-                          style={{ padding:'9px 10px', background:'#FF5252', border:'none', borderRadius:8, cursor:'pointer', color:'white', fontFamily:sans }}>
+                          style={{ padding:'9px 10px', background:'white', border:`1px solid ${C.rose}`, borderRadius:8, cursor:'pointer', color:C.rose, fontFamily:sans }}>
                           <i className="ti ti-trash" style={{ fontSize:15 }} />
                         </button>
                         <button onClick={() => {
@@ -1484,7 +1484,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
                           OK
                         </button>
                         <button onClick={() => setEditBillIdx(null)}
-                          style={{ padding:'9px 12px', background:'white', border:`1px solid ${C.rose}`, borderRadius:8, cursor:'pointer', color:C.vert, fontFamily:sans }}>✕</button>
+                          style={{ padding:'9px 12px', background:'white', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, cursor:'pointer', color:C.vert, fontFamily:sans }}>✕</button>
                       </div>
                     </div>
                   </div>
