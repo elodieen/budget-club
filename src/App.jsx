@@ -844,11 +844,11 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
       {m.closed && <ClosedBanner />}
       <div style={{ padding:'12px 16px 0', background:C.beige, flexShrink:0 }}>
         {/* Card Reste à dépenser */}
-        <div style={{ background:C.vert, borderRadius:16, padding:'20px 20px 16px', textAlign:'center', marginBottom:12 }}>
+        <div style={{ background:C.vert, borderRadius:16, padding:'14px 14px 12px', textAlign:'center', marginBottom:12 }}>
           <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'white', marginBottom:6 }}>Reste à dépenser</div>
           {rev === 0
             ? <div style={{ fontFamily:serif, fontSize:28, fontStyle:'italic', color:C.rose, lineHeight:1.3 }}>Revenus non saisis</div>
-            : <div style={{ fontFamily:serif, fontSize:48, fontWeight:700, color: reste >= 0 ? C.rose : '#E8637A', lineHeight:1 }}>{fmtR(reste)}</div>
+            : <div style={{ fontFamily:serif, fontSize:40, fontWeight:700, color: reste >= 0 ? C.rose : '#E8637A', lineHeight:1 }}>{fmtR(reste)}</div>
           }
           <div style={{ height:4, background:'rgba(255,255,255,0.2)', borderRadius:2, marginTop:12, overflow:'hidden' }}>
             <div style={{ height:'100%', width:`${pp}%`, background:'white', borderRadius:2 }} />
@@ -865,12 +865,12 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
             { label:'Épargne',  val:fmtR(epg), icon:'ti-pig-money',    vw:'epargne'  },
           ].map(c => (
             <div key={c.label} onClick={() => setView(c.vw)}
-              style={{ background:C.card, borderRadius:14, padding:14, border:`0.5px solid ${C.border}`, cursor:'pointer' }}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+              style={{ background:C.card, borderRadius:14, padding:10, border:`0.5px solid ${C.border}`, cursor:'pointer' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
                 <span style={{ fontFamily:sans, fontSize:11, color:C.muted, fontWeight:500 }}>{c.label}</span>
-                <i className={`ti ${c.icon}`} style={{ fontSize:18, color:'rgba(28,41,28,0.25)' }} />
+                <i className={`ti ${c.icon}`} style={{ fontSize:16, color:'rgba(28,41,28,0.25)' }} />
               </div>
-              <div style={{ fontFamily:serif, fontSize:c.sub ? 18 : 22, fontWeight:600, color:C.vert }}>{c.node || c.val}</div>
+              <div style={{ fontFamily:serif, fontSize:c.sub ? 15 : 18, fontWeight:600, color:C.vert }}>{c.node || c.val}</div>
               {c.sub && <div style={{ fontFamily:sans, fontSize:10, color:C.muted, marginTop:2 }}>{c.sub}</div>}
             </div>
           ))}
@@ -1262,7 +1262,7 @@ export function RevenusView({ m, mi, setMi, updateData, onProfileAction }) {
     <>
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
-      <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.vert }}>❧</span> REVENUS <span style={{ color:C.vert }}>❧</span></div>
+      <div style={{ textAlign:'center', padding:'8px 0 12px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.vert }}>❧</span> REVENUS <span style={{ color:C.vert }}>❧</span></div>
       {/* Total fixe en haut */}
       <div style={{ background:C.vert, flexShrink:0, padding:'14px 20px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
         <span style={{ fontFamily:sans, fontSize:12, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.5)' }}>Total</span>
