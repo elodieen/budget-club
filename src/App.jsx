@@ -275,6 +275,38 @@ const ProfileMenu = ({ onClose, onSwitch, onCreateProfile }) => {
   const [pinError,      setPinError]      = useState('');
   const [pinSuccess,    setPinSuccess]    = useState(false);
   const [startDayVal,   setStartDayVal]   = useState(() => getStartDay());
+  const importRef = useRef(null);
+
+  const handleExport = () => {
+    const data = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(`${currentProfileId}:`)) data[k] = localStorage.getItem(k);
+    }
+    const pinKey = `profile:${currentProfileId}:pin`;
+    const pinVal = localStorage.getItem(pinKey);
+    if (pinVal) data[pinKey] = pinVal;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `budget-club-${currentProfileId}-backup.json`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        Object.entries(data).forEach(([k, v]) => localStorage.setItem(k, v));
+        window.location.reload();
+      } catch { alert('Fichier invalide'); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
 
   const handleDeleteProfile = (p) => {
     const keys = [];
@@ -420,6 +452,23 @@ const ProfileMenu = ({ onClose, onSwitch, onCreateProfile }) => {
               </div>
               <div style={{ fontFamily:sans, fontSize:11, color:C.muted, marginTop:8, fontStyle:'italic', lineHeight:1.5 }}>
                 Détermine à partir de quel jour le mois courant est affiché.
+              </div>
+            </div>
+            <div style={{ borderTop:`1px solid ${C.border}`, paddingTop:16, marginTop:8, display:'flex', flexDirection:'column', gap:8 }}>
+              <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:1, textTransform:'uppercase', color:C.muted, marginBottom:4 }}>Données</div>
+              <button onClick={handleExport}
+                style={{ width:'100%', display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:C.roseL, border:'none', borderRadius:10, cursor:'pointer', textAlign:'left' }}>
+                <i className="ti ti-download" style={{ fontSize:16, color:C.vert }} />
+                <span style={{ fontFamily:sans, fontSize:13, fontWeight:500, color:C.vert }}>Exporter mes données</span>
+              </button>
+              <button onClick={() => importRef.current?.click()}
+                style={{ width:'100%', display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:C.roseL, border:'none', borderRadius:10, cursor:'pointer', textAlign:'left' }}>
+                <i className="ti ti-upload" style={{ fontSize:16, color:C.vert }} />
+                <span style={{ fontFamily:sans, fontSize:13, fontWeight:500, color:C.vert }}>Importer mes données</span>
+              </button>
+              <input ref={importRef} type="file" accept=".json" onChange={handleImport} style={{ display:'none' }} />
+              <div style={{ fontFamily:sans, fontSize:11, color:C.muted, fontStyle:'italic', lineHeight:1.5 }}>
+                L'import écrase les données existantes et recharge l'app.
               </div>
             </div>
           </>
