@@ -1340,10 +1340,10 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
         {depTab === 'factures' ? 'Maîtrisez vos charges. Elles ne vous surprendront plus.' : 'Le luxe, c\'est de ne jamais être surpris par ses comptes.'}
       </div>
       {/* Switcher capsule */}
-      <div style={{ padding:'6px 16px', background:C.beige, flexShrink:0, display:'flex', gap:10 }}>
+      <div style={{ padding:'8px 16px', background:C.beige, flexShrink:0, display:'flex', justifyContent:'center', alignItems:'center', gap:10 }}>
         {[{id:'factures',label:'Factures'},{id:'depenses',label:'Dépenses'}].map(t => (
           <button key={t.id} onClick={() => setDepTab(t.id)}
-            style={{ flex:1, padding:'10px 0', borderRadius:30, fontSize:13, fontWeight:700, cursor:'pointer',
+            style={{ width:140, padding:'10px 0', borderRadius:30, fontSize:13, fontWeight:700, cursor:'pointer',
               fontFamily:serif, letterSpacing:1, textTransform:'uppercase', transition:'all .2s',
               background: depTab === t.id ? C.vert : C.card,
               color:      depTab === t.id ? 'white' : C.vert,
