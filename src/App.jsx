@@ -1491,17 +1491,17 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
                 )}
                 {xBill === m.bills.indexOf(b) && (
                   <div style={{ padding:'0 14px 12px' }}>
-                    <div style={{ background:C.roseL, border:`1px solid ${C.rose}`, borderRadius:10, padding:12 }}>
+                    <div style={{ background:C.beige, border:'1px solid rgba(28,41,28,0.1)', borderRadius:10, padding:12 }}>
                       <div style={{ display:'flex', gap:8, marginBottom:8 }}>
                         <div style={{ flex:1 }}>
                           <Label>Montant réel</Label>
                           <input type="number" step="0.01" value={billForm.amount} onChange={e => setBillForm(p => ({...p, amount:e.target.value}))}
-                            style={{ width:'100%', padding:8, border:`1px solid ${C.rose}`, borderRadius:7, fontSize:15, fontWeight:600, fontFamily:serif, color:C.vert, background:'white' }} />
+                            style={{ width:'100%', padding:8, border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, fontSize:15, fontWeight:600, fontFamily:serif, color:C.vert, background:'white' }} />
                         </div>
                         <div style={{ flex:1 }}>
                           <Label>Date prélevée</Label>
                           <input type="date" value={billForm.date} onChange={e => setBillForm(p => ({...p, date:e.target.value}))}
-                            style={{ width:'100%', padding:8, border:`1px solid ${C.rose}`, borderRadius:7, fontSize:12, color:C.vert, background:'white', fontFamily:sans }} />
+                            style={{ width:'100%', padding:8, border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, fontSize:12, color:C.vert, background:'white', fontFamily:sans }} />
                         </div>
                       </div>
                       <div style={{ display:'flex', gap:8, marginBottom:8 }}>
@@ -1510,11 +1510,11 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
                           ✓ Confirmer prélevée
                         </button>
                         <button onClick={() => { updateData(mm => { mm.bills = mm.bills.filter((_,i) => i !== m.bills.indexOf(b)); }); setXBill(null); }}
-                          style={{ padding:'9px 10px', background:'#FF5252', border:'none', borderRadius:8, cursor:'pointer', color:'white', fontFamily:sans }}>
+                          style={{ padding:'9px 10px', background:'white', border:`1px solid ${C.rose}`, borderRadius:8, cursor:'pointer', color:C.rose, fontFamily:sans }}>
                           <i className="ti ti-trash" style={{ fontSize:15 }} />
                         </button>
                         <button onClick={() => setXBill(null)}
-                          style={{ padding:'9px 12px', background:'white', border:`1px solid ${C.rose}`, borderRadius:8, cursor:'pointer', color:C.vert, fontFamily:sans }}>✕</button>
+                          style={{ padding:'9px 12px', background:'white', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, cursor:'pointer', color:C.vert, fontFamily:sans }}>✕</button>
                       </div>
                       <button onClick={() => {
                         const newAmt = parseFloat(billForm.amount);
@@ -1543,7 +1543,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
                         });
                         setXBill(null);
                       }}
-                        style={{ width:'100%', padding:'8px 0', background:'rgba(28,41,28,0.08)', border:`1px solid ${C.rose}`, borderRadius:8, cursor:'pointer', color:C.vert, fontFamily:sans, fontSize:12, fontWeight:600 }}>
+                        style={{ width:'100%', padding:'8px 0', background:'white', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, cursor:'pointer', color:C.vert, fontFamily:sans, fontSize:12, fontWeight:500 }}>
                         Modifier le montant par défaut
                       </button>
                     </div>
