@@ -1301,13 +1301,22 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
 
   const [xBill, setXBill]           = useState(null);
   const [billForm, setBillForm]     = useState({ amount:'', date:'' });
+  const [editBillIdx, setEditBillIdx] = useState(null);
+  const [editBillForm, setEditBillForm] = useState({ name:'', amount:'' });
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [editExp, setEditExp]       = useState(null);
 
   const clickBill = (realI) => {
     if (m.closed) return;
     setXBill(realI);
+    setEditBillIdx(null);
     setBillForm({ amount: m.bills[realI].realAmount || m.bills[realI].amount, date: new Date().toISOString().split('T')[0] });
+  };
+  const clickRow = (realI) => {
+    if (m.facturesValidees || m.closed) return;
+    setEditBillIdx(realI);
+    setEditBillForm({ name: m.bills[realI].name, amount: String(m.bills[realI].amount) });
+    setXBill(null);
   };
   const confBill = (realI) => {
     if (m.closed) return;
@@ -1431,16 +1440,55 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
             {unpaid.length > 0 && <div style={{ padding:'6px 0 8px' }}><span style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:1, textTransform:'uppercase', color:C.muted }}>À prélever — {unpaid.length}</span></div>}
             {unpaid.map((b) => (
               <div key={b.id} style={{ background:C.card, borderRadius:12, marginBottom:8, border:`0.5px solid ${C.border}` }}>
-                <div style={{ display:'flex', alignItems:'center', gap:10, padding:'13px 14px' }}>
+                <div onClick={() => clickRow(m.bills.indexOf(b))}
+                  style={{ display:'flex', alignItems:'center', gap:10, padding:'13px 14px', cursor: m.facturesValidees || m.closed ? 'default' : 'pointer' }}>
                   <div style={{ flex:1 }}>
                     <div style={{ fontFamily:sans, fontSize:13, fontWeight:500, color:C.text }}>{b.name}</div>
                     <div style={{ fontFamily:sans, fontSize:10, color:C.muted, marginTop:2 }}>En attente · {fmtR(b.amount)}</div>
                   </div>
-                  <div onClick={() => clickBill(m.bills.indexOf(b))}
+                  <div onClick={(e) => { e.stopPropagation(); clickBill(m.bills.indexOf(b)); }}
                     style={{ width:28, height:28, borderRadius:'50%', background:C.roseL, border:`1.5px solid ${C.rose}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0 }}>
                     <i className="ti ti-check" style={{ fontSize:13, color:'#C8B4B4' }} />
                   </div>
                 </div>
+                {editBillIdx === m.bills.indexOf(b) && !m.facturesValidees && (
+                  <div style={{ padding:'0 14px 12px' }}>
+                    <div style={{ background:C.roseL, border:`1px solid ${C.rose}`, borderRadius:10, padding:12 }}>
+                      <div style={{ display:'flex', gap:8, marginBottom:8 }}>
+                        <div style={{ flex:2 }}>
+                          <Label>Nom</Label>
+                          <input type="text" value={editBillForm.name} onChange={e => setEditBillForm(p => ({...p, name:e.target.value}))}
+                            style={{ width:'100%', padding:8, border:`1px solid ${C.rose}`, borderRadius:7, fontSize:13, fontFamily:sans, color:C.vert, background:'white' }} />
+                        </div>
+                        <div style={{ flex:1 }}>
+                          <Label>Montant prévu</Label>
+                          <input type="number" step="0.01" value={editBillForm.amount} onChange={e => setEditBillForm(p => ({...p, amount:e.target.value}))}
+                            style={{ width:'100%', padding:8, border:`1px solid ${C.rose}`, borderRadius:7, fontSize:14, fontWeight:600, fontFamily:serif, color:C.vert, background:'white' }} />
+                        </div>
+                      </div>
+                      <div style={{ display:'flex', gap:8 }}>
+                        <button onClick={() => { const ri = editBillIdx; updateData(mm => { mm.bills = mm.bills.filter((_,i) => i !== ri); }); setEditBillIdx(null); }}
+                          style={{ padding:'9px 10px', background:'#FF5252', border:'none', borderRadius:8, cursor:'pointer', color:'white', fontFamily:sans }}>
+                          <i className="ti ti-trash" style={{ fontSize:15 }} />
+                        </button>
+                        <button onClick={() => {
+                          const newName = editBillForm.name.trim();
+                          const newAmt = parseFloat(editBillForm.amount);
+                          updateData(mm => {
+                            if (newName) mm.bills[editBillIdx].name = newName;
+                            if (newAmt)  mm.bills[editBillIdx].amount = newAmt;
+                          });
+                          setEditBillIdx(null);
+                        }}
+                          style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                          OK
+                        </button>
+                        <button onClick={() => setEditBillIdx(null)}
+                          style={{ padding:'9px 12px', background:'white', border:`1px solid ${C.rose}`, borderRadius:8, cursor:'pointer', color:C.vert, fontFamily:sans }}>✕</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {xBill === m.bills.indexOf(b) && (
                   <div style={{ padding:'0 14px 12px' }}>
                     <div style={{ background:C.roseL, border:`1px solid ${C.rose}`, borderRadius:10, padding:12 }}>
