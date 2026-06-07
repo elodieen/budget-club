@@ -1553,7 +1553,7 @@ const SavingsChart = ({ data, color, svgBg = 'white', title, onClose }) => {
       <div style={{ background:C.beige, borderRadius:16, margin:16, padding:'18px 16px 14px', width:'100%', maxWidth:340 }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
           <span style={{ fontFamily:serif, fontSize:18, fontWeight:700, color:C.vert }}>{title}</span>
-          <button onClick={onClose} style={{ background:C.roseL, border:'none', width:28, height:28, borderRadius:'50%', cursor:'pointer', fontSize:14, color:C.vert }}>✕</button>
+          <button onClick={onClose} style={{ background:C.vert, border:'none', width:28, height:28, borderRadius:'50%', cursor:'pointer', fontSize:14, color:C.rose }}>✕</button>
         </div>
         {data.length === 0 ? (
           <div style={{ textAlign:'center', padding:24, color:C.muted, fontFamily:sans, fontSize:13 }}>Aucune donnée</div>
@@ -1641,7 +1641,7 @@ const SavingsDetail = ({ type, label, histItems, soldeItem, onSaveHist, onDelete
           <span style={{ fontFamily:serif, fontSize:19, fontWeight:700, color:C.vert }}>
             Détail {label || (type === 'livret' ? 'Livret A' : 'PEA')}
           </span>
-          <button onClick={onClose} style={{ background:C.roseL, border:'none', width:28, height:28, borderRadius:'50%', cursor:'pointer', fontSize:14, color:C.vert }}>✕</button>
+          <button onClick={onClose} style={{ background:C.vert, border:'none', width:28, height:28, borderRadius:'50%', cursor:'pointer', fontSize:14, color:C.rose }}>✕</button>
         </div>
 
         {flash && <div style={{ textAlign:'center', fontFamily:sans, fontSize:12, color:'#2E7D32', fontWeight:600, marginBottom:8, flexShrink:0 }}>Sauvegardé ✓</div>}
@@ -1920,12 +1920,9 @@ export function EpargneView({ currentYear, onProfileAction }) {
 
         {/* ── Cards fixes ── */}
         <div style={{ flexShrink:0, padding:'0 16px', background:C.beige }}>
-          <div style={{ margin:'4px 0 8px' }}>
-            <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom:2 }}>
-              <span style={{ fontFamily:sans, fontSize:11, color:C.muted, fontWeight:500 }}>Total à date</span>
-              {lastUpdateDate && <span style={{ fontFamily:sans, fontSize:10, color:C.muted }}>Dernière maj le {lastUpdateDate}</span>}
-            </div>
-            <span style={{ fontFamily:serif, fontSize:22, fontWeight:700, color:C.vert }}>{fmtP(livretTotal + peaTotal)}</span>
+          <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', margin:'4px 0 8px' }}>
+            <span style={{ fontFamily:sans, fontSize:11, color:C.muted, fontWeight:500 }}>Total à date</span>
+            <span style={{ fontFamily:serif, fontSize:18, fontWeight:700, color:C.vert }}>{fmtP(livretTotal + peaTotal)}</span>
           </div>
 
           {/* ── Livret A ── */}
