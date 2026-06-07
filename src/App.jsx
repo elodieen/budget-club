@@ -899,7 +899,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
         </div>
 
         {/* Clôture du mois */}
-        <div ref={closeRef}>
+        <div ref={closeRef} style={{ marginTop:8 }}>
           {m.closed ? (
             <button onClick={() => updateData(mm => { mm.closed = false; })}
               style={{ width:'100%', padding:'10px 0', background:C.rose, border:'none', borderRadius:10, fontFamily:sans, fontSize:13, fontWeight:600, color:C.vert, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
