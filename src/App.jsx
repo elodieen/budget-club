@@ -855,7 +855,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
           </div>
         </div>
       </div>
-      <div style={{ display:'flex', flexDirection:'column', flex:1, justifyContent:'space-between', padding:'0 16px', paddingBottom:'calc(12px + env(safe-area-inset-bottom))', background:C.beige }}>
+      <div style={{ flex:1, overflowY:'auto', padding:'0 16px', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
         {/* 4 mini-cards */}
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:12 }}>
           {[
@@ -876,13 +876,13 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
           ))}
         </div>
         {/* Card verte : titre + 5 étapes */}
-        <div style={{ background:C.vert, borderRadius:14, padding:'14px 18px' }}>
-          <div style={{ textAlign:'center', fontFamily:serif, fontSize:13, fontWeight:600, color:'white', letterSpacing:'1px', marginBottom:12 }}>
+        <div style={{ background:C.vert, borderRadius:14, padding:'10px 14px', marginBottom:12 }}>
+          <div style={{ textAlign:'center', fontFamily:serif, fontSize:13, fontWeight:600, color:'white', letterSpacing:'1px', marginBottom:4 }}>
             <span style={{ color:C.rose }}>✦</span> Mon mois en 5 étapes <span style={{ color:C.rose }}>✦</span>
           </div>
           {steps.map((step, i) => (
             <div key={step.num} onClick={step.action}
-              style={{ display:'flex', alignItems:'center', gap:10, paddingTop:10, paddingBottom:10, borderTop: i > 0 ? '1px solid rgba(255,255,255,0.1)' : 'none', cursor:'pointer' }}>
+              style={{ display:'flex', alignItems:'center', gap:10, padding:'6px 0', borderTop: i > 0 ? '1px solid rgba(255,255,255,0.07)' : 'none', cursor:'pointer' }}>
               <div style={{ width:24, height:24, borderRadius:'50%', background:C.rose, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                 <span style={{ fontFamily:serif, fontSize:12, fontWeight:700, color:C.vert, lineHeight:1 }}>{step.num}</span>
               </div>
