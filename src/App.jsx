@@ -2382,7 +2382,6 @@ const SplashBg = ({ children }) => (
 
 const SplashLogo = ({ size = 110, titleSize = 48, spacing = '8px' }) => (
   <>
-    <div style={{ color:C.rose, fontSize:16, marginBottom:14 }}>✦</div>
     <img src="/logo-budget-club-rose.png" style={{ width:size, height:size, objectFit:'contain' }} />
     <div style={{ marginTop:14, fontFamily:serif, fontSize:titleSize, fontWeight:700, color:'white', letterSpacing:spacing, textTransform:'uppercase', lineHeight:1.1 }}>
       BUDGET<br />CLUB
@@ -2643,7 +2642,6 @@ const SplashScreen = ({ onDone }) => {
       <div style={{ position:'absolute', inset:0, backgroundImage:'url(/splash-bg.png)', backgroundSize:'cover', backgroundPosition:'center' }} />
       <div style={{ position:'absolute', inset:0, background:'rgba(30,51,40,0.65)' }} />
       <div style={{ position:'relative', textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center' }}>
-        <div style={{ color:C.rose, fontSize:16, marginBottom:16 }}>✦</div>
         <img src="/logo-budget-club-rose.png" style={{ width:110, height:110, objectFit:'contain' }} />
         <div style={{ marginTop:16, fontFamily:serif, fontSize:48, fontWeight:700, color:'white', letterSpacing:'8px', textTransform:'uppercase', lineHeight:1.1 }}>
           BUDGET<br />CLUB
