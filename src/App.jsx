@@ -552,6 +552,18 @@ const ProfileBadge = ({ onSwitch, onCreateProfile }) => {
 const MonthHeader = ({ mi, setMi, closed, onProfileAction }) => {
   const prev = () => setMi(p => p.month === 0 ? { month:11, year:p.year-1 } : { month:p.month-1, year:p.year });
   const next = () => setMi(p => p.month === 11 ? { month:0, year:p.year+1 } : { month:p.month+1, year:p.year });
+  const [saved, setSaved] = useState(false);
+  const handleSave = () => {
+    const data = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(`${currentProfileId}:`) && k !== `${currentProfileId}:auto-backup`)
+        data[k] = localStorage.getItem(k);
+    }
+    localStorage.setItem(`${currentProfileId}:auto-backup`, JSON.stringify({ timestamp: new Date().toISOString(), data }));
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1500);
+  };
   return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px 0', background:C.beige, flexShrink:0 }}>
       <img src="/logo-budget-club-favicon-rose.png" style={{ width:38, height:38, borderRadius:'50%', objectFit:'cover' }} />
@@ -563,7 +575,14 @@ const MonthHeader = ({ mi, setMi, closed, onProfileAction }) => {
         <button onClick={next}
           style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>›</button>
       </div>
-      <div style={{ width:38, display:'flex', justifyContent:'flex-end' }}>
+      <div style={{ display:'flex', alignItems:'center', gap:8, justifyContent:'flex-end' }}>
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'center' }}>
+          <button onClick={handleSave}
+            style={{ background:'none', border:'none', cursor:'pointer', padding:'2px 4px', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <i className="ti ti-device-floppy" style={{ fontSize:20, color:C.vert }} />
+          </button>
+          <span style={{ fontFamily:sans, fontSize:9, fontWeight:600, color:C.vert, whiteSpace:'nowrap', visibility: saved ? 'visible' : 'hidden' }}>Sauvegardé ✓</span>
+        </div>
         <ProfileBadge onSwitch={() => onProfileAction?.('select')} onCreateProfile={() => onProfileAction?.('create')} />
       </div>
     </div>
