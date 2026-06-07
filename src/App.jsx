@@ -2594,6 +2594,45 @@ function MainApp({ onProfileAction }) {
   const [depTab, setDepTab] = useState('depenses');
   const [modal, setModal]   = useState(null);
   const { data: m, loading, updateData } = useMonthData(mi);
+  const [autoBackupOffer, setAutoBackupOffer] = useState(null);
+
+  // Auto-save on hide/close
+  useEffect(() => {
+    const save = () => {
+      if (!currentProfileId) return;
+      const data = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(`${currentProfileId}:`) && k !== `${currentProfileId}:auto-backup`)
+          data[k] = localStorage.getItem(k);
+      }
+      localStorage.setItem(`${currentProfileId}:auto-backup`, JSON.stringify({ timestamp: new Date().toISOString(), data }));
+    };
+    const onVisibility = () => { if (document.visibilityState === 'hidden') save(); };
+    window.addEventListener('beforeunload', save);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => { window.removeEventListener('beforeunload', save); document.removeEventListener('visibilitychange', onVisibility); };
+  }, []);
+
+  // Detect incomplete data vs available backup
+  useEffect(() => {
+    if (!currentProfileId) return;
+    const raw = localStorage.getItem(`${currentProfileId}:auto-backup`);
+    if (!raw) return;
+    try {
+      const backup = JSON.parse(raw);
+      let cur = 0;
+      for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(`${currentProfileId}:budget:`)) cur++; }
+      const bak = Object.keys(backup.data || {}).filter(k => k.startsWith(`${currentProfileId}:budget:`)).length;
+      if (bak > cur) setAutoBackupOffer(backup);
+    } catch {}
+  }, []);
+
+  const restoreAutoBackup = () => {
+    if (!autoBackupOffer?.data) return;
+    Object.entries(autoBackupOffer.data).forEach(([k, v]) => localStorage.setItem(k, v));
+    window.location.reload();
+  };
 
   const addExpense = (exp)  => { if (m.closed) return; updateData(mm => { mm.expenses = [...mm.expenses, exp]; }); };
   const addRevenu  = (rev)  => { if (m.closed) return; updateData(mm => { mm.revenues = [...mm.revenues, rev]; }); };
@@ -2636,6 +2675,21 @@ function MainApp({ onProfileAction }) {
             <button onClick={() => setView('budget')} style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:22, width:32 }}>‹</button>
             <span style={{ fontFamily:serif, fontSize:20, fontWeight:600, color:C.vert, letterSpacing:1, textTransform:'uppercase' }}>Non ventilé par catégorie</span>
             <span style={{ width:32 }} />
+          </div>
+        )}
+        {autoBackupOffer && (
+          <div style={{ flexShrink:0, background:'#FFF8E7', borderBottom:'1px solid #E8C96A', padding:'8px 16px', display:'flex', alignItems:'center', gap:10, zIndex:10 }}>
+            <span style={{ fontFamily:sans, fontSize:12, color:'#7A5C00', flex:1, lineHeight:1.4 }}>
+              Sauvegarde du {new Date(autoBackupOffer.timestamp).toLocaleDateString('fr-FR')} disponible. Restaurer ?
+            </span>
+            <button onClick={restoreAutoBackup}
+              style={{ padding:'5px 12px', background:'#1E3328', color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:12, fontWeight:600, cursor:'pointer', flexShrink:0 }}>
+              Restaurer
+            </button>
+            <button onClick={() => setAutoBackupOffer(null)}
+              style={{ padding:'5px 10px', background:'none', border:'1px solid rgba(122,92,0,0.3)', borderRadius:8, fontFamily:sans, fontSize:12, color:'#7A5C00', cursor:'pointer', flexShrink:0 }}>
+              Ignorer
+            </button>
           </div>
         )}
         <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
