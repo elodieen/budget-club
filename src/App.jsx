@@ -2296,7 +2296,7 @@ const ProfileSelectScreen = ({ profiles, onSelect, onCreateProfile }) => {
   );
 };
 
-const PinScreen = ({ profile, onSuccess }) => {
+const PinScreen = ({ profile, onSuccess, onBack }) => {
   const [pin,      setPin]      = useState('');
   const [error,    setError]    = useState(false);
   const [shake,    setShake]    = useState(false);
@@ -2353,6 +2353,7 @@ const PinScreen = ({ profile, onSuccess }) => {
       {!resetStage ? (
         <>
           <div style={{ marginTop:26, fontFamily:serif, fontSize:20, fontWeight:600, color:'white' }}>{profile.name}</div>
+          {onBack && <button onClick={onBack} style={{ marginTop:6, background:'none', border:'none', color:'rgba(255,255,255,0.6)', fontFamily:sans, fontSize:11, cursor:'pointer', textDecoration:'underline', padding:0 }}>Changer de profil</button>}
           <div style={{ display:'flex', gap:12, marginTop:16, marginBottom:20, animation: shake ? 'pinShake 0.5s' : 'none' }}>
             {Array.from({ length:6 }).map((_,i) => (
               <div key={i} style={{ width:13, height:13, borderRadius:'50%', background: i < pin.length ? C.rose : 'rgba(255,255,255,0.2)', border:`1.5px solid ${i < pin.length ? C.rose : 'rgba(255,255,255,0.3)'}`, transition:'background 0.15s' }} />
@@ -2653,6 +2654,7 @@ export default function App() {
         <PinScreen
           profile={pendingProfile}
           onSuccess={profile => { persistProfile(profile.id); setAppStage('app'); }}
+          onBack={() => { setPendingProfile(null); setAppStage('select'); }}
         />
       </>
     );
