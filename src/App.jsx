@@ -878,13 +878,13 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
         {/* Card verte : titre + 5 étapes */}
         <div style={{ background:C.vert, borderRadius:14, padding:'10px 14px', marginBottom:12 }}>
           <div style={{ textAlign:'center', fontFamily:serif, fontSize:13, fontWeight:600, color:'white', letterSpacing:'1px', marginBottom:4 }}>
-            <span style={{ color:C.rose }}>✦</span> Mon mois en 5 étapes <span style={{ color:C.rose }}>✦</span>
+            <span style={{ color:'white' }}>✦</span> Mon mois en 5 étapes <span style={{ color:'white' }}>✦</span>
           </div>
           {steps.map((step, i) => (
             <div key={step.num} onClick={step.action}
               style={{ display:'flex', alignItems:'center', gap:10, padding:'6px 0', borderTop: i > 0 ? '1px solid rgba(255,255,255,0.07)' : 'none', cursor:'pointer' }}>
-              <div style={{ width:24, height:24, borderRadius:'50%', background:C.rose, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                <span style={{ fontFamily:serif, fontSize:12, fontWeight:700, color:C.vert, lineHeight:1 }}>{step.num}</span>
+              <div style={{ width:24, height:24, borderRadius:'50%', background:C.rose, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, padding:0 }}>
+                <span style={{ fontFamily:serif, fontSize:12, fontWeight:700, color:C.vert, lineHeight:1, textAlign:'center', display:'block' }}>{step.num}</span>
               </div>
               <span style={{ fontFamily:sans, fontSize:12, color: checks[i] ? 'rgba(255,255,255,0.4)' : 'white', flex:1 }}>{step.label}</span>
               {checks[i]
