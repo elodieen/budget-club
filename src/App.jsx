@@ -1900,6 +1900,14 @@ export function EpargneView({ currentYear, onProfileAction }) {
       setPeaSolde(defaultP);
       localStorage.setItem(MIG, '1');
     }
+    // Force correct Livret A initial value
+    const MIG2 = `${currentProfileId}:budget:init:livret-v2`;
+    if (!localStorage.getItem(MIG2)) {
+      const correctL = { amount: 1938.37, date: '2026-06-01' };
+      saveLivretSolde(correctL);
+      setLivretSolde(correctL);
+      localStorage.setItem(MIG2, '1');
+    }
   }, []);
 
   useEffect(() => {
@@ -2086,7 +2094,7 @@ export function EpargneView({ currentYear, onProfileAction }) {
               <div style={{ display:'flex', gap:16 }}>
                 <button title="Nouveau solde" onClick={() => { setSoldeForm({ amount: '', date: new Date().toISOString().split('T')[0] }); setEditSolde(v => !v); }}
                   style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
-                  <i className="ti ti-pencil" style={{ fontSize:18, color: editSolde ? C.gold : 'rgba(255,255,255,0.75)' }} />
+                  <i className="ti ti-plus" style={{ fontSize:18, color: editSolde ? C.gold : 'rgba(255,255,255,0.75)' }} />
                 </button>
                 <button onClick={() => setDetailType('livret')}
                   style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
@@ -2118,15 +2126,12 @@ export function EpargneView({ currentYear, onProfileAction }) {
                 <button onClick={() => {
                   const a = parseFloat(soldeForm.amount);
                   if (!a) return;
-                  const updated = { ...livretSolde, amount:a, date:soldeForm.date };
-                  saveLivretSolde(updated);
-                  setLivretSolde(updated);
-                  const entry = { id:'lh'+Date.now(), date: soldeForm.date || new Date().toISOString().split('T')[0], montant: a, label: 'Mise à jour manuelle' };
+                  const entry = { id:'lh'+Date.now(), date: soldeForm.date || new Date().toISOString().split('T')[0], montant: a, label: 'Mise à jour' };
                   const uh = [...livretHist, entry]; saveLivretHist(uh); setLivretHist(uh);
                   setEditSolde(false);
                   flashSaved('livret');
-                }} style={{ flex:1, padding:9, background:C.gold, color:C.nav, border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
-                  Enregistrer
+                }} style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                  Ajouter
                 </button>
                 <button onClick={() => setEditSolde(false)}
                   style={{ padding:'9px 12px', background:'rgba(255,255,255,0.1)', border:'none', borderRadius:8, cursor:'pointer', color:'white', fontFamily:sans }}>✕</button>
@@ -2156,9 +2161,9 @@ export function EpargneView({ currentYear, onProfileAction }) {
                 )}
               </div>
               <div style={{ display:'flex', gap:16 }}>
-                <button title="Nouveau solde" onClick={() => { setPeaSoldeForm({ montant: '', rendement: String(peaSolde?.rendement||''), pct: String(peaSolde?.pct||''), date: new Date().toISOString().split('T')[0] }); setEditPeaSolde(v => !v); }}
+                <button title="Nouveau solde" onClick={() => { setPeaSoldeForm({ montant: '', rendement: '', pct: '', date: new Date().toISOString().split('T')[0] }); setEditPeaSolde(v => !v); }}
                   style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
-                  <i className="ti ti-pencil" style={{ fontSize:18, color: editPeaSolde ? C.gold : 'white' }} />
+                  <i className="ti ti-plus" style={{ fontSize:18, color: editPeaSolde ? C.gold : 'white' }} />
                 </button>
                 <button onClick={() => setDetailType('pea')}
                   style={{ background:'none', border:'none', cursor:'pointer', padding:2 }}>
@@ -2190,15 +2195,12 @@ export function EpargneView({ currentYear, onProfileAction }) {
                 <button onClick={() => {
                   const a = parseFloat(peaSoldeForm.montant);
                   if (!a) return;
-                  const updated = { ...peaSolde, montant:a, date:peaSoldeForm.date };
-                  savePeaSolde(updated);
-                  setPeaSolde(updated);
-                  const entry = { id:'ph'+Date.now(), date: peaSoldeForm.date || new Date().toISOString().split('T')[0], montant: a, label: 'Mise à jour manuelle' };
+                  const entry = { id:'ph'+Date.now(), date: peaSoldeForm.date || new Date().toISOString().split('T')[0], montant: a, label: 'Mise à jour' };
                   const uh = [...peaHist, entry]; savePeaHist(uh); setPeaHist(uh);
                   setEditPeaSolde(false);
                   flashSaved('pea');
                 }} style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
-                  Enregistrer
+                  Ajouter
                 </button>
                 <button onClick={() => setEditPeaSolde(false)}
                   style={{ padding:'9px 12px', background:'white', border:`1px solid ${C.rose}`, borderRadius:8, cursor:'pointer', color:C.vert, fontFamily:sans }}>✕</button>
