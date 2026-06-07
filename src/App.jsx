@@ -879,13 +879,13 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
           Gérez l'ordinaire pour vous offrir l'extraordinaire.
         </div>
         {/* Card verte : titre + 5 étapes */}
-        <div style={{ background:C.vert, borderRadius:14, padding:'0 14px', flex:1, display:'flex', flexDirection:'column', justifyContent:'center' }}>
-          <div style={{ textAlign:'center', fontFamily:serif, fontSize:13, fontWeight:600, color:'white', letterSpacing:'1px' }}>
+        <div style={{ background:C.vert, borderRadius:14, padding:'10px 14px', flex:1, display:'flex', flexDirection:'column', justifyContent:'center' }}>
+          <div style={{ textAlign:'center', fontFamily:serif, fontSize:13, fontWeight:600, color:'white', letterSpacing:'1px', marginTop:0, marginBottom:8 }}>
             <span style={{ color:'white' }}>✦</span> Mon mois en 5 étapes <span style={{ color:'white' }}>✦</span>
           </div>
           {steps.map((step, i) => (
             <div key={step.num} onClick={step.action}
-              style={{ display:'flex', alignItems:'center', gap:10, padding:'5px 0', borderTop: i > 0 ? '1px solid rgba(255,255,255,0.07)' : 'none', cursor:'pointer' }}>
+              style={{ display:'flex', alignItems:'center', gap:10, padding: i === steps.length - 1 ? '7px 0 4px' : '7px 0', borderTop: i > 0 ? '1px solid rgba(255,255,255,0.07)' : 'none', cursor:'pointer' }}>
               <div style={{ width:24, height:24, borderRadius:'50%', background:C.rose, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, padding:0 }}>
                 <span style={{ fontFamily:serif, fontSize:12, fontWeight:700, color:C.vert, lineHeight:1, textAlign:'center', display:'block' }}>{step.num}</span>
               </div>
