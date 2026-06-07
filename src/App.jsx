@@ -578,7 +578,7 @@ const MonthHeader = ({ mi, setMi, closed, onProfileAction }) => {
           style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>›</button>
       </div>
       <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'flex-end', gap:8 }}>
-        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', paddingLeft:5 }}>
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', paddingLeft:5, transform:'translateX(5px)' }}>
           <button onClick={handleSave}
             style={{ background:'none', border:'none', cursor:'pointer', padding:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
             <i className="ti ti-device-floppy" style={{ fontSize:20, color:C.vert }} />
