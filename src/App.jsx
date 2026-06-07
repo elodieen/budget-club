@@ -879,7 +879,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
           Gérez l'ordinaire pour vous offrir l'extraordinaire.
         </div>
         {/* Card verte : titre + 5 étapes */}
-        <div style={{ background:C.vert, borderRadius:14, padding:'10px 14px', flex:1, display:'flex', flexDirection:'column', justifyContent:'center' }}>
+        <div style={{ background:C.vert, borderRadius:14, padding:'10px 14px', flexShrink:0, display:'flex', flexDirection:'column', justifyContent:'center', marginTop:2, marginBottom:2 }}>
           <div style={{ textAlign:'center', fontFamily:serif, fontSize:13, fontWeight:600, color:'white', letterSpacing:'1px', marginTop:0, marginBottom:8 }}>
             <span style={{ color:'white' }}>✦</span> Mon mois en 5 étapes <span style={{ color:'white' }}>✦</span>
           </div>
