@@ -1910,6 +1910,7 @@ export function EpargneView({ currentYear, onProfileAction }) {
           <span style={{ color:C.vert }}>❧</span> ÉPARGNE &amp;<br />{"    "}INVESTISSEMENT <span style={{ color:C.vert }}>❧</span>
         </div>
       </div>
+      <div style={{ textAlign:'center', padding:'4px 16px 8px', fontFamily:serif, fontSize:12, fontStyle:'italic', color:C.muted, flexShrink:0, background:C.beige }}>Investir, c'est croire en son avenir — et bâtir son indépendance un versement à la fois.</div>
 
       {/* Wrapper : cards fixes + jauges scrollables */}
       <div style={{ display:'flex', flexDirection:'column', flex:1, overflow:'hidden', background:C.beige }}>
