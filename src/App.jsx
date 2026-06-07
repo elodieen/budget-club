@@ -2198,9 +2198,9 @@ export function EpargneView({ currentYear, onProfileAction }) {
 
       {/* Bandeau clôture annuelle */}
       {allClosed && (
-        <div style={{ margin:'8px 16px 0', background:'rgba(28,41,28,0.06)', borderRadius:8, padding:'6px 16px', display:'flex', alignItems:'center', justifyContent:'center', gap:6, flexShrink:0 }}>
-          <span style={{ fontFamily:sans, fontSize:11, color:'#1E3328' }}>✦ Année {epargneYear} clôturée ✦</span>
-          <span style={{ fontFamily:serif, fontSize:13, fontWeight:700, color:C.rose }}>{fmtP(te)}</span>
+        <div style={{ margin:'8px 16px 0', background:C.rose, borderRadius:10, padding:'8px 16px', display:'flex', alignItems:'center', justifyContent:'center', gap:6, flexShrink:0 }}>
+          <span style={{ fontFamily:sans, fontSize:11, fontWeight:600, color:'#1E3328' }}>Année {epargneYear} clôturée ✓</span>
+          <span style={{ fontFamily:serif, fontSize:13, fontWeight:700, color:'#1E3328' }}>{fmtP(te)}</span>
         </div>
       )}
 
