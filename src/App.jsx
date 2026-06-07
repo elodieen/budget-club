@@ -1798,7 +1798,7 @@ const SavingsDetail = ({ type, label, histItems, soldeItem, onSaveHist, onDelete
             <div key={item.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 0', borderBottom:`0.5px solid ${C.border}` }}>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontFamily:sans, fontSize:10, color:C.muted, textTransform:'uppercase', letterSpacing:.5 }}>{item.label || 'Mise à jour'}</div>
-                <div style={{ fontFamily:sans, fontSize:12, color:C.vert, marginTop:1 }}>{item.date ? item.date.split('-').reverse().join('/') : '—'}</div>
+                <div style={{ fontFamily:sans, fontSize:12, color:C.vert, marginTop:1 }}>{fmtDateTime(item.date) || '—'}</div>
               </div>
               {!item.readOnly && editId === item.id ? (
                 <input autoFocus type="number" step="0.01" value={editVal}
@@ -1930,6 +1930,12 @@ export function EpargneView({ currentYear, onProfileAction }) {
 
   const peaRendTotal = peaRend.reduce((s,r) => s + (r.montant||0), 0);
   const fmtDate      = (d) => d ? d.split('-').reverse().join('/') : '';
+  const fmtDateTime  = (d) => {
+    if (!d) return '';
+    const dt = new Date(d);
+    const date = dt.toLocaleDateString('fr-FR');
+    return d.includes('T') ? `${date} à ${dt.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })}` : date;
+  };
 
   const fmtShortDate = d => {
     if (!d) return '';
@@ -2023,7 +2029,7 @@ export function EpargneView({ currentYear, onProfileAction }) {
     ].filter(Boolean);
     if (!allDates.length) return null;
     const latest = allDates.reduce((a, b) => (new Date(a) > new Date(b) ? a : b));
-    return latest.split('-').reverse().join('/');
+    return fmtDateTime(latest);
   })();
   const flashSaved = (type) => { setEpargneFlash(type); setTimeout(() => setEpargneFlash(null), 1000); };
 
@@ -2110,23 +2116,16 @@ export function EpargneView({ currentYear, onProfileAction }) {
           </div>
           {editSolde && (
             <div style={{ background:'rgba(28,41,28,0.92)', borderRadius:'0 0 12px 12px', padding:'10px 14px 14px', marginBottom:8 }}>
-              <div style={{ display:'flex', gap:8, marginBottom:8 }}>
-                <div style={{ flex:2 }}>
-                  <Label><span style={{ color:'rgba(255,255,255,0.5)' }}>Nouveau solde (€)</span></Label>
-                  <input type="number" step="0.01" placeholder="Nouveau solde en €" value={soldeForm.amount} onChange={e => setSoldeForm(p => ({...p, amount:e.target.value}))}
-                    style={{ width:'100%', padding:8, border:`1px solid rgba(255,255,255,0.2)`, borderRadius:7, fontSize:15, fontFamily:serif, color:C.vert, background:'white' }} />
-                </div>
-                <div style={{ flex:2 }}>
-                  <Label><span style={{ color:'rgba(255,255,255,0.5)' }}>Date du solde</span></Label>
-                  <input type="date" value={soldeForm.date} onChange={e => setSoldeForm(p => ({...p, date:e.target.value}))}
-                    style={{ width:'100%', padding:8, border:`1px solid rgba(255,255,255,0.2)`, borderRadius:7, fontSize:12, color:C.vert, background:'white', fontFamily:sans }} />
-                </div>
+              <div style={{ marginBottom:8 }}>
+                <Label><span style={{ color:'rgba(255,255,255,0.5)' }}>Nouveau solde (€)</span></Label>
+                <input type="number" step="0.01" placeholder="Nouveau solde en €" value={soldeForm.amount} onChange={e => setSoldeForm(p => ({...p, amount:e.target.value}))}
+                  style={{ width:'100%', padding:8, border:`1px solid rgba(255,255,255,0.2)`, borderRadius:7, fontSize:15, fontFamily:serif, color:C.vert, background:'white' }} />
               </div>
               <div style={{ display:'flex', gap:8 }}>
                 <button onClick={() => {
                   const a = parseFloat(soldeForm.amount);
                   if (!a) return;
-                  const entry = { id:'lh'+Date.now(), date: soldeForm.date || new Date().toISOString().split('T')[0], montant: a, label: 'Mise à jour' };
+                  const entry = { id:'lh'+Date.now(), date: new Date().toISOString(), montant: a, label: 'Mise à jour' };
                   const uh = [...livretHist, entry]; saveLivretHist(uh); setLivretHist(uh);
                   setEditSolde(false);
                   flashSaved('livret');
@@ -2179,23 +2178,16 @@ export function EpargneView({ currentYear, onProfileAction }) {
           </div>
           {editPeaSolde && (
             <div style={{ background:'rgba(28,41,28,0.08)', borderRadius:'0 0 12px 12px', padding:'10px 14px 14px', marginBottom:8, border:`1px solid ${C.rose}`, borderTop:'none' }}>
-              <div style={{ display:'flex', gap:8, marginBottom:8 }}>
-                <div style={{ flex:2 }}>
-                  <Label>Nouveau solde (€)</Label>
-                  <input type="number" step="0.01" placeholder="Nouveau solde en €" value={peaSoldeForm.montant} onChange={e => setPeaSoldeForm(p => ({...p, montant:e.target.value}))}
-                    style={{ width:'100%', padding:8, border:`1px solid ${C.border}`, borderRadius:7, fontSize:14, fontFamily:serif, color:C.vert, background:'white' }} />
-                </div>
-                <div style={{ flex:2 }}>
-                  <Label>Date</Label>
-                  <input type="date" value={peaSoldeForm.date} onChange={e => setPeaSoldeForm(p => ({...p, date:e.target.value}))}
-                    style={{ width:'100%', padding:8, border:`1px solid ${C.border}`, borderRadius:7, fontSize:12, color:C.vert, background:'white', fontFamily:sans }} />
-                </div>
+              <div style={{ marginBottom:8 }}>
+                <Label>Nouveau solde (€)</Label>
+                <input type="number" step="0.01" placeholder="Nouveau solde en €" value={peaSoldeForm.montant} onChange={e => setPeaSoldeForm(p => ({...p, montant:e.target.value}))}
+                  style={{ width:'100%', padding:8, border:`1px solid ${C.border}`, borderRadius:7, fontSize:14, fontFamily:serif, color:C.vert, background:'white' }} />
               </div>
               <div style={{ display:'flex', gap:8 }}>
                 <button onClick={() => {
                   const a = parseFloat(peaSoldeForm.montant);
                   if (!a) return;
-                  const entry = { id:'ph'+Date.now(), date: peaSoldeForm.date || new Date().toISOString().split('T')[0], montant: a, label: 'Mise à jour' };
+                  const entry = { id:'ph'+Date.now(), date: new Date().toISOString(), montant: a, label: 'Mise à jour' };
                   const uh = [...peaHist, entry]; savePeaHist(uh); setPeaHist(uh);
                   setEditPeaSolde(false);
                   flashSaved('pea');
@@ -2298,12 +2290,12 @@ export function EpargneView({ currentYear, onProfileAction }) {
             if (detailType === 'livret') {
               const upd = { amount: val, date: livretSolde?.date || '' };
               saveLivretSolde(upd); setLivretSolde(upd);
-              const entry = { id:'lh'+Date.now(), date: new Date().toISOString().split('T')[0], montant: val, label: 'Mise à jour' };
+              const entry = { id:'lh'+Date.now(), date: new Date().toISOString(), montant: val, label: 'Mise à jour' };
               const uh = [...livretHist, entry]; saveLivretHist(uh); setLivretHist(uh);
             } else {
               const upd = { ...peaSolde, montant: val };
               savePeaSolde(upd); setPeaSolde(upd);
-              const entry = { id:'ph'+Date.now(), date: new Date().toISOString().split('T')[0], montant: val, label: 'Mise à jour' };
+              const entry = { id:'ph'+Date.now(), date: new Date().toISOString(), montant: val, label: 'Mise à jour' };
               const uh = [...peaHist, entry]; savePeaHist(uh); setPeaHist(uh);
             }
           }}
