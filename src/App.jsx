@@ -843,9 +843,9 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
     <>
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
-      <div style={{ position:'relative', display:'flex', flexDirection:'column', flex:1, gap:8, padding:'8px 16px', paddingBottom:'calc(58px + env(safe-area-inset-bottom))', background:C.beige, overflow:'hidden' }}>
+      <div style={{ display:'flex', flexDirection:'column', flex:1, gap:8, padding:'8px 16px', paddingBottom:'calc(10px + env(safe-area-inset-bottom))', background:C.beige, overflow:'hidden' }}>
         {/* Card Reste à dépenser */}
-        <div style={{ background:C.vert, borderRadius:16, padding:'12px 14px 10px', textAlign:'center' }}>
+        <div style={{ background:C.vert, borderRadius:16, padding:'12px 14px 10px', textAlign:'center', marginTop: m.closed ? 8 : 0 }}>
           <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'white', marginBottom:4 }}>Reste à dépenser</div>
           {rev === 0
             ? <div style={{ fontFamily:serif, fontSize:26, fontStyle:'italic', color:C.rose, lineHeight:1.3 }}>Revenus non saisis</div>
@@ -898,8 +898,8 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
           ))}
         </div>
 
-        {/* Clôture du mois — hors flux, épinglé en bas */}
-        <div ref={closeRef} style={{ position:'absolute', bottom:'calc(10px + env(safe-area-inset-bottom))', left:16, right:16 }}>
+        {/* Clôture du mois */}
+        <div ref={closeRef}>
           {m.closed ? (
             <button onClick={() => updateData(mm => { mm.closed = false; })}
               style={{ width:'100%', padding:'10px 0', background:C.rose, border:'none', borderRadius:10, fontFamily:sans, fontSize:13, fontWeight:600, color:C.vert, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
