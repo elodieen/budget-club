@@ -565,9 +565,11 @@ const MonthHeader = ({ mi, setMi, closed, onProfileAction }) => {
     setTimeout(() => setSaved(false), 1500);
   };
   return (
-    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px 0', background:C.beige, flexShrink:0 }}>
-      <img src="/logo-budget-club-favicon-rose.png" style={{ width:38, height:38, borderRadius:'50%', objectFit:'cover' }} />
-      <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+    <div style={{ display:'flex', alignItems:'center', padding:'14px 16px 0', background:C.beige, flexShrink:0 }}>
+      <div style={{ flex:1, display:'flex', alignItems:'center' }}>
+        <img src="/logo-budget-club-favicon-rose.png" style={{ width:38, height:38, borderRadius:'50%', objectFit:'cover' }} />
+      </div>
+      <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:4 }}>
         <button onClick={prev}
           style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>‹</button>
         <span style={{ fontFamily:serif, fontSize:16, fontWeight:600, color:C.vert }}>{MONTHS[mi.month]} {mi.year}</span>
@@ -575,7 +577,7 @@ const MonthHeader = ({ mi, setMi, closed, onProfileAction }) => {
         <button onClick={next}
           style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>›</button>
       </div>
-      <div style={{ display:'flex', alignItems:'center', gap:8, justifyContent:'flex-end' }}>
+      <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'flex-end', gap:8 }}>
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center' }}>
           <button onClick={handleSave}
             style={{ background:'none', border:'none', cursor:'pointer', padding:'2px 4px', display:'flex', alignItems:'center', justifyContent:'center' }}>
