@@ -823,8 +823,9 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
   const cb5    = m.catBudgets || {};
   const tvBgt5 = Object.values(cb5).reduce((s, v) => s + (parseFloat(v) || 0), 0);
   const nonV5  = Math.max(0, rev - bT - tvBgt5);
+  const facVal = !!m.facturesValidees;
   const checks = [
-    paidBills.length > 0,
+    facVal,
     rev > 0,
     rev > 0 && tvBgt5 > 0 && nonV5 < 1,
     m.expenses.filter(e => e.cat !== 'epargne_livret' && e.cat !== 'epargne_pea').length > 0,
@@ -1406,6 +1407,24 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
             <div style={{ height:4, background:'rgba(255,255,255,0.12)', borderRadius:2, marginTop:8, overflow:'hidden' }}>
               <div style={{ height:'100%', width:`${bT > 0 ? Math.round(paidAmt/bT*100) : 0}%`, background:C.rose, borderRadius:2 }} />
             </div>
+          </div>
+          {/* Bouton valider liste */}
+          <div style={{ padding:'10px 16px 4px', background:C.beige, flexShrink:0 }}>
+            {m.facturesValidees ? (
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', background:'rgba(28,41,28,0.08)', borderRadius:10 }}>
+                <span style={{ fontFamily:sans, fontSize:13, color:C.muted, fontWeight:500 }}>Liste validée ✓</span>
+                {!m.closed && (
+                  <span onClick={() => updateData(mm => { mm.facturesValidees = false; })}
+                    style={{ fontFamily:sans, fontSize:12, color:C.vert, textDecoration:'underline', cursor:'pointer', opacity:0.7 }}>Modifier</span>
+                )}
+              </div>
+            ) : (
+              <button onClick={() => !m.closed && updateData(mm => { mm.facturesValidees = true; })}
+                disabled={!!m.closed}
+                style={{ width:'100%', padding:'11px 0', background: m.closed ? 'rgba(28,41,28,0.15)' : C.vert, color:'white', border:'none', borderRadius:10, fontFamily:sans, fontSize:13, fontWeight:600, cursor: m.closed ? 'default' : 'pointer' }}>
+                ✓ Valider ma liste de factures
+              </button>
+            )}
           </div>
           {/* Liste unifiée — non cochées en haut, cochées en bas */}
           <div style={{ flex:1, overflowY:'auto', padding:'8px 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
