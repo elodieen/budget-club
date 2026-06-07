@@ -955,7 +955,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
               <i className="ti ti-lock-open" style={{ fontSize:15 }} /> Réouvrir le mois
             </button>
           ) : confirmClose ? (
-            <div style={{ background:C.roseL, border:`1px solid ${C.rose}`, borderRadius:10, padding:'12px 14px' }}>
+            <div style={{ background:'white', border:'1px solid rgba(28,41,28,0.1)', borderRadius:10, padding:'12px 14px' }}>
               <div style={{ fontFamily:sans, fontSize:12, color:C.vert, marginBottom:10, textAlign:'center' }}>
                 Confirmer la clôture ? Cette action verrouille le mois.
               </div>
@@ -965,7 +965,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
                   Confirmer
                 </button>
                 <button onClick={() => setConfirmClose(false)}
-                  style={{ padding:'9px 14px', background:'white', border:`1px solid ${C.rose}`, borderRadius:8, cursor:'pointer', color:C.vert, fontFamily:sans, fontSize:13 }}>
+                  style={{ padding:'9px 14px', background:'white', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, cursor:'pointer', color:C.vert, fontFamily:sans, fontSize:13 }}>
                   Annuler
                 </button>
               </div>
