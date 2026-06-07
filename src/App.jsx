@@ -831,11 +831,11 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
     !!m.closed,
   ];
   const steps = [
-    { num:1, icon:'💳', label:'Factures',  action: () => { setView('depenses'); setDepTab?.('factures');  } },
-    { num:2, icon:'💰', label:'Revenus',   action: () => setView('revenus') },
-    { num:3, icon:'📊', label:'Budget',    action: () => setView('budget') },
-    { num:4, icon:'🛒', label:'Dépenses',  action: () => { setView('depenses'); setDepTab?.('depenses'); } },
-    { num:5, icon:'🔒', label:'Clôture',   action: () => closeRef.current?.scrollIntoView({ behavior:'smooth', block:'center' }) },
+    { num:1, label:'Vérifier ses factures', action: () => { setView('depenses'); setDepTab?.('factures');  } },
+    { num:2, label:'Déclarer ses revenus',  action: () => setView('revenus') },
+    { num:3, label:'Allouer son budget',    action: () => setView('budget') },
+    { num:4, label:'Suivre ses dépenses',   action: () => { setView('depenses'); setDepTab?.('depenses'); } },
+    { num:5, label:'Clôturer le mois',      action: () => closeRef.current?.scrollIntoView({ behavior:'smooth', block:'center' }) },
   ];
 
   return (
@@ -875,33 +875,25 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
             </div>
           ))}
         </div>
-        {/* Mon mois en 5 étapes */}
-        <div style={{ marginBottom:12 }}>
-          <div style={{ textAlign:'center', fontFamily:serif, fontSize:13, fontWeight:700, color:C.vert, letterSpacing:'2px', marginBottom:8 }}>
-            <span style={{ color:C.rose }}>✦</span> MON MOIS EN 5 ÉTAPES <span style={{ color:C.rose }}>✦</span>
-          </div>
-          <div style={{ background:C.card, borderRadius:14, border:`0.5px solid ${C.border}`, overflow:'hidden' }}>
-            {steps.map((step, i) => (
-              <div key={step.num} onClick={step.action}
-                style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', borderBottom: i < 4 ? `0.5px solid ${C.border}` : 'none', cursor:'pointer' }}>
-                <span style={{ fontFamily:serif, fontSize:13, fontWeight:700, color:C.rose, width:16, flexShrink:0, textAlign:'center' }}>{step.num}</span>
-                <span style={{ fontSize:15, flexShrink:0 }}>{step.icon}</span>
-                <span style={{ fontFamily:sans, fontSize:13, fontWeight:500, color:C.vert, flex:1 }}>{step.label}</span>
-                {checks[i]
-                  ? <span style={{ color:C.rose, fontWeight:700, fontSize:14, flexShrink:0 }}>✓</span>
-                  : <span style={{ color:C.muted, fontSize:18, flexShrink:0 }}>›</span>
-                }
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Citation */}
-        <div style={{ background:C.vert, borderRadius:14, padding:'18px 20px', textAlign:'center' }}>
-          <div style={{ fontFamily:serif, fontSize:14, fontStyle:'italic', color:'rgba(255,255,255,0.82)', lineHeight:1.6 }}>
+        {/* Card verte : citation + 5 étapes */}
+        <div style={{ background:C.vert, borderRadius:14, padding:'16px 18px', marginBottom:0 }}>
+          <div style={{ fontFamily:serif, fontSize:13, fontStyle:'italic', color:'rgba(255,255,255,0.7)', lineHeight:1.6, textAlign:'center', marginBottom:14 }}>
             Un bon budget est la première étape vers la liberté financière.
           </div>
-          <div style={{ marginTop:8, color:C.gold, fontSize:14 }}>❧</div>
+          {steps.map((step, i) => (
+            <div key={step.num} onClick={step.action}
+              style={{ display:'flex', alignItems:'center', gap:10, paddingTop:10, paddingBottom:10, borderTop: i > 0 ? '1px solid rgba(255,255,255,0.1)' : 'none', cursor:'pointer' }}>
+              <div style={{ width:24, height:24, borderRadius:'50%', background:C.rose, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <span style={{ fontFamily:serif, fontSize:12, fontWeight:700, color:C.vert, lineHeight:1 }}>{step.num}</span>
+              </div>
+              <span style={{ fontFamily:sans, fontSize:12, color: checks[i] ? 'rgba(255,255,255,0.4)' : 'white', flex:1 }}>{step.label}</span>
+              {checks[i]
+                ? <span style={{ color:C.rose, fontWeight:700, fontSize:13, flexShrink:0 }}>✓</span>
+                : <span style={{ color:'rgba(255,255,255,0.7)', fontSize:18, flexShrink:0 }}>›</span>
+              }
+            </div>
+          ))}
+          <div style={{ textAlign:'center', color:C.rose, fontSize:14, marginTop:12 }}>❧</div>
         </div>
 
         {/* Clôture du mois */}
