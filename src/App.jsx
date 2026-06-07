@@ -581,7 +581,7 @@ const MonthHeader = ({ mi, setMi, closed, onProfileAction }) => {
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center' }}>
           <button onClick={handleSave}
             style={{ background:'none', border:'none', cursor:'pointer', padding:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <i className="ti ti-device-floppy" style={{ fontSize:20, color:C.vert, marginTop:1 }} />
+            <i className="ti ti-device-floppy" style={{ fontSize:20, color:C.vert, marginTop:2, marginRight:-2 }} />
           </button>
           <span style={{ fontFamily:sans, fontSize:9, fontWeight:600, color:C.vert, whiteSpace:'nowrap', visibility: saved ? 'visible' : 'hidden' }}>Sauvegardé ✓</span>
         </div>
