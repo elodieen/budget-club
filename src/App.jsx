@@ -1158,12 +1158,12 @@ export function BudgetEditView({ m, updateData, setView }) {
       {/* Card non ventilé */}
       <div style={{ background:C.vert, borderRadius:12, padding:'14px 16px', marginBottom:16 }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-          <span style={{ fontFamily:sans, fontSize:12, color:C.rose, fontWeight:500 }}>Reste à ventiler sur {fmtP(rpe)}</span>
-          <span style={{ fontFamily:serif, fontSize:22, fontWeight:700, color: lft >= 0 ? C.rose : '#FF8A80' }}>{fmtP(lft)}</span>
+          <span style={{ fontFamily:sans, fontSize:12, color:C.rose, fontWeight:500 }}>Reste à ventiler</span>
+          {rev > 0 && <span style={{ fontFamily:serif, fontSize:22, fontWeight:700, color: lft >= 0 ? C.rose : '#FF8A80' }}>{fmtP(lft)}</span>}
         </div>
-        {rev === 0 && <div style={{ fontFamily:serif, fontSize:13, fontStyle:'italic', color:C.rose, marginTop:6 }}>Revenus non saisis</div>}
+        {rev === 0 && <div style={{ fontFamily:sans, fontSize:12, fontStyle:'italic', color:C.rose, marginTop:4 }}>Revenus non saisis</div>}
         <div style={{ height:3, background:'rgba(238,196,196,0.2)', borderRadius:2, marginTop:8, overflow:'hidden' }}>
-          <div style={{ height:'100%', width:`${rpe > 0 ? Math.min(100, Math.round(tv/rpe*100)) : 0}%`, background:C.rose, borderRadius:2 }} />
+          <div style={{ height:'100%', width:`${rev > 0 && rpe > 0 ? Math.min(100, Math.round(tv/rpe*100)) : 0}%`, background:C.rose, borderRadius:2 }} />
         </div>
       </div>
       {/* Inputs par catégorie */}
