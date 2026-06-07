@@ -468,7 +468,7 @@ const ProfileBadge = ({ onSwitch, onCreateProfile }) => {
   const initial  = profile ? profile.name[0].toUpperCase() : '?';
   return (
     <>
-      <button onClick={() => setOpen(true)} style={{ width:36, height:36, borderRadius:'50%', background:C.rose, border:'1px solid rgba(28,41,28,0.15)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+      <button onClick={() => setOpen(true)} style={{ width:36, height:36, borderRadius:'50%', background:C.beige, border:`2px solid ${C.vert}`, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
         <span style={{ fontFamily:serif, fontSize:14, color:C.vert, fontWeight:700, lineHeight:1 }}>{initial}</span>
       </button>
       {open && (
