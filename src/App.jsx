@@ -2136,7 +2136,7 @@ export function EpargneView({ currentYear, onProfileAction }) {
           {/* Ligne info : Dernière maj + Total à date */}
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', marginTop:8, marginBottom:8 }}>
             <span style={{ fontFamily:sans, fontSize:10, color:C.muted }}>{lastUpdateDate ? `Dernière maj le ${lastUpdateDate}` : ''}</span>
-            <span style={{ fontFamily:serif, fontSize:12, fontWeight:700, color:C.vert }}>Total à date&nbsp;: {fmtP(livretTotal + peaTotal)}</span>
+            <span style={{ fontFamily:sans, fontSize:10, color:C.muted }}>Total à date&nbsp;: <span style={{ fontFamily:serif, fontSize:12, fontWeight:700, color:C.vert }}>{fmtP(livretTotal + peaTotal)}</span></span>
           </div>
         </div>
 
