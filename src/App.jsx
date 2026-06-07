@@ -844,7 +844,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
       {m.closed && <ClosedBanner />}
       <div style={{ display:'flex', flexDirection:'column', flex:1, justifyContent:'space-between', padding:'8px 16px', paddingBottom:'calc(10px + env(safe-area-inset-bottom))', background:C.beige, overflow:'hidden' }}>
         {/* Card Reste à dépenser */}
-        <div style={{ background:C.vert, borderRadius:16, padding:'12px 14px 10px', textAlign:'center' }}>
+        <div style={{ background:C.vert, borderRadius:16, padding:'12px 14px 10px', textAlign:'center', marginBottom:12 }}>
           <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'white', marginBottom:4 }}>Reste à dépenser</div>
           {rev === 0
             ? <div style={{ fontFamily:serif, fontSize:26, fontStyle:'italic', color:C.rose, lineHeight:1.3 }}>Revenus non saisis</div>
@@ -878,13 +878,13 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
           Gérez l'ordinaire pour vous offrir l'extraordinaire.
         </div>
         {/* Card verte : titre + 5 étapes */}
-        <div style={{ background:C.vert, borderRadius:14, padding:'10px 14px', flex:1, display:'flex', flexDirection:'column', justifyContent:'center' }}>
-          <div style={{ textAlign:'center', fontFamily:serif, fontSize:13, fontWeight:600, color:'white', letterSpacing:'1px', marginBottom:4 }}>
+        <div style={{ background:C.vert, borderRadius:14, padding:'0 14px', flex:1, display:'flex', flexDirection:'column', justifyContent:'center' }}>
+          <div style={{ textAlign:'center', fontFamily:serif, fontSize:13, fontWeight:600, color:'white', letterSpacing:'1px' }}>
             <span style={{ color:'white' }}>✦</span> Mon mois en 5 étapes <span style={{ color:'white' }}>✦</span>
           </div>
           {steps.map((step, i) => (
             <div key={step.num} onClick={step.action}
-              style={{ display:'flex', alignItems:'center', gap:10, padding:'6px 0', borderTop: i > 0 ? '1px solid rgba(255,255,255,0.07)' : 'none', cursor:'pointer' }}>
+              style={{ display:'flex', alignItems:'center', gap:10, padding:'5px 0', borderTop: i > 0 ? '1px solid rgba(255,255,255,0.07)' : 'none', cursor:'pointer' }}>
               <div style={{ width:24, height:24, borderRadius:'50%', background:C.rose, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, padding:0 }}>
                 <span style={{ fontFamily:serif, fontSize:12, fontWeight:700, color:C.vert, lineHeight:1, textAlign:'center', display:'block' }}>{step.num}</span>
               </div>
