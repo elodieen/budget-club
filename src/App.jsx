@@ -470,6 +470,17 @@ const ProfileMenu = ({ onClose, onSwitch, onCreateProfile }) => {
               <div style={{ fontFamily:sans, fontSize:11, color:C.muted, fontStyle:'italic', lineHeight:1.5 }}>
                 L'import écrase les données existantes et recharge l'app.
               </div>
+              <div style={{ fontFamily:sans, fontSize:11, color:C.muted, textAlign:'center', marginTop:4 }}>
+                {(() => {
+                  try {
+                    const raw = localStorage.getItem(`${currentProfileId}:auto-backup`);
+                    if (!raw) return 'Aucune sauvegarde effectuée';
+                    const { timestamp } = JSON.parse(raw);
+                    const d = new Date(timestamp);
+                    return `Dernière sauvegarde : ${d.toLocaleDateString('fr-FR')} à ${d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })}`;
+                  } catch { return 'Aucune sauvegarde effectuée'; }
+                })()}
+              </div>
             </div>
           </>
         ) : (
