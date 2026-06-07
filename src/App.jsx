@@ -1921,8 +1921,8 @@ export function EpargneView({ currentYear, onProfileAction }) {
         {/* ── Cards fixes ── */}
         <div style={{ flexShrink:0, padding:'0 16px', background:C.beige }}>
           <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', margin:'4px 0 8px' }}>
-            <span style={{ fontFamily:sans, fontSize:10, color:C.muted }}>{lastUpdateDate ? `Dernière maj le ${lastUpdateDate}` : ''}</span>
             <span style={{ fontFamily:sans, fontSize:10, color:C.muted }}>Total à date&nbsp;: <span style={{ fontFamily:serif, fontSize:13, fontWeight:700, color:C.vert }}>{fmtP(livretTotal + peaTotal)}</span></span>
+            <span style={{ fontFamily:sans, fontSize:10, color:C.muted }}>{lastUpdateDate ? `Dernière maj le ${lastUpdateDate}` : ''}</span>
           </div>
 
           {/* ── Livret A ── */}
