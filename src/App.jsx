@@ -285,6 +285,7 @@ const fmtR = (n) => {
     : v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 };
 const fmtP = (n) => Math.round(n).toLocaleString('fr-FR') + ' €';
+const fmt2 = (n) => (parseFloat(n) || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 const fmtDateTime = (d) => {
   if (!d) return '';
   const dt = new Date(d);
@@ -1064,7 +1065,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
           {[
             { label:'Revenus',  val:fmtR(rev), icon:'ti-credit-card',  vw:'revenus' },
-            { label:'Factures', val:'', node:<><span style={{ color:C.vert }}>{fmtP(paidAmt)}</span><span style={{ color:C.vert }}> / {fmtP(bT)}</span></>, sub:`${pN}/${bN} prélevées`, icon:'ti-file-invoice', vw:'depenses' },
+            { label:'Factures', val:'', node:<><span style={{ color:C.vert }}>{fmt2(paidAmt)}</span><span style={{ color:C.vert }}> / {fmt2(bT)}</span></>, sub:`${pN}/${bN} prélevées`, icon:'ti-file-invoice', vw:'depenses' },
             { label:'Dépenses', val:fmtR(eT),  icon:'ti-shopping-bag', vw:'depenses' },
             { label:'Épargne',  val:fmtR(epg), icon:'ti-pig-money',    vw:'epargne'  },
           ].map(c => (
@@ -1671,8 +1672,8 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
           <div style={{ background:C.vert, padding:'14px 18px', flexShrink:0, marginTop:8 }}>
             <div style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.5)', letterSpacing:1, textTransform:'uppercase', marginBottom:4 }}>{pN}/{bN} prélevées</div>
             <div style={{ display:'flex', alignItems:'baseline', gap:6 }}>
-              <span style={{ fontFamily:serif, fontSize:28, fontWeight:700, color:C.rose }}>{fmtP(paidAmt)}</span>
-              <span style={{ fontFamily:sans, fontSize:13, color:'rgba(255,255,255,0.5)' }}>/ {fmtP(bT)}</span>
+              <span style={{ fontFamily:serif, fontSize:28, fontWeight:700, color:C.rose }}>{fmt2(paidAmt)}</span>
+              <span style={{ fontFamily:sans, fontSize:13, color:'rgba(255,255,255,0.5)' }}>/ {fmt2(bT)}</span>
             </div>
             <div style={{ height:4, background:'rgba(255,255,255,0.12)', borderRadius:2, marginTop:8, overflow:'hidden' }}>
               <div style={{ height:'100%', width:`${bT > 0 ? Math.round(paidAmt/bT*100) : 0}%`, background:C.rose, borderRadius:2 }} />
@@ -1705,7 +1706,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
                   style={{ display:'flex', alignItems:'center', gap:10, padding:'13px 14px', cursor: m.facturesValidees || m.closed ? 'default' : 'pointer' }}>
                   <div style={{ flex:1 }}>
                     <div style={{ fontFamily:sans, fontSize:13, fontWeight:500, color:C.text }}>{b.name}</div>
-                    <div style={{ fontFamily:sans, fontSize:10, color:C.muted, marginTop:2 }}>En attente · {fmtR(b.amount)}</div>
+                    <div style={{ fontFamily:sans, fontSize:10, color:C.muted, marginTop:2 }}>En attente · {fmt2(b.amount)}</div>
                   </div>
                   <div onClick={(e) => { e.stopPropagation(); clickBill(m.bills.indexOf(b)); }}
                     style={{ width:28, height:28, borderRadius:'50%', background:C.roseL, border:`1.5px solid ${C.rose}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0 }}>
@@ -1824,7 +1825,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
                   <div style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px' }}>
                     <div style={{ flex:1 }}>
                       <div style={{ fontFamily:sans, fontSize:13, color:C.text }}>{b.name}</div>
-                      <div style={{ fontFamily:sans, fontSize:10, color:C.muted, marginTop:2 }}>{ds ? `Prélevé le ${ds}` : 'Prélevée'} · {fmtR(b.realAmount||b.amount)}</div>
+                      <div style={{ fontFamily:sans, fontSize:10, color:C.muted, marginTop:2 }}>{ds ? `Prélevé le ${ds}` : 'Prélevée'} · {fmt2(b.realAmount||b.amount)}</div>
                     </div>
                     <div onClick={() => unchBill(m.bills.indexOf(b))}
                       style={{ width:28, height:28, borderRadius:'50%', background:C.vert, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0 }}>
@@ -1836,7 +1837,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
             })}
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 0', borderTop:`2px solid ${C.border}`, marginTop:6 }}>
               <span style={{ fontFamily:sans, fontSize:13, fontWeight:600, color:C.vert }}>Total projeté</span>
-              <span style={{ fontFamily:serif, fontSize:22, fontWeight:700, color:C.vert }}>{fmtR(bT)}</span>
+              <span style={{ fontFamily:serif, fontSize:22, fontWeight:700, color:C.vert }}>{fmt2(bT)}</span>
             </div>
           </div>
         </>
@@ -2286,7 +2287,7 @@ export function EpargneView({ currentYear, onProfileAction }) {
                 </button>
               </div>
             </div>
-            <span style={{ fontFamily:serif, fontSize:26, fontWeight:700, color:C.rose, cursor:'pointer' }} onClick={() => setChartType('livret')}>{fmtP(livretTotal)}</span>
+            <span style={{ fontFamily:serif, fontSize:26, fontWeight:700, color:C.rose, cursor:'pointer' }} onClick={() => setChartType('livret')}>{fmt2(livretTotal)}</span>
           </div>
           {editSolde && (
             <div style={{ background:'rgba(28,41,28,0.92)', borderRadius:'0 0 12px 12px', padding:'10px 14px 14px', marginBottom:8 }}>
@@ -2348,7 +2349,7 @@ export function EpargneView({ currentYear, onProfileAction }) {
                 </button>
               </div>
             </div>
-            <span style={{ fontFamily:serif, fontSize:26, fontWeight:700, color:C.rose, cursor:'pointer' }} onClick={() => setChartType('pea')}>{fmtP(peaTotal)}</span>
+            <span style={{ fontFamily:serif, fontSize:26, fontWeight:700, color:C.rose, cursor:'pointer' }} onClick={() => setChartType('pea')}>{fmt2(peaTotal)}</span>
           </div>
           {editPeaSolde && (
             <div style={{ background:'rgba(28,41,28,0.08)', borderRadius:'0 0 12px 12px', padding:'10px 14px 14px', marginBottom:8, border:`1px solid ${C.rose}`, borderTop:'none' }}>
