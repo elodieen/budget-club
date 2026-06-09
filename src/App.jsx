@@ -1181,6 +1181,8 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
   const [envIcon, setEnvIcon]             = useState('ti-tag');
   const [confirmDelCat, setConfirmDelCat] = useState(null);
 
+  const SAVINGS_LABELS = { epargne_livret: 'Épargne', epargne_pea: 'Investissement' };
+  const catLabel = (cat) => SAVINGS_LABELS[cat.id] || cat.label;
   const allCatList = sortCatsWithDiversLast([...CATS, ...customCats]);
   const cwb  = allCatList.filter(c => cb[c.id]);
   const tv   = cwb.reduce((s,c) => s + (cb[c.id]||0), 0);
@@ -1237,7 +1239,7 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
             return (
               <div key={cat.id} style={{ background:C.roseL, borderRadius:12, marginBottom:4, padding:'11px 14px', border:`1px solid ${C.rose}`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                 <span style={{ fontFamily:sans, fontSize:13, color:C.vert }}>
-                  {isCustom ? 'Supprimer ' : 'Retirer le budget '}<strong>{cat.label}</strong> ?
+                  {isCustom ? 'Supprimer ' : 'Retirer le budget '}<strong>{catLabel(cat)}</strong> ?
                 </span>
                 <div style={{ display:'flex', gap:8, flexShrink:0 }}>
                   <button onClick={() => {
@@ -1257,7 +1259,7 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
               <div style={{ flex:1 }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:7 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:5 }}>
-                    <span style={{ fontFamily:sans, fontSize:14, fontWeight:500, color:C.text }}>{cat.label}</span>
+                    <span style={{ fontFamily:sans, fontSize:14, fontWeight:500, color:C.text }}>{catLabel(cat)}</span>
                     {ov && <WarningTriangle />}
                   </div>
                   <div style={{ display:'flex', alignItems:'center', gap:6 }}>
@@ -1286,7 +1288,7 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
           if (confirmDelCat === cat.id) {
             return (
               <div key={cat.id} style={{ background:C.roseL, borderRadius:12, marginBottom:4, padding:'11px 14px', border:`1px solid ${C.rose}`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                <span style={{ fontFamily:sans, fontSize:13, color:C.vert }}>Supprimer <strong>{cat.label}</strong> ?</span>
+                <span style={{ fontFamily:sans, fontSize:13, color:C.vert }}>Supprimer <strong>{catLabel(cat)}</strong> ?</span>
                 <div style={{ display:'flex', gap:8, flexShrink:0 }}>
                   <button onClick={() => {
                     const upd = customCats.filter(c => c.id !== cat.id);
@@ -1305,7 +1307,7 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
               <CatIcon catId={cat.id} size={44} gray />
               <div style={{ flex:1 }}>
                 <div style={{ display:'flex', justifyContent:'space-between', marginBottom:7 }}>
-                  <span style={{ fontFamily:sans, fontSize:14, color:'rgba(28,41,28,0.4)' }}>{cat.label}</span>
+                  <span style={{ fontFamily:sans, fontSize:14, color:'rgba(28,41,28,0.4)' }}>{catLabel(cat)}</span>
                   <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                     <span style={{ fontFamily:sans, fontSize:12, color:C.muted }}>{fmtR(sp)}</span>
                     {isCustom && !m.closed && (
