@@ -1128,16 +1128,24 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
                 <button onClick={() => {
                   const sf = parseFloat(soldeFinalInput);
                   updateData(mm => { mm.closed = true; if (sf) mm.soldeFinal = sf; });
-                  setConfirmClose(false); setSoldeFinalInput('');
-                  setMi(p => p.month === 11 ? { month: 0, year: p.year + 1 } : { month: p.month + 1, year: p.year });
+                  setConfirmClose(false);
+                  setSoldeFinalInput('');
+                  const nextMonth = mi.month === 11 ? 0 : mi.month + 1;
+                  const nextYear  = mi.month === 11 ? mi.year + 1 : mi.year;
+                  console.log('Navigation vers mois suivant:', nextMonth, nextYear);
+                  setMi({ month: nextMonth, year: nextYear });
                 }}
                   style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
                   Confirmer
                 </button>
                 <button onClick={() => {
                   updateData(mm => { mm.closed = true; });
-                  setConfirmClose(false); setSoldeFinalInput('');
-                  setMi(p => p.month === 11 ? { month: 0, year: p.year + 1 } : { month: p.month + 1, year: p.year });
+                  setConfirmClose(false);
+                  setSoldeFinalInput('');
+                  const nextMonth = mi.month === 11 ? 0 : mi.month + 1;
+                  const nextYear  = mi.month === 11 ? mi.year + 1 : mi.year;
+                  console.log('Navigation vers mois suivant:', nextMonth, nextYear);
+                  setMi({ month: nextMonth, year: nextYear });
                 }}
                   style={{ padding:'9px 12px', background:'white', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, cursor:'pointer', color:C.muted, fontFamily:sans, fontSize:13 }}>
                   Passer
