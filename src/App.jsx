@@ -1129,11 +1129,16 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
                   const sf = parseFloat(soldeFinalInput);
                   updateData(mm => { mm.closed = true; if (sf) mm.soldeFinal = sf; });
                   setConfirmClose(false); setSoldeFinalInput('');
+                  setMi(p => p.month === 11 ? { month: 0, year: p.year + 1 } : { month: p.month + 1, year: p.year });
                 }}
                   style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
                   Confirmer
                 </button>
-                <button onClick={() => { updateData(mm => { mm.closed = true; }); setConfirmClose(false); setSoldeFinalInput(''); }}
+                <button onClick={() => {
+                  updateData(mm => { mm.closed = true; });
+                  setConfirmClose(false); setSoldeFinalInput('');
+                  setMi(p => p.month === 11 ? { month: 0, year: p.year + 1 } : { month: p.month + 1, year: p.year });
+                }}
                   style={{ padding:'9px 12px', background:'white', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, cursor:'pointer', color:C.muted, fontFamily:sans, fontSize:13 }}>
                   Passer
                 </button>
@@ -1353,8 +1358,12 @@ export function BudgetEditView({ m, updateData, setView }) {
   const [customCats, setCustomCats]         = useState(getCustomCats);
   const [confirmDelEdit, setConfirmDelEdit] = useState(null);
   const [removedFromEdit, setRemovedFromEdit] = useState([]);
-  const allCatList = sortCatsWithDiversLast([...CATS.filter(c => c.id !== 'epargne_livret' && c.id !== 'epargne_pea'), ...customCats])
-    .filter(c => !removedFromEdit.includes(c.id));
+  const FIXED_SAVINGS_IDS = ['epargne_livret', 'epargne_pea'];
+  const allCatList = [
+    ...sortCatsWithDiversLast([...CATS.filter(c => !FIXED_SAVINGS_IDS.includes(c.id)), ...customCats])
+      .filter(c => !removedFromEdit.includes(c.id)),
+    ...CATS.filter(c => FIXED_SAVINGS_IDS.includes(c.id)),
+  ];
 
   const tv  = allCatList.reduce((s,c) => s + (parseFloat(vals[c.id])||0), 0);
   const lft = rpe - tv;
@@ -1388,6 +1397,7 @@ export function BudgetEditView({ m, updateData, setView }) {
       {/* Inputs par catégorie */}
       {allCatList.map(c => {
         const isCustom = c.id.startsWith('custom_');
+        const isFixed  = FIXED_SAVINGS_IDS.includes(c.id);
         if (confirmDelEdit === c.id) {
           return (
             <div key={c.id} style={{ background:C.roseL, borderRadius:10, marginBottom:4, padding:'10px 12px', border:`1px solid ${C.rose}`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
@@ -1420,7 +1430,7 @@ export function BudgetEditView({ m, updateData, setView }) {
                 onChange={e => handleChange(c.id, e.target.value)}
                 disabled={m.closed}
                 style={{ width:75, padding:'6px 8px', border:`1px solid ${C.border}`, borderRadius:8, fontSize:13, textAlign:'right', background: m.closed ? 'rgba(28,41,28,0.05)' : 'white', color:C.vert, fontFamily:sans }} />
-              {!m.closed && (
+              {!m.closed && !isFixed && (
                 <button onClick={() => setConfirmDelEdit(c.id)}
                   style={{ background:'none', border:'none', cursor:'pointer', padding:'2px 4px', color:'rgba(192,57,43,0.35)' }}>
                   <i className="ti ti-trash" style={{ fontSize:14 }} />
@@ -2802,8 +2812,13 @@ function MainApp({ onProfileAction }) {
       const sf = prevData.soldeFinal;
       if (!sf) return;
       const reportId = `r-report-${prevYear}-${String(prevMonth + 1).padStart(2, '0')}`;
-      if (m.revenues.some(r => r.id === reportId)) return;
+      // Read current month directly from localStorage to avoid stale React state
+      const currentKey = storageKey(mi);
+      const currentRaw = localStorage.getItem(currentKey);
+      const currentData = currentRaw ? JSON.parse(currentRaw) : null;
+      if (currentData?.revenues?.some(r => r.id === reportId)) return;
       updateData(mm => {
+        if (mm.revenues.some(r => r.id === reportId)) return;
         mm.revenues = [...mm.revenues, { id: reportId, name: 'Reste mois précédent', amount: sf }];
       });
     } catch {}
