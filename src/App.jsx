@@ -259,11 +259,23 @@ const getInitialMonth = () => {
   const month    = today.getMonth(); // 0-11
   const year     = today.getFullYear();
   const startDay = getStartDay();
-  if (day < startDay) {
-    if (month === 0) return { month: 11, year: year - 1 };
-    return { month: month - 1, year };
+  let cur = day < startDay
+    ? (month === 0 ? { month: 11, year: year - 1 } : { month: month - 1, year })
+    : { month, year };
+  // Avance jusqu'au premier mois non clôturé
+  for (let i = 0; i < 12; i++) {
+    const key = `${currentProfileId}:budget:${cur.year}:${String(cur.month + 1).padStart(2, '0')}`;
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) break;
+      const data = JSON.parse(raw);
+      if (!data.closed) break;
+    } catch { break; }
+    cur = cur.month === 11
+      ? { month: 0, year: cur.year + 1 }
+      : { month: cur.month + 1, year: cur.year };
   }
-  return { month, year };
+  return cur;
 };
 
 const fmtR = (n) => {
@@ -1130,10 +1142,6 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
                   updateData(mm => { mm.closed = true; if (sf) mm.soldeFinal = sf; });
                   setConfirmClose(false);
                   setSoldeFinalInput('');
-                  const nextMonth = mi.month === 11 ? 0 : mi.month + 1;
-                  const nextYear  = mi.month === 11 ? mi.year + 1 : mi.year;
-                  console.log('Navigation vers mois suivant:', nextMonth, nextYear);
-                  setMi({ month: nextMonth, year: nextYear });
                 }}
                   style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
                   Confirmer
@@ -1142,10 +1150,6 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
                   updateData(mm => { mm.closed = true; });
                   setConfirmClose(false);
                   setSoldeFinalInput('');
-                  const nextMonth = mi.month === 11 ? 0 : mi.month + 1;
-                  const nextYear  = mi.month === 11 ? mi.year + 1 : mi.year;
-                  console.log('Navigation vers mois suivant:', nextMonth, nextYear);
-                  setMi({ month: nextMonth, year: nextYear });
                 }}
                   style={{ padding:'9px 12px', background:'white', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, cursor:'pointer', color:C.muted, fontFamily:sans, fontSize:13 }}>
                   Passer
