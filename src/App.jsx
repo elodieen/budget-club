@@ -722,8 +722,9 @@ const BottomNav = ({ view, setView, m }) => {
   const rev      = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
   const cb       = m.catBudgets || {};
   const bT       = m.bills.reduce((s,b) => s + billValue(b), 0);
-  const tv       = CATS.filter(c => c.id !== 'epargne_livret' && c.id !== 'epargne_pea').reduce((s,c) => s + (cb[c.id]||0), 0);
+  const tv       = Object.values(cb).reduce((s, v) => s + (parseFloat(v) || 0), 0);
   const nonV     = Math.max(0, rev - bT - tv);
+  console.log('Budget check:', rev, tv, nonV);
   const badges   = { revenus: m.revenues.length > 0, budget: rev > 0 && tv > 0 && nonV < 1, depenses: !!m.closed };
 
   return (
