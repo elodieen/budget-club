@@ -1096,7 +1096,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
               <div style={{ width:24, height:24, borderRadius:'50%', background:C.rose, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, padding:0 }}>
                 <span style={{ fontFamily:serif, fontSize:12, fontWeight:700, color:C.vert, lineHeight:1, textAlign:'center', display:'block' }}>{step.num}</span>
               </div>
-              <span style={{ fontFamily:sans, fontSize:12, color: checks[i] ? 'rgba(255,255,255,0.4)' : 'white', flex:1 }}>{step.label}</span>
+              <span style={{ fontFamily:sans, fontSize:12, color: (i === 3 ? m.closed : checks[i]) ? 'rgba(255,255,255,0.4)' : 'white', flex:1 }}>{step.label}</span>
               {i === 3
                 ? m.closed
                   ? <span style={{ color:C.rose, fontWeight:700, fontSize:13, flexShrink:0 }}>✓</span>
