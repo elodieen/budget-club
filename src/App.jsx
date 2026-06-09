@@ -1169,7 +1169,7 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
   const [envIcon, setEnvIcon]             = useState('ti-tag');
   const [confirmDelCat, setConfirmDelCat] = useState(null);
 
-  const allCatList = sortCatsWithDiversLast([...CATS.filter(c => c.id !== 'epargne_livret' && c.id !== 'epargne_pea'), ...customCats]);
+  const allCatList = sortCatsWithDiversLast([...CATS, ...customCats]);
   const cwb  = allCatList.filter(c => cb[c.id]);
   const tv   = cwb.reduce((s,c) => s + (cb[c.id]||0), 0);
   const rev  = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
@@ -1358,11 +1358,14 @@ export function BudgetEditView({ m, updateData, setView }) {
   const [customCats, setCustomCats]         = useState(getCustomCats);
   const [confirmDelEdit, setConfirmDelEdit] = useState(null);
   const [removedFromEdit, setRemovedFromEdit] = useState([]);
-  const FIXED_SAVINGS_IDS = ['epargne_livret', 'epargne_pea'];
+  const SAVINGS_CATS = [
+    { id: 'epargne_livret', label: 'Épargne',       icon: 'ti-building-bank' },
+    { id: 'epargne_pea',    label: 'Investissement', icon: 'ti-trending-up'   },
+  ];
   const allCatList = [
-    ...sortCatsWithDiversLast([...CATS.filter(c => !FIXED_SAVINGS_IDS.includes(c.id)), ...customCats])
+    ...sortCatsWithDiversLast([...CATS.filter(c => c.id !== 'epargne_livret' && c.id !== 'epargne_pea'), ...customCats])
       .filter(c => !removedFromEdit.includes(c.id)),
-    ...CATS.filter(c => FIXED_SAVINGS_IDS.includes(c.id)),
+    ...SAVINGS_CATS.filter(c => !removedFromEdit.includes(c.id)),
   ];
 
   const tv  = allCatList.reduce((s,c) => s + (parseFloat(vals[c.id])||0), 0);
@@ -1397,7 +1400,6 @@ export function BudgetEditView({ m, updateData, setView }) {
       {/* Inputs par catégorie */}
       {allCatList.map(c => {
         const isCustom = c.id.startsWith('custom_');
-        const isFixed  = FIXED_SAVINGS_IDS.includes(c.id);
         if (confirmDelEdit === c.id) {
           return (
             <div key={c.id} style={{ background:C.roseL, borderRadius:10, marginBottom:4, padding:'10px 12px', border:`1px solid ${C.rose}`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
@@ -1430,7 +1432,7 @@ export function BudgetEditView({ m, updateData, setView }) {
                 onChange={e => handleChange(c.id, e.target.value)}
                 disabled={m.closed}
                 style={{ width:75, padding:'6px 8px', border:`1px solid ${C.border}`, borderRadius:8, fontSize:13, textAlign:'right', background: m.closed ? 'rgba(28,41,28,0.05)' : 'white', color:C.vert, fontFamily:sans }} />
-              {!m.closed && !isFixed && (
+              {!m.closed && (
                 <button onClick={() => setConfirmDelEdit(c.id)}
                   style={{ background:'none', border:'none', cursor:'pointer', padding:'2px 4px', color:'rgba(192,57,43,0.35)' }}>
                   <i className="ti ti-trash" style={{ fontSize:14 }} />
@@ -1442,6 +1444,16 @@ export function BudgetEditView({ m, updateData, setView }) {
       })}
       {saved && (
         <div style={{ textAlign:'center', marginTop:14, fontFamily:sans, fontSize:12, color:'#2E7D32', fontWeight:500 }}>Sauvegardé ✓</div>
+      )}
+      {!m.closed && SAVINGS_CATS.some(sc => removedFromEdit.includes(sc.id)) && (
+        <div style={{ marginTop:12, display:'flex', flexDirection:'column', gap:6 }}>
+          {SAVINGS_CATS.filter(sc => removedFromEdit.includes(sc.id)).map(sc => (
+            <button key={sc.id} onClick={() => setRemovedFromEdit(prev => prev.filter(id => id !== sc.id))}
+              style={{ width:'100%', padding:'9px 0', background:'none', border:`1.5px dashed rgba(28,41,28,0.2)`, borderRadius:10, fontFamily:sans, fontSize:12, color:C.muted, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
+              <i className={`ti ${sc.icon}`} style={{ fontSize:13 }} /> + Ajouter {sc.label}
+            </button>
+          ))}
+        </div>
       )}
     </div>
   );
