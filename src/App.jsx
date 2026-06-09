@@ -1097,9 +1097,15 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
                 <span style={{ fontFamily:serif, fontSize:12, fontWeight:700, color:C.vert, lineHeight:1, textAlign:'center', display:'block' }}>{step.num}</span>
               </div>
               <span style={{ fontFamily:sans, fontSize:12, color: checks[i] ? 'rgba(255,255,255,0.4)' : 'white', flex:1 }}>{step.label}</span>
-              {checks[i]
-                ? <span style={{ color:C.rose, fontWeight:700, fontSize:13, flexShrink:0 }}>✓</span>
-                : <span style={{ color:'rgba(255,255,255,0.7)', fontSize:18, flexShrink:0 }}>›</span>
+              {i === 3
+                ? m.closed
+                  ? <span style={{ color:C.rose, fontWeight:700, fontSize:13, flexShrink:0 }}>✓</span>
+                  : checks[i]
+                    ? <i className="ti ti-hourglass" style={{ fontSize:14, color:C.rose, flexShrink:0 }} />
+                    : <span style={{ color:'rgba(255,255,255,0.7)', fontSize:18, flexShrink:0 }}>›</span>
+                : checks[i]
+                  ? <span style={{ color:C.rose, fontWeight:700, fontSize:13, flexShrink:0 }}>✓</span>
+                  : <span style={{ color:'rgba(255,255,255,0.7)', fontSize:18, flexShrink:0 }}>›</span>
               }
             </div>
           ))}
