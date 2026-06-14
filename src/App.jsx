@@ -1066,10 +1066,10 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
         {/* 4 mini-cards */}
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
           {[
-            { label:'Revenus',  val:fmtR(rev), icon:'ti-credit-card',  vw:'revenus' },
-            { label:'Factures', val:'', node:<><span style={{ color:C.vert }}>{fmt2(paidAmt)}</span><span style={{ color:C.vert }}> / {fmt2(bT)}</span></>, sub:`${pN}/${bN} prélevées`, icon:'ti-file-invoice', vw:'depenses' },
-            { label:'Dépenses', val:fmtR(eT),  icon:'ti-shopping-bag', vw:'depenses' },
-            { label:'Épargne',  val:fmtR(epg), icon:'ti-pig-money',    vw:'epargne'  },
+            { label:'Revenus',  val:fmtP(rev), icon:'ti-credit-card',  vw:'revenus' },
+            { label:'Factures', val:'', node:<><span style={{ color:C.vert }}>{fmtP(paidAmt)}</span><span style={{ color:C.vert }}> / {fmtP(bT)}</span></>, sub:`${pN}/${bN} prélevées`, icon:'ti-file-invoice', vw:'depenses' },
+            { label:'Dépenses', val:fmtP(eT),  icon:'ti-shopping-bag', vw:'depenses' },
+            { label:'Épargne',  val:fmtP(epg), icon:'ti-pig-money',    vw:'epargne'  },
           ].map(c => (
             <div key={c.label} onClick={() => setView(c.vw)}
               style={{ background:C.card, borderRadius:12, padding:10, border:`0.5px solid ${C.border}`, cursor:'pointer' }}>
