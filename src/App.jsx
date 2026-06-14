@@ -1195,7 +1195,7 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
   const cwb  = allCatList.filter(c => cb[c.id]);
   const tv   = cwb.reduce((s,c) => s + (cb[c.id]||0), 0);
   const rev  = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
-  const bT   = m.bills.reduce((s,b) => s + billValue(b), 0);
+  const bT   = m.bills.reduce((s,b) => s + b.amount, 0);
   const nonV = Math.max(0, rev - bT - tv);
   const done = tv > 0 && nonV < 1;
 
@@ -1372,7 +1372,7 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
 export function BudgetEditView({ m, updateData, setView }) {
   const cb              = m.catBudgets || {};
   const rev             = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
-  const bT              = m.bills.reduce((s,b) => s + billValue(b), 0);
+  const bT              = m.bills.reduce((s,b) => s + b.amount, 0);
   const rpe             = rev - bT;
   const [vals, setVals] = useState({ ...cb });
   const [saved, setSaved] = useState(false);
