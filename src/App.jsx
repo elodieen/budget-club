@@ -1052,9 +1052,9 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
       <div style={{ display:'flex', flexDirection:'column', flex:1, gap:8, padding:'8px 16px', paddingBottom:'calc(10px + env(safe-area-inset-bottom))', background:C.beige, overflow:'hidden' }}>
-        {/* Card Reste à dépenser */}
+        {/* Card Reste à vivre du mois */}
         <div style={{ background:C.vert, borderRadius:16, padding:'12px 14px 10px', textAlign:'center', marginTop: m.closed ? 8 : 0, marginBottom:8 }}>
-          <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'white', marginBottom:4 }}>Reste à dépenser</div>
+          <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'white', marginBottom:4 }}>Reste à vivre du mois</div>
           {rev === 0
             ? <div style={{ fontFamily:serif, fontSize:26, fontStyle:'italic', color:C.rose, lineHeight:1.3 }}>Revenus non saisis</div>
             : <div style={{ fontFamily:serif, fontSize:38, fontWeight:700, color: reste >= 0 ? C.rose : '#E8637A', lineHeight:1 }}>{fmtR(reste)}</div>
@@ -1624,7 +1624,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
         <>
           {/* Card reste à dépenser */}
           <div style={{ background:C.vert, padding:'10px 18px', flexShrink:0, textAlign:'center', marginTop:8 }}>
-            <div style={{ fontFamily:sans, fontSize:9, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.5)', marginBottom:4 }}>Reste à dépenser</div>
+            <div style={{ fontFamily:sans, fontSize:9, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.5)', marginBottom:4 }}>Reste à vivre du mois</div>
             {rev === 0
               ? <div style={{ fontFamily:serif, fontSize:24, fontStyle:'italic', color:C.rose }}>Revenus non saisis</div>
               : <div style={{ fontFamily:serif, fontSize:32, fontWeight:700, color:C.rose }}>{fmtR(reste)}</div>
