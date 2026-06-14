@@ -721,7 +721,7 @@ const TABS = [
 const BottomNav = ({ view, setView, m }) => {
   const rev      = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
   const cb       = m.catBudgets || {};
-  const bT       = m.bills.reduce((s,b) => s + billValue(b), 0);
+  const bT       = m.bills.reduce((s,b) => s + b.amount, 0);
   const tv       = Object.values(cb).reduce((s, v) => s + (parseFloat(v) || 0), 0);
   const nonV     = Math.max(0, rev - bT - tv);
   console.log('Budget check:', rev, tv, nonV);
@@ -1019,6 +1019,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
   const rev       = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
   const allBills  = m.bills.filter(b => b.selected !== false);
   const bT        = allBills.reduce((s,b) => s + billValue(b), 0);
+  const bTPrevu   = allBills.reduce((s,b) => s + b.amount, 0);
   const paidBills = allBills.filter(b => b.paid);
   const paidAmt   = paidBills.reduce((s,b) => s + billValue(b), 0);
   const pN = paidBills.length, bN = allBills.length;
@@ -1029,7 +1030,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
 
   const cb5    = m.catBudgets || {};
   const tvBgt5 = Object.values(cb5).reduce((s, v) => s + (parseFloat(v) || 0), 0);
-  const nonV5  = Math.max(0, rev - bT - tvBgt5);
+  const nonV5  = Math.max(0, rev - bTPrevu - tvBgt5);
   const facVal = !!m.facturesValidees;
   const checks = [
     facVal,
