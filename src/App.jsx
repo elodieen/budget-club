@@ -725,7 +725,7 @@ const BottomNav = ({ view, setView, m }) => {
   const tv       = Object.values(cb).reduce((s, v) => s + (parseFloat(v) || 0), 0);
   const nonV     = Math.max(0, rev - bT - tv);
   console.log('Budget check:', rev, tv, nonV);
-  const badges   = { revenus: m.revenues.length > 0, budget: rev > 0 && tv > 0 && nonV < 1, depenses: !!m.closed };
+  const badges   = { revenus: m.revenues.length > 0, budget: m.budgetLocked || (rev > 0 && tv > 0 && nonV < 1), depenses: !!m.closed };
 
   return (
     <div style={{ display:'flex', alignItems:'stretch', background:C.nav, flexShrink:0, paddingTop:8, paddingBottom:'env(safe-area-inset-bottom)' }}>
@@ -1035,7 +1035,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
   const checks = [
     facVal,
     rev > 0,
-    rev > 0 && tvBgt5 > 0 && nonV5 < 1,
+    m.budgetLocked || (rev > 0 && tvBgt5 > 0 && nonV5 < 1),
     m.expenses.filter(e => e.cat !== 'epargne_livret' && e.cat !== 'epargne_pea').length > 0,
     !!m.closed,
   ];
@@ -1220,14 +1220,14 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
       <div style={{ flex:1, overflowY:'auto', padding:'0 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
         {/* Card état budget */}
         <div onClick={() => setView('budget_edit')}
-          style={{ background:C.vert, borderRadius:14, padding:'14px 18px', marginBottom:16, marginTop:8, display:'flex', justifyContent:'space-between', alignItems:'center', cursor:'pointer' }}>
+          style={{ background:C.vert, borderRadius:14, padding:'14px 18px', marginBottom:(done || m.budgetLocked) ? 8 : 16, marginTop:8, display:'flex', justifyContent:'space-between', alignItems:'center', cursor:'pointer' }}>
           <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            <div style={{ width:32, height:32, borderRadius:'50%', background: done ? C.rose : 'rgba(255,255,255,0.12)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <i className={`ti ${done ? 'ti-circle-check' : 'ti-hourglass'}`} style={{ fontSize:16, color: done ? C.vert : C.rose }} />
+            <div style={{ width:32, height:32, borderRadius:'50%', background: (done || m.budgetLocked) ? C.rose : 'rgba(255,255,255,0.12)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <i className={`ti ${m.budgetLocked ? 'ti-lock' : done ? 'ti-circle-check' : 'ti-hourglass'}`} style={{ fontSize:16, color: (done || m.budgetLocked) ? C.vert : C.rose }} />
             </div>
             <div>
               <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:1.5, color:'rgba(255,255,255,0.55)', textTransform:'uppercase' }}>
-                {done ? 'Budget terminé' : 'Budget en cours'}
+                {m.budgetLocked ? 'Budget verrouillé' : done ? 'Budget terminé' : 'Budget en cours'}
               </div>
               <div style={{ fontFamily:serif, fontSize:26, fontWeight:700, color:C.rose, lineHeight:1.1 }}>
                 {fmtP(nonV)} <span style={{ fontSize:15, fontWeight:400, color:C.rose }}>à répartir</span>
@@ -1236,6 +1236,20 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
           </div>
           <i className="ti ti-chevron-right" style={{ fontSize:18, color:'rgba(255,255,255,0.4)' }} />
         </div>
+        {done && !m.budgetLocked && (
+          <button onClick={() => updateData(mm => { mm.budgetLocked = true; })}
+            style={{ width:'100%', padding:'10px 0', background:'none', border:`1.5px solid rgba(28,41,28,0.25)`, borderRadius:10, fontFamily:sans, fontSize:13, fontWeight:500, color:C.vert, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8, marginBottom:16 }}>
+            🔒 Verrouiller mon budget
+          </button>
+        )}
+        {m.budgetLocked && (
+          <div style={{ textAlign:'center', marginBottom:16 }}>
+            <button onClick={() => updateData(mm => { mm.budgetLocked = false; })}
+              style={{ background:'none', border:'none', cursor:'pointer', fontFamily:sans, fontSize:12, color:C.muted, textDecoration:'underline' }}>
+              Déverrouiller
+            </button>
+          </div>
+        )}
 
         {/* Catégories avec budget */}
         {cwb.map(cat => {
