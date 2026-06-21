@@ -757,7 +757,7 @@ const BottomNav = ({ view, setView, m }) => {
 const FAB_ACTIONS = {
   accueil:  (setModal)        => setModal('dep'),
   budget:   (_, setView)      => setView('budget_edit'),
-  revenus:  (setModal)        => setModal('rev'),
+  revenus:  (setModal)        => setModal('dep'),
   depenses: (setModal, _, dt) => setModal(dt === 'depenses' ? 'dep' : 'bill'),
   epargne:  (setModal)        => setModal('dep'),
 };
@@ -824,13 +824,15 @@ const ICON_CHOICES = [
   'ti-paw','ti-baby-carriage','ti-shirt','ti-tool','ti-phone',
 ];
 
-export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose }) => {
+export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu }) => {
   const isEdit = !!initial;
+  const [type, setType]             = useState('depense');
   const [form, setForm]             = useState(
     initial
       ? { amount: String(initial.amount), cat: initial.cat, name: initial.name || '', date: initial.date || new Date().toISOString().split('T')[0] }
       : { amount:'', cat:'', name:'', date: new Date().toISOString().split('T')[0] }
   );
+  const [revForm, setRevForm]       = useState({ amount:'', name:'' });
   const [customCats, setCustomCats] = useState(() => getCustomCats());
   const [showNewCat, setShowNewCat] = useState(false);
   const [newCatName, setNewCatName] = useState('');
@@ -850,6 +852,13 @@ export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose }) => {
     onClose();
   };
 
+  const submitRevenu = () => {
+    const a = parseFloat(revForm.amount);
+    if (!a || !revForm.name) return;
+    onAddRevenu?.({ id:'r'+Date.now(), name:revForm.name, amount:a });
+    onClose();
+  };
+
   const addCustomCat = () => {
     if (!newCatName.trim()) return;
     const newCat = { id:'custom_'+Date.now(), label:newCatName.trim(), icon:newCatIcon };
@@ -861,62 +870,97 @@ export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose }) => {
     setShowNewCat(false);
   };
 
+  const modalTitle = isEdit ? 'Modifier la dépense' : type === 'revenu' ? 'Ajouter un revenu' : 'Nouvelle dépense';
+
   return (
-    <ModalShell title={isEdit ? 'Modifier la dépense' : 'Nouvelle dépense'} onClose={onClose}>
-      <div style={{ marginBottom:14 }}>
-        <Label>Montant</Label>
-        <input type="number" inputMode="decimal" step="0.01" placeholder="0,00" value={form.amount}
-          onChange={e => upd('amount', e.target.value)}
-          style={{ width:'100%', fontFamily:serif, fontSize:36, fontWeight:700, border:'none', borderBottom:`2px solid ${C.rose}`, outline:'none', padding:'4px 0', background:'transparent', color:C.vert }} />
-      </div>
-      <div style={{ marginBottom:14 }}>
-        <Label>Catégorie</Label>
-        <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:8 }}>
-          {allCats.map(c => (
-            <span key={c.id} onClick={() => upd('cat', c.id)}
-              style={{ padding:'5px 11px', borderRadius:20, fontFamily:sans, fontSize:11, cursor:'pointer',
-                border:`1.5px solid ${form.cat === c.id ? C.vert : 'rgba(28,41,28,0.15)'}`,
-                background: form.cat === c.id ? C.vert : C.roseL,
-                color: form.cat === c.id ? 'white' : C.vert }}>
-              {c.label}
-            </span>
+    <ModalShell title={modalTitle} onClose={onClose}>
+      {!isEdit && (
+        <div style={{ display:'flex', justifyContent:'center', gap:10, marginBottom:16 }}>
+          {[{id:'depense',label:'Dépense'},{id:'revenu',label:'Revenu'}].map(t => (
+            <button key={t.id} onClick={() => setType(t.id)}
+              style={{ width:130, padding:'10px 0', borderRadius:30, fontSize:13, fontWeight:700, cursor:'pointer',
+                fontFamily:serif, letterSpacing:1, textTransform:'uppercase', transition:'all .2s',
+                background: type === t.id ? C.vert : C.card,
+                color:      type === t.id ? 'white' : C.vert,
+                border:     `1.5px solid ${type === t.id ? C.vert : C.rose}` }}>
+              {t.label}
+            </button>
           ))}
         </div>
-        {showNewCat ? (
-          <div style={{ padding:12, background:C.roseL, borderRadius:10, border:`1px solid ${C.rose}` }}>
-            <input placeholder="Nom de la catégorie" value={newCatName} onChange={e => setNewCatName(e.target.value)}
-              style={{ width:'100%', padding:'7px 10px', border:`1px solid ${C.border}`, borderRadius:8, fontSize:13, fontFamily:sans, color:C.vert, background:'white', marginBottom:8 }} />
+      )}
+
+      {type === 'revenu' ? (
+        <>
+          <div style={{ marginBottom:14 }}>
+            <Label>Montant</Label>
+            <input type="number" inputMode="decimal" step="0.01" placeholder="0,00" value={revForm.amount}
+              onChange={e => setRevForm(p => ({...p, amount:e.target.value}))}
+              style={{ width:'100%', fontFamily:serif, fontSize:36, fontWeight:700, border:'none', borderBottom:`2px solid ${C.rose}`, outline:'none', padding:'4px 0', background:'transparent', color:C.vert }} />
+          </div>
+          <div style={{ marginBottom:20 }}>
+            <Label>Nom</Label>
+            <TextInput placeholder="ex : Remboursement mutuelle" value={revForm.name} onChange={e => setRevForm(p => ({...p, name:e.target.value}))} />
+          </div>
+          <SubmitBtn label="Valider" onClick={submitRevenu} />
+        </>
+      ) : (
+        <>
+          <div style={{ marginBottom:14 }}>
+            <Label>Montant</Label>
+            <input type="number" inputMode="decimal" step="0.01" placeholder="0,00" value={form.amount}
+              onChange={e => upd('amount', e.target.value)}
+              style={{ width:'100%', fontFamily:serif, fontSize:36, fontWeight:700, border:'none', borderBottom:`2px solid ${C.rose}`, outline:'none', padding:'4px 0', background:'transparent', color:C.vert }} />
+          </div>
+          <div style={{ marginBottom:14 }}>
+            <Label>Catégorie</Label>
             <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:8 }}>
-              {ICON_CHOICES.map(icon => (
-                <div key={icon} onClick={() => setNewCatIcon(icon)}
-                  style={{ width:34, height:34, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer',
-                    background: newCatIcon === icon ? C.vert : 'white',
-                    border:`1.5px solid ${newCatIcon === icon ? C.vert : C.border}` }}>
-                  <i className={`ti ${icon}`} style={{ fontSize:16, color: newCatIcon === icon ? 'white' : C.muted }} />
-                </div>
+              {allCats.map(c => (
+                <span key={c.id} onClick={() => upd('cat', c.id)}
+                  style={{ padding:'5px 11px', borderRadius:20, fontFamily:sans, fontSize:11, cursor:'pointer',
+                    border:`1.5px solid ${form.cat === c.id ? C.vert : 'rgba(28,41,28,0.15)'}`,
+                    background: form.cat === c.id ? C.vert : C.roseL,
+                    color: form.cat === c.id ? 'white' : C.vert }}>
+                  {c.label}
+                </span>
               ))}
             </div>
-            <div style={{ display:'flex', gap:8 }}>
-              <button onClick={addCustomCat}
-                style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
-                Ajouter
+            {showNewCat ? (
+              <div style={{ padding:12, background:C.roseL, borderRadius:10, border:`1px solid ${C.rose}` }}>
+                <input placeholder="Nom de la catégorie" value={newCatName} onChange={e => setNewCatName(e.target.value)}
+                  style={{ width:'100%', padding:'7px 10px', border:`1px solid ${C.border}`, borderRadius:8, fontSize:13, fontFamily:sans, color:C.vert, background:'white', marginBottom:8 }} />
+                <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:8 }}>
+                  {ICON_CHOICES.map(icon => (
+                    <div key={icon} onClick={() => setNewCatIcon(icon)}
+                      style={{ width:34, height:34, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer',
+                        background: newCatIcon === icon ? C.vert : 'white',
+                        border:`1.5px solid ${newCatIcon === icon ? C.vert : C.border}` }}>
+                      <i className={`ti ${icon}`} style={{ fontSize:16, color: newCatIcon === icon ? 'white' : C.muted }} />
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display:'flex', gap:8 }}>
+                  <button onClick={addCustomCat}
+                    style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                    Ajouter
+                  </button>
+                  <button onClick={() => setShowNewCat(false)}
+                    style={{ padding:'9px 12px', background:'white', border:`1px solid ${C.rose}`, borderRadius:8, cursor:'pointer', color:C.vert, fontFamily:sans }}>✕</button>
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => setShowNewCat(true)}
+                style={{ padding:'5px 12px', background:'none', border:`1.5px dashed rgba(28,41,28,0.2)`, borderRadius:20, fontFamily:sans, fontSize:11, color:C.muted, cursor:'pointer', display:'inline-flex', alignItems:'center', gap:5 }}>
+                <i className="ti ti-plus" style={{ fontSize:11 }} /> Ajouter une catégorie
               </button>
-              <button onClick={() => setShowNewCat(false)}
-                style={{ padding:'9px 12px', background:'white', border:`1px solid ${C.rose}`, borderRadius:8, cursor:'pointer', color:C.vert, fontFamily:sans }}>✕</button>
-            </div>
+            )}
           </div>
-        ) : (
-          <button onClick={() => setShowNewCat(true)}
-            style={{ padding:'5px 12px', background:'none', border:`1.5px dashed rgba(28,41,28,0.2)`, borderRadius:20, fontFamily:sans, fontSize:11, color:C.muted, cursor:'pointer', display:'inline-flex', alignItems:'center', gap:5 }}>
-            <i className="ti ti-plus" style={{ fontSize:11 }} /> Ajouter une catégorie
-          </button>
-        )}
-      </div>
-      <div style={{ display:'flex', gap:10, marginBottom:16 }}>
-        <div style={{ flex:1 }}><Label>Nom</Label><TextInput placeholder="ex : Carrefour" value={form.name} onChange={e => upd('name', e.target.value)} /></div>
-        <div style={{ flex:1 }}><Label>Date</Label><DateInput value={form.date} onChange={e => upd('date', e.target.value)} /></div>
-      </div>
-      <SubmitBtn label={isEdit ? 'Modifier la dépense' : 'Valider la dépense'} onClick={submit} />
+          <div style={{ display:'flex', gap:10, marginBottom:16 }}>
+            <div style={{ flex:1 }}><Label>Nom</Label><TextInput placeholder="ex : Carrefour" value={form.name} onChange={e => upd('name', e.target.value)} /></div>
+            <div style={{ flex:1 }}><Label>Date</Label><DateInput value={form.date} onChange={e => upd('date', e.target.value)} /></div>
+          </div>
+          <SubmitBtn label={isEdit ? 'Modifier la dépense' : 'Valider la dépense'} onClick={submit} />
+        </>
+      )}
     </ModalShell>
   );
 };
@@ -2936,7 +2980,7 @@ function MainApp({ onProfileAction }) {
         </div>
         {!['budget_edit'].includes(view) && !m.closed && <FAB view={view} setModal={setModal} setView={setView} depTab={depTab} />}
         <BottomNav view={view} setView={setView} m={m} />
-        {!m.closed && modal === 'dep'  && <AddExpenseModal onAdd={addExpense} onClose={() => setModal(null)} />}
+        {!m.closed && modal === 'dep'  && <AddExpenseModal onAdd={addExpense} onClose={() => setModal(null)} onAddRevenu={addRevenu} />}
         {!m.closed && modal === 'rev'  && <AddRevenuModal  onAdd={addRevenu}  onClose={() => setModal(null)} />}
         {!m.closed && modal === 'bill' && <AddBillModal    onAdd={addBill}    onClose={() => setModal(null)} />}
       </div>
