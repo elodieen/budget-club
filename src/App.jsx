@@ -253,6 +253,13 @@ const getSavingsLabels  = () => { try { const s = localStorage.getItem(`${curren
 const saveSavingsLabels = (labels) => localStorage.setItem(`${currentProfileId}:settings:savingsLabels`, JSON.stringify(labels));
 const sortCatsWithDiversLast = (cats) => { const d = cats.filter(c => c.id === 'divers'); return [...cats.filter(c => c.id !== 'divers'), ...d]; };
 
+const getDepSuggestions  = () => { try { return JSON.parse(localStorage.getItem(`${currentProfileId}:depenses:suggestions`) || '[]'); } catch { return []; } };
+const saveDepSuggestion  = (nom, categorie) => {
+  const list = getDepSuggestions();
+  const dedup = list.filter(s => s.nom.toLowerCase() !== nom.toLowerCase());
+  localStorage.setItem(`${currentProfileId}:depenses:suggestions`, JSON.stringify([{ nom, categorie }, ...dedup].slice(0, 100)));
+};
+
 const getInitialMonth = () => {
   const today    = new Date();
   const day      = today.getDate();
@@ -754,27 +761,58 @@ const BottomNav = ({ view, setView, m }) => {
 };
 
 // Bouton FAB contextuel
-const FAB_ACTIONS = {
-  accueil:  (setModal)        => setModal('dep'),
-  budget:   (_, setView)      => setView('budget_edit'),
-  revenus:  (setModal)        => setModal('dep'),
-  depenses: (setModal, _, dt) => setModal(dt === 'depenses' ? 'dep' : 'bill'),
-  epargne:  (setModal)        => setModal('dep'),
+const FAB = ({ view, setModal, setView, depTab, onAccueil }) => {
+  const handleClick = () => {
+    if (view === 'accueil')  { onAccueil(); return; }
+    if (view === 'revenus')  { setModal('rev'); return; }
+    if (view === 'budget')   { setView('budget_edit'); return; }
+    if (view === 'depenses') { setModal(depTab === 'depenses' ? 'dep' : 'bill'); return; }
+    if (view === 'epargne')  { setModal('dep'); return; }
+  };
+  return (
+    <button onClick={handleClick}
+      style={{
+        position:'absolute', bottom:68, right:16,
+        width:50, height:50, borderRadius:'50%',
+        background:C.rose, border:'none', color:C.vert,
+        fontSize:24, cursor:'pointer',
+        display:'flex', alignItems:'center', justifyContent:'center',
+        boxShadow:`0 4px 18px rgba(238,196,196,0.8)`, zIndex:10,
+      }}>
+      <i className="ti ti-plus" />
+    </button>
+  );
 };
 
-const FAB = ({ view, setModal, setView, depTab }) => (
-  <button
-    onClick={() => FAB_ACTIONS[view]?.(setModal, setView, depTab)}
-    style={{
-      position:'absolute', bottom:68, right:16,
-      width:50, height:50, borderRadius:'50%',
-      background:C.rose, border:'none', color:C.vert,
-      fontSize:24, cursor:'pointer',
-      display:'flex', alignItems:'center', justifyContent:'center',
-      boxShadow:`0 4px 18px rgba(238,196,196,0.8)`, zIndex:10,
-    }}>
-    <i className="ti ti-plus" />
-  </button>
+// Bottom sheet FAB pour accueil
+const FabSheet = ({ onDep, onRev, onBill, onClose }) => (
+  <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(28,41,28,0.5)', zIndex:200, display:'flex', alignItems:'flex-end' }}
+    onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div style={{ background:C.beige, borderRadius:'20px 20px 0 0', width:'100%', padding:'20px 16px', paddingBottom:'calc(24px + env(safe-area-inset-bottom))' }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+        <span style={{ fontFamily:serif, fontSize:18, fontWeight:700, color:C.vert }}>Ajouter</span>
+        <button onClick={onClose} style={{ background:C.roseL, border:'none', width:30, height:30, borderRadius:'50%', cursor:'pointer', fontSize:15, color:C.vert }}>✕</button>
+      </div>
+      <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+        {[
+          { icon:'ti-shopping-bag', label:'+ Dépense', sub:'Enregistrer une dépense', action:onDep  },
+          { icon:'ti-cash',         label:'+ Revenu',  sub:'Ajouter un revenu',        action:onRev  },
+          { icon:'ti-file-invoice', label:'+ Facture', sub:'Ajouter une facture',       action:onBill },
+        ].map(item => (
+          <button key={item.label} onClick={item.action}
+            style={{ display:'flex', alignItems:'center', gap:14, padding:'14px 16px', background:C.card, border:`1px solid ${C.border}`, borderRadius:14, cursor:'pointer', textAlign:'left', width:'100%' }}>
+            <div style={{ width:44, height:44, borderRadius:12, background:C.vert, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              <i className={`ti ${item.icon}`} style={{ fontSize:20, color:C.rose }} />
+            </div>
+            <div>
+              <div style={{ fontFamily:serif, fontSize:16, fontWeight:700, color:C.vert }}>{item.label}</div>
+              <div style={{ fontFamily:sans, fontSize:12, color:C.muted, marginTop:2 }}>{item.sub}</div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  </div>
 );
 
 // Triangle attention dépassement budget
@@ -837,6 +875,8 @@ export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu
   const [showNewCat, setShowNewCat] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   const [newCatIcon, setNewCatIcon] = useState('ti-tag');
+  const [sugsVisible, setSugsVisible]   = useState(false);
+  const [filteredSugs, setFilteredSugs] = useState([]);
 
   const allCats = sortCatsWithDiversLast([...CATS, ...customCats]);
   const upd = (k, v) => setForm(p => ({ ...p, [k]: v }));
@@ -848,6 +888,7 @@ export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu
       onUpdate({ ...initial, name:form.name, amount:a, cat:form.cat, date:form.date });
     } else {
       onAdd({ id:'e'+Date.now(), name:form.name, amount:a, cat:form.cat, date:form.date });
+      if (form.name && form.cat) saveDepSuggestion(form.name, form.cat);
     }
     onClose();
   };
@@ -955,7 +996,38 @@ export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu
             )}
           </div>
           <div style={{ display:'flex', gap:10, marginBottom:16 }}>
-            <div style={{ flex:1 }}><Label>Nom</Label><TextInput placeholder="ex : Carrefour" value={form.name} onChange={e => upd('name', e.target.value)} /></div>
+            <div style={{ flex:1, position:'relative' }}>
+              <Label>Nom</Label>
+              <input
+                placeholder="ex : Carrefour"
+                value={form.name}
+                onChange={e => {
+                  const val = e.target.value;
+                  upd('name', val);
+                  if (val.length > 0) {
+                    const f = getDepSuggestions().filter(s => s.nom.toLowerCase().includes(val.toLowerCase())).slice(0, 5);
+                    setFilteredSugs(f);
+                    setSugsVisible(f.length > 0);
+                  } else {
+                    setSugsVisible(false);
+                  }
+                }}
+                onKeyDown={e => { if (e.key === 'Escape') setSugsVisible(false); }}
+                onBlur={() => setTimeout(() => setSugsVisible(false), 150)}
+                style={{ width:'100%', padding:'9px 12px', border:`1px solid ${C.border}`, borderRadius:10, fontSize:14, color:C.vert, background:'white', fontFamily:sans }}
+              />
+              {sugsVisible && (
+                <div style={{ position:'absolute', top:'100%', left:0, right:0, background:'white', border:`1px solid ${C.rose}`, borderRadius:8, zIndex:20, marginTop:2, overflow:'hidden' }}>
+                  {filteredSugs.map((s, i) => (
+                    <div key={i}
+                      onMouseDown={() => { upd('name', s.nom); upd('cat', s.categorie); setSugsVisible(false); }}
+                      style={{ padding:'8px 12px', fontFamily:sans, fontSize:13, color:C.vert, borderBottom: i < filteredSugs.length - 1 ? `1px solid ${C.rose}` : 'none', cursor:'pointer', background:'white' }}>
+                      {s.nom}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <div style={{ flex:1 }}><Label>Date</Label><DateInput value={form.date} onChange={e => upd('date', e.target.value)} /></div>
           </div>
           <SubmitBtn label={isEdit ? 'Modifier la dépense' : 'Valider la dépense'} onClick={submit} />
@@ -1072,6 +1144,24 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
   const reste = Math.round((rev - bT - eT - epg) * 100) / 100;
   const pp    = rev > 0 ? Math.min(100, Math.round(eT / rev * 100)) : 0;
 
+  // Indicateur de rythme
+  const startDay = getStartDay();
+  const todayDate = new Date();
+  const budgetMStart = new Date(mi.year, mi.month, startDay);
+  const joursTotal = 30;
+  const joursEcoules = Math.max(0, Math.min(joursTotal, Math.floor((todayDate - budgetMStart) / 86400000)));
+  const joursRestants = Math.max(1, joursTotal - joursEcoules);
+  const pctMois = joursEcoules / joursTotal * 100;
+  const budgetDisponible = rev - bT;
+  const pctConsomme = budgetDisponible > 0 ? Math.min(200, eT / budgetDisponible * 100) : 0;
+  const euroParJour = Math.round(reste / joursRestants);
+  const ecart = pctConsomme - pctMois;
+  let verdict, verdictColor;
+  if (reste < 0)        { verdict = 'SOS budget';        verdictColor = '#E8637A'; }
+  else if (ecart > 15)  { verdict = 'Freine un peu';     verdictColor = '#EEC4C4'; }
+  else if (ecart >= -10){ verdict = 'Parfait équilibre'; verdictColor = '#FFFFFF'; }
+  else                  { verdict = 'Girl boss';          verdictColor = '#FFFFFF'; }
+
   const cb5    = m.catBudgets || {};
   const tvBgt5 = Object.values(cb5).reduce((s, v) => s + (parseFloat(v) || 0), 0);
   const nonV5  = Math.max(0, rev - bTPrevu - tvBgt5);
@@ -1103,9 +1193,20 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
             ? <div style={{ fontFamily:serif, fontSize:26, fontStyle:'italic', color:C.rose, lineHeight:1.3 }}>Revenus non saisis</div>
             : <div style={{ fontFamily:serif, fontSize:38, fontWeight:700, color: reste >= 0 ? C.rose : '#E8637A', lineHeight:1 }}>{fmtR(reste)}</div>
           }
-          <div style={{ height:3, background:'rgba(255,255,255,0.2)', borderRadius:2, marginTop:8, overflow:'hidden' }}>
-            <div style={{ height:'100%', width:`${pp}%`, background:'white', borderRadius:2 }} />
+          {/* Double jauge */}
+          <div style={{ position:'relative', height:6, background:'rgba(255,255,255,0.15)', borderRadius:3, marginTop:8 }}>
+            <div style={{ position:'absolute', top:0, left:0, height:'100%', width:`${Math.min(100, pctConsomme)}%`, background:'#EEC4C4', borderRadius:3 }} />
+            <div style={{ position:'absolute', top:1.5, left:0, height:3, width:`${Math.min(100, pctMois)}%`, background:'rgba(255,255,255,0.7)', borderRadius:3 }} />
           </div>
+          {/* Verdict + jours restants */}
+          {rev > 0 && (
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:6 }}>
+              <span style={{ fontFamily:serif, fontSize:13, color:verdictColor, lineHeight:1 }}>{verdict}</span>
+              <span style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.6)' }}>
+                Il te reste {joursRestants}j · ~{euroParJour}€/jour
+              </span>
+            </div>
+          )}
         </div>
         {/* 4 mini-cards */}
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
@@ -2847,10 +2948,11 @@ const SplashScreen = ({ onDone }) => {
 
 // ─── MAIN APP (rendu après login) ───────────────────────────
 function MainApp({ onProfileAction }) {
-  const [mi, setMi]         = useState(getInitialMonth);
-  const [view, setView]     = useState('accueil');
-  const [depTab, setDepTab] = useState('depenses');
-  const [modal, setModal]   = useState(null);
+  const [mi, setMi]               = useState(getInitialMonth);
+  const [view, setView]           = useState('accueil');
+  const [depTab, setDepTab]       = useState('depenses');
+  const [modal, setModal]         = useState(null);
+  const [showFabSheet, setShowFabSheet] = useState(false);
   const { data: m, loading, updateData } = useMonthData(mi);
   const [autoBackupOffer, setAutoBackupOffer] = useState(null);
 
@@ -2978,8 +3080,19 @@ function MainApp({ onProfileAction }) {
         <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
           {renderView()}
         </div>
-        {!['budget_edit'].includes(view) && !m.closed && <FAB view={view} setModal={setModal} setView={setView} depTab={depTab} />}
+        {!['budget_edit'].includes(view) && !m.closed && (
+          <FAB view={view} setModal={setModal} setView={setView} depTab={depTab}
+            onAccueil={() => setShowFabSheet(true)} />
+        )}
         <BottomNav view={view} setView={setView} m={m} />
+        {showFabSheet && !m.closed && (
+          <FabSheet
+            onDep={() => { setShowFabSheet(false); setModal('dep'); }}
+            onRev={() => { setShowFabSheet(false); setModal('rev'); }}
+            onBill={() => { setShowFabSheet(false); setModal('bill'); }}
+            onClose={() => setShowFabSheet(false)}
+          />
+        )}
         {!m.closed && modal === 'dep'  && <AddExpenseModal onAdd={addExpense} onClose={() => setModal(null)} onAddRevenu={addRevenu} />}
         {!m.closed && modal === 'rev'  && <AddRevenuModal  onAdd={addRevenu}  onClose={() => setModal(null)} />}
         {!m.closed && modal === 'bill' && <AddBillModal    onAdd={addBill}    onClose={() => setModal(null)} />}
