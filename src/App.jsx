@@ -1180,7 +1180,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
               </div>
               <div style={{ marginTop:6, textAlign:'center' }}>
                 <span style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.6)' }}>
-                  {Math.round(pctConsomme)}% consommé · {joursRestants}j restants ({Math.round(pctMois)}% écoulé)
+                  {Math.round(pctConsomme)}% du reste à vivre dépensé, encore {joursRestants}j devant toi
                 </span>
               </div>
             </div>
