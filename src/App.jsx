@@ -761,9 +761,9 @@ const BottomNav = ({ view, setView, m }) => {
 };
 
 // Bouton FAB contextuel
-const FAB = ({ view, setModal, setView, depTab, onAccueil }) => {
+const FAB = ({ view, setModal, setView, depTab }) => {
   const handleClick = () => {
-    if (view === 'accueil')  { onAccueil(); return; }
+    if (view === 'accueil')  { setModal('dep'); return; }
     if (view === 'revenus')  { setModal('rev'); return; }
     if (view === 'budget')   { setView('budget_edit'); return; }
     if (view === 'depenses') { setModal(depTab === 'depenses' ? 'dep' : 'bill'); return; }
@@ -783,37 +783,6 @@ const FAB = ({ view, setModal, setView, depTab, onAccueil }) => {
     </button>
   );
 };
-
-// Bottom sheet FAB pour accueil
-const FabSheet = ({ onDep, onRev, onBill, onClose }) => (
-  <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(28,41,28,0.5)', zIndex:200, display:'flex', alignItems:'flex-end' }}
-    onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-    <div style={{ background:C.beige, borderRadius:'20px 20px 0 0', width:'100%', padding:'20px 16px', paddingBottom:'calc(24px + env(safe-area-inset-bottom))' }}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
-        <span style={{ fontFamily:serif, fontSize:18, fontWeight:700, color:C.vert }}>Ajouter</span>
-        <button onClick={onClose} style={{ background:C.roseL, border:'none', width:30, height:30, borderRadius:'50%', cursor:'pointer', fontSize:15, color:C.vert }}>✕</button>
-      </div>
-      <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-        {[
-          { icon:'ti-shopping-bag', label:'+ Dépense', sub:'Enregistrer une dépense', action:onDep  },
-          { icon:'ti-cash',         label:'+ Revenu',  sub:'Ajouter un revenu',        action:onRev  },
-          { icon:'ti-file-invoice', label:'+ Facture', sub:'Ajouter une facture',       action:onBill },
-        ].map(item => (
-          <button key={item.label} onClick={item.action}
-            style={{ display:'flex', alignItems:'center', gap:14, padding:'14px 16px', background:C.card, border:`1px solid ${C.border}`, borderRadius:14, cursor:'pointer', textAlign:'left', width:'100%' }}>
-            <div style={{ width:44, height:44, borderRadius:12, background:C.vert, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-              <i className={`ti ${item.icon}`} style={{ fontSize:20, color:C.rose }} />
-            </div>
-            <div>
-              <div style={{ fontFamily:serif, fontSize:16, fontWeight:700, color:C.vert }}>{item.label}</div>
-              <div style={{ fontFamily:sans, fontSize:12, color:C.muted, marginTop:2 }}>{item.sub}</div>
-            </div>
-          </button>
-        ))}
-      </div>
-    </div>
-  </div>
-);
 
 // Triangle attention dépassement budget
 const WarningTriangle = () => (
@@ -2951,8 +2920,7 @@ function MainApp({ onProfileAction }) {
   const [mi, setMi]               = useState(getInitialMonth);
   const [view, setView]           = useState('accueil');
   const [depTab, setDepTab]       = useState('depenses');
-  const [modal, setModal]         = useState(null);
-  const [showFabSheet, setShowFabSheet] = useState(false);
+  const [modal, setModal]   = useState(null);
   const { data: m, loading, updateData } = useMonthData(mi);
   const [autoBackupOffer, setAutoBackupOffer] = useState(null);
 
@@ -3081,18 +3049,9 @@ function MainApp({ onProfileAction }) {
           {renderView()}
         </div>
         {!['budget_edit'].includes(view) && !m.closed && (
-          <FAB view={view} setModal={setModal} setView={setView} depTab={depTab}
-            onAccueil={() => setShowFabSheet(true)} />
+          <FAB view={view} setModal={setModal} setView={setView} depTab={depTab} />
         )}
         <BottomNav view={view} setView={setView} m={m} />
-        {showFabSheet && !m.closed && (
-          <FabSheet
-            onDep={() => { setShowFabSheet(false); setModal('dep'); }}
-            onRev={() => { setShowFabSheet(false); setModal('rev'); }}
-            onBill={() => { setShowFabSheet(false); setModal('bill'); }}
-            onClose={() => setShowFabSheet(false)}
-          />
-        )}
         {!m.closed && modal === 'dep'  && <AddExpenseModal onAdd={addExpense} onClose={() => setModal(null)} onAddRevenu={addRevenu} noRevenu={view === 'depenses' && depTab === 'depenses'} />}
         {!m.closed && modal === 'rev'  && <AddRevenuModal  onAdd={addRevenu}  onClose={() => setModal(null)} />}
         {!m.closed && modal === 'bill' && <AddBillModal    onAdd={addBill}    onClose={() => setModal(null)} />}
