@@ -1128,8 +1128,8 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
   const joursEcoules = Math.max(0, Math.min(joursTotal, Math.floor((todayDate - budgetMStart) / 86400000)));
   const joursRestants = Math.max(0, joursTotal - joursEcoules);
   const pctMois = joursTotal > 0 ? joursEcoules / joursTotal * 100 : 0;
-  const resteAVivre = rev - bT - eT;
-  const pctConsomme = resteAVivre > 0 ? Math.min(100, eT / resteAVivre * 100) : (eT > 0 ? 100 : 0);
+  const totalDisponible = rev - bT;
+  const pctConsomme = totalDisponible > 0 ? Math.min(100, eT / totalDisponible * 100) : 0;
   const ecart = pctConsomme - pctMois;
   let jaugeIcon, jaugeIconColor;
   if (reste < 0)       { jaugeIcon = 'ti-alert-circle';   jaugeIconColor = '#E8637A'; }
