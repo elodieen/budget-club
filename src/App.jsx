@@ -1132,10 +1132,8 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
   const pctConsomme = budgetDisponible > 0 ? Math.min(100, eT / budgetDisponible * 100) : 0;
   const ecart = pctConsomme - pctMois;
   let jaugeIcon, jaugeIconColor;
-  if (reste < 0)        { jaugeIcon = 'ti-alert-circle';   jaugeIconColor = '#E8637A'; }
-  else if (ecart > 15)  { jaugeIcon = 'ti-alert-triangle'; jaugeIconColor = '#EEC4C4'; }
-  else if (ecart >= -10){ jaugeIcon = 'ti-circle-check';   jaugeIconColor = 'rgba(255,255,255,0.8)'; }
-  else                  { jaugeIcon = 'ti-mood-smile';      jaugeIconColor = 'rgba(255,255,255,0.8)'; }
+  if (reste < 0)       { jaugeIcon = 'ti-alert-circle';   jaugeIconColor = '#E8637A'; }
+  else if (ecart > 15) { jaugeIcon = 'ti-alert-triangle'; jaugeIconColor = '#EEC4C4'; }
 
   const cb5    = m.catBudgets || {};
   const tvBgt5 = Object.values(cb5).reduce((s, v) => s + (parseFloat(v) || 0), 0);
@@ -1172,7 +1170,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
           {rev > 0 && (
             <div style={{ marginTop:10 }}>
               <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                <i className={`ti ${jaugeIcon}`} style={{ fontSize:14, color:jaugeIconColor, flexShrink:0 }} />
+                {jaugeIcon && <i className={`ti ${jaugeIcon}`} style={{ fontSize:14, color:jaugeIconColor, flexShrink:0 }} />}
                 <div style={{ flex:1, position:'relative', height:5, background:'rgba(255,255,255,0.15)', borderRadius:3 }}>
                   <div style={{ position:'absolute', top:0, left:0, height:'100%', width:`${pctConsomme}%`, background:'#EEC4C4', borderRadius:3, transition:'width 0.6s ease' }} />
                   <div style={{ position:'absolute', top:-3.5, left:`${pctMois}%`, transform:'translateX(-50%)', width:2, height:12, background:'rgba(255,255,255,0.8)', borderRadius:1 }} />
