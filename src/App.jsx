@@ -257,7 +257,9 @@ const getDepSuggestions  = () => { try { return JSON.parse(localStorage.getItem(
 const saveDepSuggestion  = (nom, categorie) => {
   const list = getDepSuggestions();
   const dedup = list.filter(s => s.nom.toLowerCase() !== nom.toLowerCase());
-  localStorage.setItem(`${currentProfileId}:depenses:suggestions`, JSON.stringify([{ nom, categorie }, ...dedup].slice(0, 100)));
+  const updated = [{ nom, categorie }, ...dedup].slice(0, 100);
+  localStorage.setItem(`${currentProfileId}:depenses:suggestions`, JSON.stringify(updated));
+  console.log('[BC] suggestion saved →', `${currentProfileId}:depenses:suggestions`, nom, categorie, '| total:', updated.length);
 };
 
 const getInitialMonth = () => {
@@ -964,40 +966,42 @@ export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu
               </button>
             )}
           </div>
-          <div style={{ display:'flex', gap:10, marginBottom:16 }}>
-            <div style={{ flex:1, position:'relative' }}>
-              <Label>Nom</Label>
-              <input
-                placeholder="ex : Carrefour"
-                value={form.name}
-                onChange={e => {
-                  const val = e.target.value;
-                  upd('name', val);
-                  if (val.length > 0) {
-                    const f = getDepSuggestions().filter(s => s.nom.toLowerCase().includes(val.toLowerCase())).slice(0, 5);
+          <div style={{ marginBottom:16 }}>
+            <div style={{ display:'flex', gap:10 }}>
+              <div style={{ flex:1 }}>
+                <Label>Nom</Label>
+                <input
+                  placeholder="ex : Carrefour"
+                  value={form.name}
+                  onChange={e => {
+                    const val = e.target.value;
+                    upd('name', val);
+                    const allSugs = getDepSuggestions();
+                    const f = val.length > 0
+                      ? allSugs.filter(s => s.nom.toLowerCase().includes(val.toLowerCase())).slice(0, 5)
+                      : [];
+                    console.log('[BC] autocomplete keystroke:', val, '| matches:', f);
                     setFilteredSugs(f);
                     setSugsVisible(f.length > 0);
-                  } else {
-                    setSugsVisible(false);
-                  }
-                }}
-                onKeyDown={e => { if (e.key === 'Escape') setSugsVisible(false); }}
-                onBlur={() => setTimeout(() => setSugsVisible(false), 150)}
-                style={{ width:'100%', padding:'9px 12px', border:`1px solid ${C.border}`, borderRadius:10, fontSize:14, color:C.vert, background:'white', fontFamily:sans }}
-              />
-              {sugsVisible && (
-                <div style={{ position:'absolute', top:'100%', left:0, right:0, background:'white', border:`1px solid ${C.rose}`, borderRadius:8, zIndex:20, marginTop:2, overflow:'hidden' }}>
-                  {filteredSugs.map((s, i) => (
-                    <div key={i}
-                      onMouseDown={() => { upd('name', s.nom); upd('cat', s.categorie); setSugsVisible(false); }}
-                      style={{ padding:'8px 12px', fontFamily:sans, fontSize:13, color:C.vert, borderBottom: i < filteredSugs.length - 1 ? `1px solid ${C.rose}` : 'none', cursor:'pointer', background:'white' }}>
-                      {s.nom}
-                    </div>
-                  ))}
-                </div>
-              )}
+                  }}
+                  onKeyDown={e => { if (e.key === 'Escape') setSugsVisible(false); }}
+                  onBlur={() => setTimeout(() => setSugsVisible(false), 150)}
+                  style={{ width:'100%', padding:'9px 12px', border:`1px solid ${C.border}`, borderRadius:10, fontSize:14, color:C.vert, background:'white', fontFamily:sans }}
+                />
+              </div>
+              <div style={{ flex:1 }}><Label>Date</Label><DateInput value={form.date} onChange={e => upd('date', e.target.value)} /></div>
             </div>
-            <div style={{ flex:1 }}><Label>Date</Label><DateInput value={form.date} onChange={e => upd('date', e.target.value)} /></div>
+            {sugsVisible && (
+              <div style={{ background:'white', border:`1px solid ${C.rose}`, borderRadius:8, marginTop:4, overflow:'hidden' }}>
+                {filteredSugs.map((s, i) => (
+                  <div key={i}
+                    onMouseDown={() => { upd('name', s.nom); upd('cat', s.categorie); setSugsVisible(false); }}
+                    style={{ padding:'8px 12px', fontFamily:sans, fontSize:13, color:C.vert, borderBottom: i < filteredSugs.length - 1 ? `1px solid ${C.rose}` : 'none', cursor:'pointer' }}>
+                    {s.nom}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <SubmitBtn label={isEdit ? 'Modifier la dépense' : 'Valider la dépense'} onClick={submit} />
         </>
