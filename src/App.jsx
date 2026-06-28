@@ -763,26 +763,46 @@ const BottomNav = ({ view, setView, m }) => {
 };
 
 // Bouton FAB contextuel
-const FAB = ({ view, setModal, setView, depTab }) => {
+const FAB = ({ view, setModal, setView, depTab, setRevType }) => {
+  const [open, setOpen] = useState(false);
+  const isMenuView = view === 'accueil' || view === 'revenus';
+
   const handleClick = () => {
-    if (view === 'accueil')  { setModal('dep'); return; }
-    if (view === 'revenus')  { setModal('rev'); return; }
+    if (isMenuView)          { setOpen(o => !o); return; }
     if (view === 'budget')   { setView('budget_edit'); return; }
     if (view === 'depenses') { setModal(depTab === 'depenses' ? 'dep' : 'bill'); return; }
     if (view === 'epargne')  { setModal('dep'); return; }
   };
-  return (
-    <button onClick={handleClick}
-      style={{
-        position:'absolute', bottom:68, right:16,
-        width:50, height:50, borderRadius:'50%',
-        background:C.rose, border:'none', color:C.vert,
-        fontSize:24, cursor:'pointer',
-        display:'flex', alignItems:'center', justifyContent:'center',
-        boxShadow:`0 4px 18px rgba(238,196,196,0.8)`, zIndex:10,
-      }}>
-      <i className="ti ti-plus" />
+
+  const menuItem = (label, icon, action) => (
+    <button onMouseDown={action}
+      style={{ display:'flex', alignItems:'center', gap:10, width:'100%', padding:'12px 16px', background:'none', border:'none', borderBottom:`1px solid ${C.rose}`, fontFamily:sans, fontSize:13, fontWeight:600, color:C.vert, cursor:'pointer', textAlign:'left' }}>
+      <i className={`ti ${icon}`} style={{ fontSize:16, color:C.vert }} />{label}
     </button>
+  );
+
+  return (
+    <>
+      {open && <div onClick={() => setOpen(false)} style={{ position:'fixed', inset:0, zIndex:9 }} />}
+      {open && isMenuView && (
+        <div style={{ position:'absolute', bottom:128, right:16, background:'white', borderRadius:14, boxShadow:'0 4px 24px rgba(28,41,28,0.18)', overflow:'hidden', zIndex:11, minWidth:200 }}>
+          {view === 'accueil' && menuItem('Dépense', 'ti-minus', () => { setModal('dep'); setOpen(false); })}
+          {menuItem('Revenu', 'ti-plus', () => { setRevType('revenu'); setModal('rev'); setOpen(false); })}
+          {menuItem('Remboursement', 'ti-arrow-back-up', () => { setRevType('remboursement'); setModal('rev'); setOpen(false); })}
+        </div>
+      )}
+      <button onClick={handleClick}
+        style={{
+          position:'absolute', bottom:68, right:16,
+          width:50, height:50, borderRadius:'50%',
+          background:C.rose, border:'none', color:C.vert,
+          fontSize:24, cursor:'pointer',
+          display:'flex', alignItems:'center', justifyContent:'center',
+          boxShadow:`0 4px 18px rgba(238,196,196,0.8)`, zIndex:10,
+        }}>
+        <i className="ti ti-plus" />
+      </button>
+    </>
   );
 };
 
@@ -1011,17 +1031,18 @@ export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu
 };
 
 // Modal Ajouter revenu
-export const AddRevenuModal = ({ onAdd, onClose }) => {
+export const AddRevenuModal = ({ onAdd, onClose, revType='revenu' }) => {
   const today = new Date().toISOString().slice(0, 10);
   const [form, setForm] = useState({ name:'', amount:'', date:today });
   const submit = () => {
     const a = parseFloat(form.amount);
     if (!a || !form.name) return;
-    onAdd({ id:'r'+Date.now(), name:form.name, amount:a, date:form.date || today });
+    onAdd({ id:'r'+Date.now(), name:form.name, amount:a, date:form.date || today, type:revType });
     onClose();
   };
+  const title = revType === 'remboursement' ? 'Ajouter un remboursement' : 'Ajouter un revenu';
   return (
-    <ModalShell title="Ajouter un revenu" onClose={onClose}>
+    <ModalShell title={title} onClose={onClose}>
       <div style={{ display:'flex', gap:10, marginBottom:14 }}>
         <div style={{ flex:2 }}><Label>Source</Label><TextInput placeholder="ex : Salaire, Virement..." value={form.name} onChange={e => setForm(p => ({...p, name:e.target.value}))} /></div>
         <div style={{ flex:1 }}>
@@ -1654,7 +1675,10 @@ function RevenueRow({ r, i, onUpdate, onDelete, closed }) {
       ) : (
         <div onClick={() => { if (closed) return; setNameVal(r.name); setEditing('name'); }}
           style={{ flex:1, minWidth:0, cursor: closed ? 'default' : 'text' }}>
-          <div style={{ fontFamily:sans, fontSize:15, color:C.vert }}>{r.name}</div>
+          <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+            <span style={{ fontFamily:sans, fontSize:15, color:C.vert }}>{r.name}</span>
+            {r.type === 'remboursement' && <span style={{ fontFamily:sans, fontSize:9, fontWeight:600, color:C.vert, background:C.rose, borderRadius:4, padding:'2px 5px', letterSpacing:0.5 }}>Remboursement</span>}
+          </div>
           {r.date && <div style={{ fontFamily:sans, fontSize:11, color:C.muted, marginTop:2 }}>{new Date(r.date + 'T12:00:00').toLocaleDateString('fr-FR', { day:'numeric', month:'long' })}</div>}
         </div>
       )}
@@ -1674,9 +1698,20 @@ function RevenueRow({ r, i, onUpdate, onDelete, closed }) {
 }
 
 export function RevenusView({ m, mi, setMi, updateData, onProfileAction }) {
-  const rev = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
-  const del = (i)         => updateData(mm => { mm.revenues = mm.revenues.filter((_,idx) => idx !== i); });
+  const revenus  = m.revenues.filter(r => (r.type || 'revenu') === 'revenu');
+  const rembours = m.revenues.filter(r => r.type === 'remboursement');
+  const totalRev = revenus.reduce((s,r) => s + (r.amount||0), 0);
+  const totalRmb = rembours.reduce((s,r) => s + (r.amount||0), 0);
+  const total    = totalRev + totalRmb;
+  const del = (i)          => updateData(mm => { mm.revenues = mm.revenues.filter((_,idx) => idx !== i); });
   const upd = (i, updated) => updateData(mm => { mm.revenues = mm.revenues.map((r, idx) => idx === i ? updated : r); });
+
+  const SectionHeader = ({ label, subtotal }) => (
+    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 2px 6px' }}>
+      <span style={{ fontFamily:sans, fontSize:10, fontWeight:700, letterSpacing:1.5, textTransform:'uppercase', color:C.muted }}>{label}</span>
+      <span style={{ fontFamily:serif, fontSize:14, color:C.vert }}>{fmtR(subtotal)}</span>
+    </div>
+  );
 
   return (
     <>
@@ -1684,19 +1719,37 @@ export function RevenusView({ m, mi, setMi, updateData, onProfileAction }) {
       {m.closed && <ClosedBanner />}
       <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.vert }}>❧</span> REVENUS <span style={{ color:C.vert }}>❧</span></div>
       <div style={{ textAlign:'center', padding:'4px 16px 8px', fontFamily:serif, fontSize:12, fontStyle:'italic', color:C.muted, flexShrink:0, background:C.beige, marginBottom:8 }}>Ce n'est pas ce qu'on gagne qui compte, c'est ce qu'on en fait.</div>
-      {/* Total fixe en haut */}
-      <div style={{ background:C.vert, flexShrink:0, padding:'14px 20px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-        <span style={{ fontFamily:sans, fontSize:12, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.5)' }}>Total</span>
-        <span style={{ fontFamily:serif, fontSize:30, fontWeight:700, color:C.rose }}>{fmtR(rev)}</span>
+      {/* Card total */}
+      <div style={{ background:C.vert, flexShrink:0, padding:'12px 20px' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+          <span style={{ fontFamily:sans, fontSize:12, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.5)' }}>Total</span>
+          <span style={{ fontFamily:serif, fontSize:30, fontWeight:700, color:C.rose }}>{fmtR(total)}</span>
+        </div>
+        {totalRmb > 0 && (
+          <div style={{ display:'flex', justifyContent:'flex-end', gap:12, marginTop:3 }}>
+            <span style={{ fontFamily:sans, fontSize:11, color:'rgba(255,255,255,0.45)' }}>Revenus {fmtR(totalRev)}</span>
+            <span style={{ fontFamily:sans, fontSize:11, color:'rgba(255,255,255,0.45)' }}>·</span>
+            <span style={{ fontFamily:sans, fontSize:11, color:'rgba(255,255,255,0.45)' }}>Remboursements {fmtR(totalRmb)}</span>
+          </div>
+        )}
       </div>
       {/* Liste scrollable */}
-      <div style={{ flex:1, overflowY:'auto', padding:'12px 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
+      <div style={{ flex:1, overflowY:'auto', padding:'4px 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
         {m.revenues.length === 0 && (
           <div style={{ textAlign:'center', padding:32, color:C.muted, fontFamily:sans, fontSize:13 }}>Aucun revenu saisi ce mois</div>
         )}
-        {m.revenues.map((r, i) => (
-          <RevenueRow key={r.id} r={r} i={i} onUpdate={upd} onDelete={del} closed={m.closed} />
-        ))}
+        {revenus.length > 0 && (
+          <>
+            <SectionHeader label="Revenus" subtotal={totalRev} />
+            {revenus.map(r => { const i = m.revenues.indexOf(r); return <RevenueRow key={r.id} r={r} i={i} onUpdate={upd} onDelete={del} closed={m.closed} />; })}
+          </>
+        )}
+        {rembours.length > 0 && (
+          <>
+            <SectionHeader label="Remboursements" subtotal={totalRmb} />
+            {rembours.map(r => { const i = m.revenues.indexOf(r); return <RevenueRow key={r.id} r={r} i={i} onUpdate={upd} onDelete={del} closed={m.closed} />; })}
+          </>
+        )}
       </div>
     </>
   );
@@ -2943,6 +2996,7 @@ function MainApp({ onProfileAction }) {
   const [view, setView]           = useState('accueil');
   const [depTab, setDepTab]       = useState('depenses');
   const [modal, setModal]   = useState(null);
+  const [revType, setRevType] = useState('revenu');
   const { data: m, loading, updateData } = useMonthData(mi);
   const [autoBackupOffer, setAutoBackupOffer] = useState(null);
 
@@ -3071,11 +3125,11 @@ function MainApp({ onProfileAction }) {
           {renderView()}
         </div>
         {!['budget_edit'].includes(view) && !m.closed && (
-          <FAB view={view} setModal={setModal} setView={setView} depTab={depTab} />
+          <FAB view={view} setModal={setModal} setView={setView} depTab={depTab} setRevType={setRevType} />
         )}
         <BottomNav view={view} setView={setView} m={m} />
         {!m.closed && modal === 'dep'  && <AddExpenseModal onAdd={addExpense} onClose={() => setModal(null)} onAddRevenu={addRevenu} noRevenu={view === 'depenses' && depTab === 'depenses'} />}
-        {!m.closed && modal === 'rev'  && <AddRevenuModal  onAdd={addRevenu}  onClose={() => setModal(null)} />}
+        {!m.closed && modal === 'rev'  && <AddRevenuModal  onAdd={addRevenu}  onClose={() => setModal(null)} revType={revType} />}
         {!m.closed && modal === 'bill' && <AddBillModal    onAdd={addBill}    onClose={() => setModal(null)} />}
       </div>
     </>
