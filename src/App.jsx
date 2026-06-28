@@ -1012,16 +1012,24 @@ export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu
 
 // Modal Ajouter revenu
 export const AddRevenuModal = ({ onAdd, onClose }) => {
-  const [form, setForm] = useState({ name:'', amount:'' });
+  const today = new Date().toISOString().slice(0, 10);
+  const [form, setForm] = useState({ name:'', amount:'', date:today });
   const submit = () => {
     const a = parseFloat(form.amount);
     if (!a || !form.name) return;
-    onAdd({ id:'r'+Date.now(), name:form.name, amount:a });
+    onAdd({ id:'r'+Date.now(), name:form.name, amount:a, date:form.date || today });
     onClose();
   };
   return (
     <ModalShell title="Ajouter un revenu" onClose={onClose}>
-      <div style={{ marginBottom:14 }}><Label>Source</Label><TextInput placeholder="ex : Salaire, Virement..." value={form.name} onChange={e => setForm(p => ({...p, name:e.target.value}))} /></div>
+      <div style={{ display:'flex', gap:10, marginBottom:14 }}>
+        <div style={{ flex:2 }}><Label>Source</Label><TextInput placeholder="ex : Salaire, Virement..." value={form.name} onChange={e => setForm(p => ({...p, name:e.target.value}))} /></div>
+        <div style={{ flex:1 }}>
+          <Label>Date</Label>
+          <input type="date" value={form.date} onChange={e => setForm(p => ({...p, date:e.target.value}))}
+            style={{ width:'100%', fontFamily:sans, fontSize:13, border:'none', borderBottom:`1.5px solid ${C.rose}`, outline:'none', padding:'6px 0', background:'transparent', color:C.vert }} />
+        </div>
+      </div>
       <div style={{ marginBottom:20 }}>
         <Label>Montant</Label>
         <input type="number" inputMode="decimal" step="0.01" placeholder="0,00" value={form.amount}
@@ -1129,7 +1137,8 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
   const joursRestants = Math.max(0, joursTotal - joursEcoules);
   const pctMois = joursTotal > 0 ? joursEcoules / joursTotal * 100 : 0;
   const totalDisponible = rev - bT;
-  const pctConsomme = totalDisponible > 0 ? Math.min(100, eT / totalDisponible * 100) : 0;
+  const depensesLibres = Math.max(0, totalDisponible - reste);
+  const pctConsomme = totalDisponible > 0 ? Math.min(100, depensesLibres / totalDisponible * 100) : 0;
   const ecart = pctConsomme - pctMois;
   let jaugeIcon, jaugeIconColor;
   if (reste < 0)       { jaugeIcon = 'ti-alert-circle';   jaugeIconColor = '#E8637A'; }
@@ -1643,8 +1652,11 @@ function RevenueRow({ r, i, onUpdate, onDelete, closed }) {
           onBlur={() => saveField('name')} onKeyDown={e => onKey(e, 'name')}
           style={{ fontFamily:sans, fontSize:15, color:C.vert, border:'none', borderBottom:`1.5px solid ${C.vert}`, outline:'none', background:'transparent', flex:1, minWidth:0 }} />
       ) : (
-        <span onClick={() => { if (closed) return; setNameVal(r.name); setEditing('name'); }}
-          style={{ fontFamily:sans, fontSize:15, color:C.vert, cursor: closed ? 'default' : 'text', flex:1, minWidth:0 }}>{r.name}</span>
+        <div onClick={() => { if (closed) return; setNameVal(r.name); setEditing('name'); }}
+          style={{ flex:1, minWidth:0, cursor: closed ? 'default' : 'text' }}>
+          <div style={{ fontFamily:sans, fontSize:15, color:C.vert }}>{r.name}</div>
+          {r.date && <div style={{ fontFamily:sans, fontSize:11, color:C.muted, marginTop:2 }}>{new Date(r.date + 'T12:00:00').toLocaleDateString('fr-FR', { day:'numeric', month:'long' })}</div>}
+        </div>
       )}
       <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
         {editing === 'amount' ? (
