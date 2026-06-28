@@ -1178,7 +1178,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
                   <div style={{ position:'absolute', top:-3.5, left:`${pctMois}%`, transform:'translateX(-50%)', width:2, height:12, background:'rgba(255,255,255,0.8)', borderRadius:1 }} />
                 </div>
               </div>
-              <div style={{ marginTop:6, textAlign:'center' }}>
+              <div style={{ marginTop:4, marginBottom:4, textAlign:'center' }}>
                 <span style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.6)' }}>
                   {Math.round(pctConsomme)}% du reste à vivre dépensé, encore {joursRestants}j devant toi
                 </span>
