@@ -1164,7 +1164,10 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
           <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'white', marginBottom:4 }}>Reste à vivre du mois</div>
           {rev === 0
             ? <div style={{ fontFamily:serif, fontSize:26, fontStyle:'italic', color:C.rose, lineHeight:1.3 }}>Revenus non saisis</div>
-            : <div style={{ fontFamily:serif, fontSize:38, fontWeight:700, color: reste >= 0 ? C.rose : '#E8637A', lineHeight:1 }}>{fmtR(reste)}</div>
+            : <div style={{ display:'inline-flex', alignItems:'flex-end', gap:4 }}>
+                <span style={{ fontFamily:serif, fontSize:38, fontWeight:700, color: reste >= 0 ? C.rose : '#E8637A', lineHeight:1 }}>{fmtR(reste)}</span>
+                <span style={{ fontFamily:sans, fontSize:13, color:'rgba(255,255,255,0.45)', lineHeight:'1.15', paddingBottom:2 }}>/ {fmtR(totalDisponible)}</span>
+              </div>
           }
           {/* Jauge unique avec icône + trait de position mois */}
           {rev > 0 && (
