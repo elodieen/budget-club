@@ -862,7 +862,7 @@ const ICON_CHOICES = [
   'ti-paw','ti-baby-carriage','ti-shirt','ti-tool','ti-phone',
 ];
 
-export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu }) => {
+export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu, noRevenu }) => {
   const isEdit = !!initial;
   const [type, setType]             = useState('depense');
   const [form, setForm]             = useState(
@@ -915,7 +915,7 @@ export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu
 
   return (
     <ModalShell title={modalTitle} onClose={onClose}>
-      {!isEdit && (
+      {!isEdit && !noRevenu && (
         <div style={{ display:'flex', justifyContent:'center', gap:10, marginBottom:16 }}>
           {[{id:'depense',label:'Dépense'},{id:'revenu',label:'Revenu'}].map(t => (
             <button key={t.id} onClick={() => setType(t.id)}
@@ -3093,7 +3093,7 @@ function MainApp({ onProfileAction }) {
             onClose={() => setShowFabSheet(false)}
           />
         )}
-        {!m.closed && modal === 'dep'  && <AddExpenseModal onAdd={addExpense} onClose={() => setModal(null)} onAddRevenu={addRevenu} />}
+        {!m.closed && modal === 'dep'  && <AddExpenseModal onAdd={addExpense} onClose={() => setModal(null)} onAddRevenu={addRevenu} noRevenu={view === 'depenses' && depTab === 'depenses'} />}
         {!m.closed && modal === 'rev'  && <AddRevenuModal  onAdd={addRevenu}  onClose={() => setModal(null)} />}
         {!m.closed && modal === 'bill' && <AddBillModal    onAdd={addBill}    onClose={() => setModal(null)} />}
       </div>
