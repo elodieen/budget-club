@@ -1172,7 +1172,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
           {rev > 0 && (
             <div style={{ marginTop:10 }}>
               <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                <i className={jaugeIcon} style={{ fontSize:14, color:jaugeIconColor, flexShrink:0 }} />
+                <i className={`ti ${jaugeIcon}`} style={{ fontSize:14, color:jaugeIconColor, flexShrink:0 }} />
                 <div style={{ flex:1, position:'relative', height:5, background:'rgba(255,255,255,0.15)', borderRadius:3 }}>
                   <div style={{ position:'absolute', top:0, left:0, height:'100%', width:`${pctConsomme}%`, background:'#EEC4C4', borderRadius:3, transition:'width 0.6s ease' }} />
                   <div style={{ position:'absolute', top:-3.5, left:`${pctMois}%`, transform:'translateX(-50%)', width:2, height:12, background:'rgba(255,255,255,0.8)', borderRadius:1 }} />
