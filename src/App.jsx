@@ -1127,16 +1127,9 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
   const joursTotal   = Math.round((budgetMEnd - budgetMStart) / 86400000);
   const joursEcoules = Math.max(0, Math.min(joursTotal, Math.floor((todayDate - budgetMStart) / 86400000)));
   const joursRestants = Math.max(0, joursTotal - joursEcoules);
-  const pctMois = joursEcoules / joursTotal * 100;
+  const pctMois = joursTotal > 0 ? joursEcoules / joursTotal * 100 : 0;
   const budgetDisponible = rev - bT;
-  const pctConsomme = budgetDisponible > 0 ? Math.min(200, eT / budgetDisponible * 100) : 0;
-  const euroParJour = Math.round(reste / joursRestants);
-  const ecart = pctConsomme - pctMois;
-  let verdict, verdictColor;
-  if (reste < 0)        { verdict = 'SOS budget';        verdictColor = '#E8637A'; }
-  else if (ecart > 15)  { verdict = 'Freine un peu';     verdictColor = '#EEC4C4'; }
-  else if (ecart >= -10){ verdict = 'Parfait équilibre'; verdictColor = '#FFFFFF'; }
-  else                  { verdict = 'Girl boss';          verdictColor = '#FFFFFF'; }
+  const pctConsomme = budgetDisponible > 0 ? Math.min(100, eT / budgetDisponible * 100) : 0;
 
   const cb5    = m.catBudgets || {};
   const tvBgt5 = Object.values(cb5).reduce((s, v) => s + (parseFloat(v) || 0), 0);
@@ -1169,34 +1162,23 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
             ? <div style={{ fontFamily:serif, fontSize:26, fontStyle:'italic', color:C.rose, lineHeight:1.3 }}>Revenus non saisis</div>
             : <div style={{ fontFamily:serif, fontSize:38, fontWeight:700, color: reste >= 0 ? C.rose : '#E8637A', lineHeight:1 }}>{fmtR(reste)}</div>
           }
-          {/* Double jauge */}
+          {/* Jauge unique avec trait de position mois */}
           {rev > 0 && (
-            <div style={{ marginTop:10, display:'flex', flexDirection:'column', gap:5 }}>
-              {/* Barre 1 : Mois écoulé */}
-              <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                <span style={{ fontFamily:sans, fontSize:9, color:'rgba(255,255,255,0.6)', width:70, textAlign:'left', flexShrink:0 }}>Mois écoulé</span>
-                <div style={{ flex:1, height:4, background:'rgba(255,255,255,0.15)', borderRadius:2, overflow:'hidden' }}>
-                  <div style={{ height:'100%', width:`${Math.min(100, pctMois)}%`, background:'rgba(255,255,255,0.5)', borderRadius:2, transition:'width 0.6s cubic-bezier(0.23,1,0.32,1)' }} />
-                </div>
-                <span style={{ fontFamily:sans, fontSize:9, color:'rgba(255,255,255,0.6)', width:28, textAlign:'right', flexShrink:0 }}>{Math.round(pctMois)}%</span>
+            <div style={{ marginTop:10 }}>
+              <div style={{ position:'relative', height:5, background:'rgba(255,255,255,0.15)', borderRadius:3 }}>
+                {/* Remplissage rose : budget consommé */}
+                <div style={{ position:'absolute', top:0, left:0, height:'100%', width:`${pctConsomme}%`, background:'#EEC4C4', borderRadius:3, transition:'width 0.6s ease' }} />
+                {/* Trait vertical : position dans le mois */}
+                <div style={{ position:'absolute', top:-3.5, left:`${pctMois}%`, transform:'translateX(-50%)', width:2, height:12, background:'rgba(255,255,255,0.8)', borderRadius:1 }} />
               </div>
-              {/* Barre 2 : Budget utilisé */}
-              <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                <span style={{ fontFamily:sans, fontSize:9, color:'rgba(255,255,255,0.6)', width:70, textAlign:'left', flexShrink:0 }}>Budget utilisé</span>
-                <div style={{ flex:1, height:4, background:'rgba(255,255,255,0.15)', borderRadius:2, overflow:'hidden' }}>
-                  <div style={{ height:'100%', width:`${Math.min(100, pctConsomme)}%`, background:'#EEC4C4', borderRadius:2, transition:'width 0.6s cubic-bezier(0.23,1,0.32,1)' }} />
-                </div>
-                <span style={{ fontFamily:sans, fontSize:9, color:'rgba(255,255,255,0.6)', width:28, textAlign:'right', flexShrink:0 }}>{Math.round(Math.min(100, pctConsomme))}%</span>
+              <div style={{ marginTop:6, display:'flex', flexDirection:'column', gap:2 }}>
+                <span style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.6)' }}>
+                  {Math.round(pctConsomme)}% du reste à vivre consommé
+                </span>
+                <span style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.6)' }}>
+                  {joursRestants}j restants ({Math.round(pctMois)}% du mois écoulé)
+                </span>
               </div>
-            </div>
-          )}
-          {/* Verdict + jours restants — uniquement si le mois n'est pas fini */}
-          {rev > 0 && joursRestants > 0 && (
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:7 }}>
-              <span style={{ fontFamily:serif, fontSize:13, color:verdictColor, lineHeight:1 }}>{verdict}</span>
-              <span style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.6)' }}>
-                Il te reste {joursRestants}j · ~{euroParJour}€/jour
-              </span>
             </div>
           )}
         </div>
