@@ -970,9 +970,10 @@ export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu
           </div>
           <div style={{ marginBottom:14 }}>
             <Label>Catégorie</Label>
-            <div className={errs.cat ? 'field-err' : ''} style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:8 }}>
+            <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:8 }}>
               {allCats.map(c => (
                 <span key={c.id} onClick={() => upd('cat', c.id)}
+                  className={errs.cat ? 'cat-err' : ''}
                   style={{ padding:'5px 11px', borderRadius:20, fontFamily:sans, fontSize:11, cursor:'pointer',
                     border:`1.5px solid ${form.cat === c.id ? C.vert : 'rgba(28,41,28,0.15)'}`,
                     background: form.cat === c.id ? C.vert : C.roseL,

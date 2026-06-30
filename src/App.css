@@ -170,6 +170,14 @@
   border-radius: 8px;
 }
 
+@keyframes pulse-error {
+  0%, 100% { border-color: #E8637A; }
+  50%       { border-color: transparent; }
+}
+.cat-err {
+  animation: pulse-error 0.4s ease 3;
+}
+
 .ticks {
   position: relative;
   width: 100%;
