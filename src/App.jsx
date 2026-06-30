@@ -1728,7 +1728,6 @@ function RevenueRow({ r, i, onUpdate, onDelete, closed }) {
       <div style={{ flex:1, minWidth:0 }}>
         <div style={{ display:'flex', alignItems:'center', gap:6 }}>
           <span style={{ fontFamily:sans, fontSize:15, color:C.vert }}>{r.name}</span>
-          {r.type === 'remboursement' && <span style={{ fontFamily:sans, fontSize:9, fontWeight:600, color:C.vert, background:C.rose, borderRadius:4, padding:'2px 5px', letterSpacing:0.5 }}>Remboursement</span>}
         </div>
         {r.date && <div style={{ fontFamily:sans, fontSize:11, color:C.muted, marginTop:2 }}>{new Date(r.date + 'T12:00:00').toLocaleDateString('fr-FR', { day:'numeric', month:'long' })}</div>}
       </div>
