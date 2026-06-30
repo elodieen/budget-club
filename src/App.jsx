@@ -786,9 +786,9 @@ const FAB = ({ view, setModal, setView, depTab, setRevType }) => {
       {open && <div onClick={() => setOpen(false)} style={{ position:'fixed', inset:0, zIndex:9 }} />}
       {open && isMenuView && (
         <div style={{ position:'absolute', bottom:128, right:16, background:'white', borderRadius:14, boxShadow:'0 4px 24px rgba(28,41,28,0.18)', overflow:'hidden', zIndex:11, minWidth:200 }}>
-          {view === 'accueil' && menuItem('Dépense', 'ti-minus', () => { setModal('dep'); setOpen(false); })}
           {menuItem('Revenu', 'ti-plus', () => { setRevType('revenu'); setModal('rev'); setOpen(false); })}
           {menuItem('Remboursement', 'ti-arrow-back-up', () => { setRevType('remboursement'); setModal('rev'); setOpen(false); })}
+          {view === 'accueil' && menuItem('Dépense', 'ti-minus', () => { setModal('dep'); setOpen(false); })}
         </div>
       )}
       <button onClick={handleClick}
@@ -1057,7 +1057,7 @@ export const AddRevenuModal = ({ onAdd, onClose, revType='revenu' }) => {
           onChange={e => setForm(p => ({...p, amount:e.target.value}))}
           style={{ width:'100%', fontFamily:serif, fontSize:36, fontWeight:700, border:'none', borderBottom:`2px solid ${C.rose}`, outline:'none', padding:'4px 0', background:'transparent', color:C.vert }} />
       </div>
-      <SubmitBtn label="Ajouter le revenu" onClick={submit} />
+      <SubmitBtn label={revType === 'remboursement' ? 'Ajouter le remboursement' : 'Ajouter le revenu'} onClick={submit} />
     </ModalShell>
   );
 };
@@ -1205,7 +1205,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
               <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                 {jaugeIcon && <i className={`ti ${jaugeIcon}`} style={{ fontSize:14, color:jaugeIconColor, flexShrink:0 }} />}
                 <div style={{ flex:1, position:'relative', height:5, background:'rgba(255,255,255,0.15)', borderRadius:3 }}>
-                  <div style={{ position:'absolute', top:0, left:0, height:'100%', width:`${pctConsomme}%`, background:'#EEC4C4', borderRadius:3, transition:'width 0.6s ease' }} />
+                  <div style={{ position:'absolute', top:0, left:0, height:'100%', width:'100%', background:'#EEC4C4', borderRadius:3, transformOrigin:'left', transform:`scaleX(${pctConsomme / 100})`, transition:'transform 0.6s ease' }} />
                   <div style={{ position:'absolute', top:-3.5, left:`${pctMois}%`, transform:'translateX(-50%)', width:2, height:12, background:'rgba(255,255,255,0.8)', borderRadius:1 }} />
                 </div>
               </div>
