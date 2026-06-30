@@ -161,6 +161,15 @@
   }
 }
 
+@keyframes fieldPulse {
+  0%,100% { box-shadow: 0 0 0 2.5px #E8637A; }
+  50%      { box-shadow: 0 0 0 2.5px rgba(232,99,122,0.15); }
+}
+.field-err {
+  animation: fieldPulse 0.22s ease 3;
+  border-radius: 8px;
+}
+
 .ticks {
   position: relative;
   width: 100%;

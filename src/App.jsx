@@ -870,13 +870,16 @@ export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu
   const [newCatIcon, setNewCatIcon] = useState('ti-tag');
   const [sugsVisible, setSugsVisible]   = useState(false);
   const [filteredSugs, setFilteredSugs] = useState([]);
+  const [errs, setErrs]                 = useState({});
+
+  const flashErrs = (e) => { setErrs(e); setTimeout(() => setErrs({}), 700); };
 
   const allCats = sortCatsWithDiversLast([...CATS, ...customCats]);
   const upd = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   const submit = () => {
     const a = parseFloat(form.amount);
-    if (!a || !form.cat) return;
+    if (!a || !form.cat) { flashErrs({ amount: !a, cat: !form.cat }); return; }
     const typeField = expType === 'remboursement' ? { type:'remboursement' } : {};
     if (isEdit) {
       onUpdate({ ...initial, name:form.name, amount:a, cat:form.cat, date:form.date, ...typeField });
@@ -889,7 +892,7 @@ export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu
 
   const submitRevenu = () => {
     const a = parseFloat(revForm.amount);
-    if (!a || !revForm.name) return;
+    if (!a || !revForm.name) { flashErrs({ revAmount: !a, revName: !revForm.name }); return; }
     onAddRevenu?.({ id:'r'+Date.now(), name:revForm.name, amount:a });
     onClose();
   };
@@ -933,11 +936,12 @@ export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu
             <Label>Montant</Label>
             <input type="number" inputMode="decimal" step="0.01" placeholder="0,00" value={revForm.amount}
               onChange={e => setRevForm(p => ({...p, amount:e.target.value}))}
+              className={errs.revAmount ? 'field-err' : ''}
               style={{ width:'100%', fontFamily:serif, fontSize:36, fontWeight:700, border:'none', borderBottom:`2px solid ${C.rose}`, outline:'none', padding:'4px 0', background:'transparent', color:C.vert }} />
           </div>
           <div style={{ marginBottom:20 }}>
             <Label>Nom</Label>
-            <TextInput placeholder="ex : Remboursement mutuelle" value={revForm.name} onChange={e => setRevForm(p => ({...p, name:e.target.value}))} />
+            <TextInput placeholder="ex : Remboursement mutuelle" value={revForm.name} onChange={e => setRevForm(p => ({...p, name:e.target.value}))} className={errs.revName ? 'field-err' : ''} />
           </div>
           <SubmitBtn label="Valider" onClick={submitRevenu} />
         </>
@@ -961,11 +965,12 @@ export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu
             <Label>Montant</Label>
             <input type="number" inputMode="decimal" step="0.01" placeholder="0,00" value={form.amount}
               onChange={e => upd('amount', e.target.value)}
+              className={errs.amount ? 'field-err' : ''}
               style={{ width:'100%', fontFamily:serif, fontSize:36, fontWeight:700, border:'none', borderBottom:`2px solid ${C.rose}`, outline:'none', padding:'4px 0', background:'transparent', color:C.vert }} />
           </div>
           <div style={{ marginBottom:14 }}>
             <Label>Catégorie</Label>
-            <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:8 }}>
+            <div className={errs.cat ? 'field-err' : ''} style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:8 }}>
               {allCats.map(c => (
                 <span key={c.id} onClick={() => upd('cat', c.id)}
                   style={{ padding:'5px 11px', borderRadius:20, fontFamily:sans, fontSize:11, cursor:'pointer',
@@ -1054,9 +1059,11 @@ export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu
 export const AddRevenuModal = ({ onAdd, onClose, revType='revenu' }) => {
   const today = new Date().toISOString().slice(0, 10);
   const [form, setForm] = useState({ name:'', amount:'', date:today });
+  const [errs, setErrs] = useState({});
+  const flashErrs = (e) => { setErrs(e); setTimeout(() => setErrs({}), 700); };
   const submit = () => {
     const a = parseFloat(form.amount);
-    if (!a || !form.name) return;
+    if (!a || !form.name) { flashErrs({ amount: !a, name: !form.name }); return; }
     onAdd({ id:'r'+Date.now(), name:form.name, amount:a, date:form.date || today, type:revType });
     onClose();
   };
@@ -1064,7 +1071,7 @@ export const AddRevenuModal = ({ onAdd, onClose, revType='revenu' }) => {
   return (
     <ModalShell title={title} onClose={onClose}>
       <div style={{ display:'flex', gap:10, marginBottom:14 }}>
-        <div style={{ flex:2 }}><Label>Source</Label><TextInput placeholder="ex : Salaire, Virement..." value={form.name} onChange={e => setForm(p => ({...p, name:e.target.value}))} /></div>
+        <div style={{ flex:2 }}><Label>Source</Label><TextInput placeholder="ex : Salaire, Virement..." value={form.name} onChange={e => setForm(p => ({...p, name:e.target.value}))} className={errs.name ? 'field-err' : ''} /></div>
         <div style={{ flex:1 }}>
           <Label>Date</Label>
           <input type="date" value={form.date} onChange={e => setForm(p => ({...p, date:e.target.value}))}
@@ -1075,6 +1082,7 @@ export const AddRevenuModal = ({ onAdd, onClose, revType='revenu' }) => {
         <Label>Montant</Label>
         <input type="number" inputMode="decimal" step="0.01" placeholder="0,00" value={form.amount}
           onChange={e => setForm(p => ({...p, amount:e.target.value}))}
+          className={errs.amount ? 'field-err' : ''}
           style={{ width:'100%', fontFamily:serif, fontSize:36, fontWeight:700, border:'none', borderBottom:`2px solid ${C.rose}`, outline:'none', padding:'4px 0', background:'transparent', color:C.vert }} />
       </div>
       <SubmitBtn label={revType === 'remboursement' ? 'Ajouter le remboursement' : 'Ajouter le revenu'} onClick={submit} />
@@ -1085,19 +1093,22 @@ export const AddRevenuModal = ({ onAdd, onClose, revType='revenu' }) => {
 // Modal Ajouter facture
 export const AddBillModal = ({ onAdd, onClose }) => {
   const [form, setForm] = useState({ name:'', amount:'' });
+  const [errs, setErrs] = useState({});
+  const flashErrs = (e) => { setErrs(e); setTimeout(() => setErrs({}), 700); };
   const submit = () => {
     const a = parseFloat(form.amount);
-    if (!a || !form.name) return;
+    if (!a || !form.name) { flashErrs({ amount: !a, name: !form.name }); return; }
     onAdd({ id:'b'+Date.now(), name:form.name, amount:a, realAmount:a, paid:false, paidDate:'' });
     onClose();
   };
   return (
     <ModalShell title="Ajouter une facture" onClose={onClose}>
-      <div style={{ marginBottom:14 }}><Label>Nom de la facture</Label><TextInput placeholder="ex : EDF, Loyer..." value={form.name} onChange={e => setForm(p => ({...p, name:e.target.value}))} /></div>
+      <div style={{ marginBottom:14 }}><Label>Nom de la facture</Label><TextInput placeholder="ex : EDF, Loyer..." value={form.name} onChange={e => setForm(p => ({...p, name:e.target.value}))} className={errs.name ? 'field-err' : ''} /></div>
       <div style={{ marginBottom:20 }}>
         <Label>Montant</Label>
         <input type="number" inputMode="decimal" step="0.01" placeholder="0,00" value={form.amount}
           onChange={e => setForm(p => ({...p, amount:e.target.value}))}
+          className={errs.amount ? 'field-err' : ''}
           style={{ width:'100%', fontFamily:serif, fontSize:36, fontWeight:700, border:'none', borderBottom:`2px solid ${C.rose}`, outline:'none', padding:'4px 0', background:'transparent', color:C.vert }} />
       </div>
       <SubmitBtn label="Ajouter la facture" onClick={submit} />
