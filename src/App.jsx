@@ -1135,6 +1135,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
   const [soldeFinalInput, setSoldeFinalInput] = useState('');
   const closeRef = useRef(null);
   const rev       = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
+  const revRmb    = m.revenues.filter(r => r.type === 'remboursement').reduce((s,r) => s + (r.amount||0), 0);
   const allBills  = m.bills.filter(b => b.selected !== false);
   const bT        = allBills.reduce((s,b) => s + billValue(b), 0);
   const bTPrevu   = allBills.reduce((s,b) => s + b.amount, 0);
@@ -1220,7 +1221,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
         {/* 4 mini-cards */}
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
           {[
-            { label:'Revenus',  val:fmtP(rev), icon:'ti-credit-card',  vw:'revenus' },
+            { label:'Revenus',  val:fmtP(rev), icon:'ti-credit-card',  vw:'revenus', sub: revRmb > 0 ? `+${fmtP(revRmb)} remb.` : null, subSize: 9 },
             { label:'Factures', val:'', node:<><span style={{ color:C.vert }}>{fmtP(paidAmt)}</span><span style={{ color:C.vert }}> / {fmtP(bT)}</span></>, sub:`${pN}/${bN} prélevées`, icon:'ti-file-invoice', vw:'depenses' },
             { label:'Dépenses', val:fmtP(eT),  icon:'ti-shopping-bag', vw:'depenses' },
             { label:'Épargne',  val:fmtP(epg), icon:'ti-pig-money',    vw:'epargne'  },
@@ -1232,7 +1233,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
                 <i className={`ti ${c.icon}`} style={{ fontSize:15, color:'rgba(28,41,28,0.25)' }} />
               </div>
               <div style={{ fontFamily:serif, fontSize:c.sub ? 14 : 17, fontWeight:600, color:C.vert }}>{c.node || c.val}</div>
-              {c.sub && <div style={{ fontFamily:sans, fontSize:10, color:C.muted, marginTop:1 }}>{c.sub}</div>}
+              {c.sub && <div style={{ fontFamily:sans, fontSize:c.subSize || 10, color:C.muted, marginTop:1 }}>{c.sub}</div>}
             </div>
           ))}
         </div>
