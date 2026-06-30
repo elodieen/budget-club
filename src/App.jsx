@@ -1243,7 +1243,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
           {[
             { label:'Revenus',  val:fmtP(rev), icon:'ti-credit-card',  vw:'revenus' },
             { label:'Factures', val:'', node:<><span style={{ color:C.vert }}>{fmtP(paidAmt)}</span><span style={{ color:C.vert }}> / {fmtP(bT)}</span></>, sub:`${pN}/${bN} prélevées`, icon:'ti-file-invoice', vw:'depenses' },
-            { label:'Épargne',  val:fmtP(epg), icon:'ti-pig-money',    vw:'epargne'  },
+            { label:'Épargne',  val:fmtP(epg), icon:'ti-building-bank', vw:'epargne'  },
             { label:'Dépenses', val:fmtP(eT - expRmb), icon:'ti-shopping-bag', vw:'depenses' },
           ].map(c => (
             <div key={c.label} onClick={() => setView(c.vw)}
