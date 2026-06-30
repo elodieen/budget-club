@@ -728,13 +728,12 @@ const TABS = [
 ];
 
 const BottomNav = ({ view, setView, m }) => {
-  const rev      = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
+  const rev      = m.revenues.filter(r => (r.type || 'revenu') === 'revenu').reduce((s,r) => s + (r.amount||0), 0);
   const cb       = m.catBudgets || {};
   const bT       = m.bills.reduce((s,b) => s + b.amount, 0);
   const tv       = Object.values(cb).reduce((s, v) => s + (parseFloat(v) || 0), 0);
   const nonV     = Math.max(0, rev - bT - tv);
-  console.log('Budget check:', rev, tv, nonV);
-  const badges   = { revenus: m.revenues.length > 0, budget: m.budgetLocked || (rev > 0 && tv > 0 && nonV < 1), depenses: !!m.closed };
+  const badges   = { revenus: m.revenues.filter(r => (r.type||'revenu') === 'revenu').length > 0, budget: m.budgetLocked || (rev > 0 && tv > 0 && nonV < 1), depenses: !!m.closed };
 
   return (
     <div style={{ display:'flex', alignItems:'stretch', background:C.nav, flexShrink:0, paddingTop:8, paddingBottom:'env(safe-area-inset-bottom)' }}>
@@ -786,8 +785,7 @@ const FAB = ({ view, setModal, setView, depTab, setRevType }) => {
       {open && <div onClick={() => setOpen(false)} style={{ position:'fixed', inset:0, zIndex:9 }} />}
       {open && isMenuView && (
         <div style={{ position:'absolute', bottom:128, right:16, background:'white', borderRadius:14, boxShadow:'0 4px 24px rgba(28,41,28,0.18)', overflow:'hidden', zIndex:11, minWidth:200 }}>
-          {menuItem('Revenu', 'ti-plus', () => { setRevType('revenu'); setModal('rev'); setOpen(false); })}
-          {menuItem('Remboursement', 'ti-arrow-back-up', () => { setRevType('remboursement'); setModal('rev'); setOpen(false); })}
+          {menuItem('Revenu', 'ti-plus', () => { setModal('rev'); setOpen(false); })}
           {view === 'accueil' && menuItem('Dépense', 'ti-minus', () => { setModal('dep'); setOpen(false); })}
         </div>
       )}
@@ -856,6 +854,7 @@ const ICON_CHOICES = [
 export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu, noRevenu }) => {
   const isEdit = !!initial;
   const [type, setType]             = useState('depense');
+  const [expType, setExpType]       = useState(initial?.type === 'remboursement' ? 'remboursement' : 'depense');
   const [form, setForm]             = useState(
     initial
       ? { amount: String(initial.amount), cat: initial.cat, name: initial.name || '', date: initial.date || new Date().toISOString().split('T')[0] }
@@ -875,10 +874,11 @@ export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu
   const submit = () => {
     const a = parseFloat(form.amount);
     if (!a || !form.cat) return;
+    const typeField = expType === 'remboursement' ? { type:'remboursement' } : {};
     if (isEdit) {
-      onUpdate({ ...initial, name:form.name, amount:a, cat:form.cat, date:form.date });
+      onUpdate({ ...initial, name:form.name, amount:a, cat:form.cat, date:form.date, ...typeField });
     } else {
-      onAdd({ id:'e'+Date.now(), name:form.name, amount:a, cat:form.cat, date:form.date });
+      onAdd({ id:'e'+Date.now(), name:form.name, amount:a, cat:form.cat, date:form.date, ...typeField });
       if (form.name && form.cat) saveDepSuggestion(form.name, form.cat);
     }
     onClose();
@@ -902,7 +902,10 @@ export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu
     setShowNewCat(false);
   };
 
-  const modalTitle = isEdit ? 'Modifier la dépense' : type === 'revenu' ? 'Ajouter un revenu' : 'Nouvelle dépense';
+  const modalTitle = isEdit
+    ? (expType === 'remboursement' ? 'Modifier le remboursement' : 'Modifier la dépense')
+    : type === 'revenu' ? 'Ajouter un revenu'
+    : expType === 'remboursement' ? 'Nouveau remboursement' : 'Nouvelle dépense';
 
   return (
     <ModalShell title={modalTitle} onClose={onClose}>
@@ -937,6 +940,18 @@ export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu
         </>
       ) : (
         <>
+          <div style={{ display:'flex', justifyContent:'center', gap:10, marginBottom:16 }}>
+            {[{id:'depense',label:'Dépense'},{id:'remboursement',label:'Remboursement'}].map(t => (
+              <button key={t.id} onClick={() => setExpType(t.id)}
+                style={{ width:130, padding:'10px 0', borderRadius:30, fontSize:13, fontWeight:700, cursor:'pointer',
+                  fontFamily:serif, letterSpacing:1, textTransform:'uppercase', transition:'all .2s',
+                  background: expType === t.id ? C.vert : C.card,
+                  color:      expType === t.id ? 'white' : C.vert,
+                  border:     `1.5px solid ${expType === t.id ? C.vert : C.rose}` }}>
+                {t.label}
+              </button>
+            ))}
+          </div>
           <div style={{ marginBottom:14 }}>
             <Label>Montant</Label>
             <input type="number" inputMode="decimal" step="0.01" placeholder="0,00" value={form.amount}
@@ -1023,7 +1038,7 @@ export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu
               </div>
             )}
           </div>
-          <SubmitBtn label={isEdit ? 'Modifier la dépense' : 'Valider la dépense'} onClick={submit} />
+          <SubmitBtn label={isEdit ? (expType === 'remboursement' ? 'Modifier le remboursement' : 'Modifier la dépense') : (expType === 'remboursement' ? 'Valider le remboursement' : 'Valider la dépense')} onClick={submit} />
         </>
       )}
     </ModalShell>
@@ -1134,19 +1149,18 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
   const [confirmClose, setConfirmClose] = useState(false);
   const [soldeFinalInput, setSoldeFinalInput] = useState('');
   const closeRef = useRef(null);
-  const rev       = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
-  const revRmb    = m.revenues.filter(r => r.type === 'remboursement').reduce((s,r) => s + (r.amount||0), 0);
-  const revOnly   = rev - revRmb;
+  const rev    = m.revenues.filter(r => (r.type || 'revenu') === 'revenu').reduce((s,r) => s + (r.amount||0), 0);
   const allBills  = m.bills.filter(b => b.selected !== false);
   const bT        = allBills.reduce((s,b) => s + billValue(b), 0);
   const bTPrevu   = allBills.reduce((s,b) => s + b.amount, 0);
   const paidBills = allBills.filter(b => b.paid);
   const paidAmt   = paidBills.reduce((s,b) => s + billValue(b), 0);
   const pN = paidBills.length, bN = allBills.length;
-  const eT   = m.expenses.filter(e => e.cat !== 'epargne_livret' && e.cat !== 'epargne_pea').reduce((s,e) => s + (e.amount||0), 0);
-  const epg  = m.expenses.filter(e => (e.cat === 'epargne_livret' || e.cat === 'epargne_pea')).reduce((s,e) => s + (e.amount||0), 0);
-  const reste = Math.round((rev - bT - eT - epg) * 100) / 100;
-  const pp    = rev > 0 ? Math.min(100, Math.round(eT / rev * 100)) : 0;
+  const expRmb = m.expenses.filter(e => e.type === 'remboursement' && e.cat !== 'epargne_livret' && e.cat !== 'epargne_pea').reduce((s,e) => s + (e.amount||0), 0);
+  const eT     = m.expenses.filter(e => e.type !== 'remboursement' && e.cat !== 'epargne_livret' && e.cat !== 'epargne_pea').reduce((s,e) => s + (e.amount||0), 0);
+  const epg    = m.expenses.filter(e => (e.cat === 'epargne_livret' || e.cat === 'epargne_pea')).reduce((s,e) => s + (e.amount||0), 0);
+  const reste  = Math.round((rev - bT - eT + expRmb - epg) * 100) / 100;
+  const pp     = rev > 0 ? Math.min(100, Math.round((eT - expRmb) / rev * 100)) : 0;
 
   // Indicateur de rythme
   const startDay = getStartDay();
@@ -1222,9 +1236,9 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
         {/* 4 mini-cards */}
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
           {[
-            { label:'Revenus',  val:fmtP(revOnly), icon:'ti-credit-card',  vw:'revenus', sub: revRmb > 0 ? `+${fmtP(revRmb)} remb.` : null, subSize: 9 },
+            { label:'Revenus',  val:fmtP(rev), icon:'ti-credit-card',  vw:'revenus' },
             { label:'Factures', val:'', node:<><span style={{ color:C.vert }}>{fmtP(paidAmt)}</span><span style={{ color:C.vert }}> / {fmtP(bT)}</span></>, sub:`${pN}/${bN} prélevées`, icon:'ti-file-invoice', vw:'depenses' },
-            { label:'Dépenses', val:fmtP(eT),  icon:'ti-shopping-bag', vw:'depenses' },
+            { label:'Dépenses', val:fmtP(eT - expRmb), icon:'ti-shopping-bag', vw:'depenses', sub: expRmb > 0 ? `− ${fmtP(expRmb)} remboursé` : null, subSize: 9 },
             { label:'Épargne',  val:fmtP(epg), icon:'ti-pig-money',    vw:'epargne'  },
           ].map(c => (
             <div key={c.label} onClick={() => setView(c.vw)}
@@ -1739,20 +1753,10 @@ function RevenueRow({ r, i, onUpdate, onDelete, closed }) {
 }
 
 export function RevenusView({ m, mi, setMi, updateData, onProfileAction }) {
-  const revenus  = m.revenues.filter(r => (r.type || 'revenu') === 'revenu');
-  const rembours = m.revenues.filter(r => r.type === 'remboursement');
-  const totalRev = revenus.reduce((s,r) => s + (r.amount||0), 0);
-  const totalRmb = rembours.reduce((s,r) => s + (r.amount||0), 0);
-  const total    = totalRev + totalRmb;
+  const revenus = m.revenues.filter(r => (r.type || 'revenu') === 'revenu');
+  const total   = revenus.reduce((s,r) => s + (r.amount||0), 0);
   const del = (i)          => updateData(mm => { mm.revenues = mm.revenues.filter((_,idx) => idx !== i); });
   const upd = (i, updated) => updateData(mm => { mm.revenues = mm.revenues.map((r, idx) => idx === i ? updated : r); });
-
-  const SectionHeader = ({ label, subtotal }) => (
-    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 2px 6px' }}>
-      <span style={{ fontFamily:sans, fontSize:10, fontWeight:700, letterSpacing:1.5, textTransform:'uppercase', color:C.muted }}>{label}</span>
-      <span style={{ fontFamily:serif, fontSize:14, color:C.vert }}>{fmtR(subtotal)}</span>
-    </div>
-  );
 
   return (
     <>
@@ -1766,31 +1770,13 @@ export function RevenusView({ m, mi, setMi, updateData, onProfileAction }) {
           <span style={{ fontFamily:sans, fontSize:12, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.5)' }}>Total</span>
           <span style={{ fontFamily:serif, fontSize:30, fontWeight:700, color:C.rose }}>{fmtR(total)}</span>
         </div>
-        {totalRmb > 0 && (
-          <div style={{ display:'flex', justifyContent:'flex-end', gap:12, marginTop:3 }}>
-            <span style={{ fontFamily:sans, fontSize:11, color:'rgba(255,255,255,0.45)' }}>Revenus {fmtR(totalRev)}</span>
-            <span style={{ fontFamily:sans, fontSize:11, color:'rgba(255,255,255,0.45)' }}>·</span>
-            <span style={{ fontFamily:sans, fontSize:11, color:'rgba(255,255,255,0.45)' }}>Remboursements {fmtR(totalRmb)}</span>
-          </div>
-        )}
       </div>
       {/* Liste scrollable */}
       <div style={{ flex:1, overflowY:'auto', padding:'4px 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
-        {m.revenues.length === 0 && (
+        {revenus.length === 0 && (
           <div style={{ textAlign:'center', padding:32, color:C.muted, fontFamily:sans, fontSize:13 }}>Aucun revenu saisi ce mois</div>
         )}
-        {revenus.length > 0 && (
-          <>
-            <SectionHeader label="Revenus" subtotal={totalRev} />
-            {revenus.map(r => { const i = m.revenues.indexOf(r); return <RevenueRow key={r.id} r={r} i={i} onUpdate={upd} onDelete={del} closed={m.closed} />; })}
-          </>
-        )}
-        {rembours.length > 0 && (
-          <>
-            <SectionHeader label="Remboursements" subtotal={totalRmb} />
-            {rembours.map(r => { const i = m.revenues.indexOf(r); return <RevenueRow key={r.id} r={r} i={i} onUpdate={upd} onDelete={del} closed={m.closed} />; })}
-          </>
-        )}
+        {revenus.map(r => { const i = m.revenues.indexOf(r); return <RevenueRow key={r.id} r={r} i={i} onUpdate={upd} onDelete={del} closed={m.closed} />; })}
       </div>
     </>
   );
@@ -1803,11 +1789,13 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
   const unpaid  = bills.filter(b => !b.paid);
   const paid    = bills.filter(b =>  b.paid);
   const bT      = bills.reduce((s,b) => s + billValue(b), 0);
-  const eT      = exps.reduce((s,e) => s + (e.amount||0), 0);
+  const expRmb  = exps.filter(e => e.type === 'remboursement').reduce((s,e) => s + (e.amount||0), 0);
+  const eTgross = exps.reduce((s,e) => s + (e.amount||0), 0);
+  const eT      = eTgross - 2 * expRmb;
   const paidAmt = paid.reduce((s,b) => s + billValue(b), 0);
   const pN = paid.length, bN = bills.length;
 
-  const rev   = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
+  const rev   = m.revenues.filter(r => (r.type || 'revenu') === 'revenu').reduce((s,r) => s + (r.amount||0), 0);
   const reste = Math.round((rev - bT - eT) * 100) / 100;
 
   const [xBill, setXBill]           = useState(null);
@@ -1900,7 +1888,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
                     <div style={{ fontFamily:sans, fontSize:11, color:C.muted }}>{cat.label}</div>
                   </div>
                   <div style={{ textAlign:'right', flexShrink:0 }}>
-                    <div style={{ fontFamily:serif, fontSize:16, fontWeight:600, color:C.vert }}>-{fmtR(e.amount)}</div>
+                    <div style={{ fontFamily:serif, fontSize:16, fontWeight:600, color:C.vert }}>{e.type === 'remboursement' ? '+' : '-'}{fmtR(e.amount)}</div>
                     <div style={{ fontFamily:sans, fontSize:10, color:C.muted }}>{e.date ? new Date(e.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : ''}</div>
                   </div>
                   {!m.closed && (
