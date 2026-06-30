@@ -1185,17 +1185,17 @@ const DeleteBillScopeModal = ({ bill, onDeleteThisMonth, onDeletePermanently, on
     </div>
     <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
       <button onClick={onDeleteThisMonth}
-        style={{ textAlign:'left', padding:'12px 16px', background:C.beige, border:`1px solid ${C.border}`, borderRadius:12, cursor:'pointer', fontFamily:sans, width:'100%' }}>
+        style={{ textAlign:'left', padding:'12px 16px', background:C.beige, border:'1px solid rgba(28,41,28,0.15)', borderRadius:12, cursor:'pointer', fontFamily:sans, width:'100%' }}>
         <div style={{ fontSize:13, fontWeight:600, color:C.vert, marginBottom:3 }}>Ce mois uniquement</div>
         <div style={{ fontSize:11, color:C.muted }}>La facture reste dans les mois suivants</div>
       </button>
       <button onClick={onDeletePermanently}
-        style={{ textAlign:'left', padding:'12px 16px', background:'rgba(232,99,122,0.07)', border:`1px solid rgba(232,99,122,0.3)`, borderRadius:12, cursor:'pointer', fontFamily:sans, width:'100%' }}>
-        <div style={{ fontSize:13, fontWeight:600, color:'#C0394E', marginBottom:3 }}>Supprimer définitivement</div>
+        style={{ textAlign:'left', padding:'12px 16px', background:C.beige, border:'1px solid rgba(28,41,28,0.15)', borderRadius:12, cursor:'pointer', fontFamily:sans, width:'100%' }}>
+        <div style={{ fontSize:13, fontWeight:600, color:C.vert, marginBottom:3 }}>Supprimer définitivement</div>
         <div style={{ fontSize:11, color:C.muted }}>Retire de tous les mois à venir</div>
       </button>
       <button onClick={onClose}
-        style={{ padding:'10px 0', background:'none', border:`1px solid ${C.border}`, borderRadius:12, cursor:'pointer', fontFamily:sans, fontSize:13, color:C.muted, width:'100%' }}>
+        style={{ padding:'10px 0', background:'white', border:'1px solid rgba(28,41,28,0.1)', borderRadius:12, cursor:'pointer', fontFamily:sans, fontSize:13, color:C.vert, width:'100%' }}>
         Annuler
       </button>
     </div>
@@ -2058,12 +2058,17 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
             {unpaid.length > 0 && <div style={{ padding:'6px 0 8px' }}><span style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:1, textTransform:'uppercase', color:C.muted }}>À prélever — {unpaid.length}</span></div>}
             {unpaid.map((b) => (
               <div key={b.id} style={{ background:C.card, borderRadius:12, marginBottom:8, border:`0.5px solid ${C.border}` }}>
-                <div onClick={() => clickRow(m.bills.indexOf(b))}
-                  style={{ display:'flex', alignItems:'center', gap:10, padding:'13px 14px', cursor: m.facturesValidees || m.closed ? 'default' : 'pointer' }}>
-                  <div style={{ flex:1 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:10, padding:'13px 14px' }}>
+                  <div onClick={() => clickRow(m.bills.indexOf(b))} style={{ flex:1, cursor: m.facturesValidees || m.closed ? 'default' : 'pointer' }}>
                     <div style={{ fontFamily:sans, fontSize:13, fontWeight:500, color:C.text }}>{b.name}</div>
                     <div style={{ fontFamily:sans, fontSize:10, color:C.muted, marginTop:2 }}>En attente · {fmt2(b.amount)}</div>
                   </div>
+                  {!m.closed && (
+                    <button onClick={(e) => { e.stopPropagation(); setDeleteBillPending(b); }}
+                      style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(28,41,28,0.28)', fontSize:15, padding:'4px', flexShrink:0, display:'flex', alignItems:'center' }}>
+                      <i className="ti ti-trash" />
+                    </button>
+                  )}
                   <div onClick={(e) => { e.stopPropagation(); clickBill(m.bills.indexOf(b)); }}
                     style={{ width:28, height:28, borderRadius:'50%', background:C.roseL, border:`1.5px solid ${C.rose}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0 }}>
                     <i className="ti ti-check" style={{ fontSize:13, color:'#C8B4B4' }} />
