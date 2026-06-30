@@ -1652,47 +1652,87 @@ export function BudgetEditView({ m, updateData, setView }) {
 
 // Vue REVENUS
 function RevenueRow({ r, i, onUpdate, onDelete, closed }) {
-  const [editing, setEditing] = useState(null);
-  const [nameVal, setNameVal] = useState(r.name);
-  const [amtVal,  setAmtVal]  = useState(String(r.amount));
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({ name:'', amount:'', date:'', type:'revenu' });
 
-  const saveField = (field) => {
-    if (field === 'name') onUpdate(i, { ...r, name: nameVal.trim() || r.name });
-    else                  onUpdate(i, { ...r, amount: parseFloat(amtVal) || r.amount });
-    setEditing(null);
+  const openForm = () => {
+    setForm({ name: r.name, amount: String(r.amount), date: r.date || '', type: r.type || 'revenu' });
+    setOpen(true);
   };
-  const onKey = (e, field) => {
-    if (e.key === 'Enter')  saveField(field);
-    if (e.key === 'Escape') setEditing(null);
+
+  const save = () => {
+    const a = parseFloat(form.amount);
+    if (!a || !form.name.trim()) return;
+    onUpdate(i, { ...r, name: form.name.trim(), amount: a, date: form.date, type: form.type });
+    setOpen(false);
   };
+
+  const cancel = () => setOpen(false);
+
+  if (open) {
+    return (
+      <div style={{ background:C.beige, borderRadius:12, padding:'14px 16px', marginBottom:10, border:`1px solid ${C.border}` }}>
+        <div style={{ marginBottom:10 }}>
+          <Label>Nom</Label>
+          <input autoFocus value={form.name} onChange={e => setForm(p => ({ ...p, name:e.target.value }))}
+            style={{ width:'100%', padding:'8px 10px', border:`1px solid ${C.border}`, borderRadius:8, fontSize:14, color:C.vert, background:'white', fontFamily:sans, outline:'none', boxSizing:'border-box' }} />
+        </div>
+        <div style={{ display:'flex', gap:10, marginBottom:10 }}>
+          <div style={{ flex:1.5 }}>
+            <Label>Montant</Label>
+            <input type="number" inputMode="decimal" step="0.01" value={form.amount}
+              onChange={e => setForm(p => ({ ...p, amount:e.target.value }))}
+              style={{ width:'100%', padding:'8px 10px', border:`1px solid ${C.border}`, borderRadius:8, fontSize:15, color:C.vert, background:'white', fontFamily:serif, fontWeight:600, outline:'none', boxSizing:'border-box' }} />
+          </div>
+          <div style={{ flex:1 }}>
+            <Label>Date</Label>
+            <input type="date" value={form.date} onChange={e => setForm(p => ({ ...p, date:e.target.value }))}
+              style={{ width:'100%', padding:'8px 6px', border:`1px solid ${C.border}`, borderRadius:8, fontSize:12, color:C.vert, background:'white', fontFamily:sans, outline:'none', boxSizing:'border-box' }} />
+          </div>
+        </div>
+        <div style={{ marginBottom:14 }}>
+          <Label>Type</Label>
+          <div style={{ display:'flex', gap:8 }}>
+            {[{id:'revenu',label:'Revenu'},{id:'remboursement',label:'Remboursement'}].map(t => (
+              <button key={t.id} onClick={() => setForm(p => ({ ...p, type:t.id }))}
+                style={{ flex:1, padding:'8px 0', borderRadius:20, fontFamily:sans, fontSize:12, fontWeight:600, cursor:'pointer',
+                  background: form.type === t.id ? C.vert : 'white',
+                  color:      form.type === t.id ? 'white' : C.vert,
+                  border:     `1.5px solid ${form.type === t.id ? C.vert : C.rose}` }}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{ display:'flex', gap:8 }}>
+          <button onClick={save}
+            style={{ flex:1, padding:'10px 0', background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
+            Enregistrer
+          </button>
+          <button onClick={() => onDelete(i)}
+            style={{ padding:'10px 13px', background:'rgba(232,99,122,0.1)', border:'none', borderRadius:8, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <i className="ti ti-trash" style={{ fontSize:16, color:'#E8637A' }} />
+          </button>
+          <button onClick={cancel}
+            style={{ padding:'10px 13px', background:'white', border:`1px solid ${C.rose}`, borderRadius:8, cursor:'pointer', color:C.vert, fontFamily:sans, fontSize:14, lineHeight:1 }}>
+            ✕
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ background:C.card, borderRadius:12, padding:'14px 18px', marginBottom:10, display:'flex', justifyContent:'space-between', alignItems:'center', border:`0.5px solid ${C.border}` }}>
-      {editing === 'name' ? (
-        <input autoFocus value={nameVal} onChange={e => setNameVal(e.target.value)}
-          onBlur={() => saveField('name')} onKeyDown={e => onKey(e, 'name')}
-          style={{ fontFamily:sans, fontSize:15, color:C.vert, border:'none', borderBottom:`1.5px solid ${C.vert}`, outline:'none', background:'transparent', flex:1, minWidth:0 }} />
-      ) : (
-        <div onClick={() => { if (closed) return; setNameVal(r.name); setEditing('name'); }}
-          style={{ flex:1, minWidth:0, cursor: closed ? 'default' : 'text' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-            <span style={{ fontFamily:sans, fontSize:15, color:C.vert }}>{r.name}</span>
-            {r.type === 'remboursement' && <span style={{ fontFamily:sans, fontSize:9, fontWeight:600, color:C.vert, background:C.rose, borderRadius:4, padding:'2px 5px', letterSpacing:0.5 }}>Remboursement</span>}
-          </div>
-          {r.date && <div style={{ fontFamily:sans, fontSize:11, color:C.muted, marginTop:2 }}>{new Date(r.date + 'T12:00:00').toLocaleDateString('fr-FR', { day:'numeric', month:'long' })}</div>}
+    <div onClick={() => { if (closed) return; openForm(); }}
+      style={{ background:C.card, borderRadius:12, padding:'14px 18px', marginBottom:10, display:'flex', justifyContent:'space-between', alignItems:'center', border:`0.5px solid ${C.border}`, cursor: closed ? 'default' : 'pointer' }}>
+      <div style={{ flex:1, minWidth:0 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+          <span style={{ fontFamily:sans, fontSize:15, color:C.vert }}>{r.name}</span>
+          {r.type === 'remboursement' && <span style={{ fontFamily:sans, fontSize:9, fontWeight:600, color:C.vert, background:C.rose, borderRadius:4, padding:'2px 5px', letterSpacing:0.5 }}>Remboursement</span>}
         </div>
-      )}
-      <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
-        {editing === 'amount' ? (
-          <input autoFocus type="number" value={amtVal} onChange={e => setAmtVal(e.target.value)}
-            onBlur={() => saveField('amount')} onKeyDown={e => onKey(e, 'amount')}
-            style={{ fontFamily:serif, fontSize:20, fontWeight:600, color:C.vert, width:110, border:'none', borderBottom:`1.5px solid ${C.vert}`, outline:'none', background:'transparent', textAlign:'right' }} />
-        ) : (
-          <span onClick={() => { if (closed) return; setAmtVal(String(r.amount)); setEditing('amount'); }}
-            style={{ fontFamily:serif, fontSize:20, fontWeight:600, color:C.vert, cursor: closed ? 'default' : 'text' }}>+{fmtR(r.amount)}</span>
-        )}
-        {!closed && <button onClick={() => onDelete(i)} style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(28,41,28,0.25)', fontSize:14, padding:2 }}>✕</button>}
+        {r.date && <div style={{ fontFamily:sans, fontSize:11, color:C.muted, marginTop:2 }}>{new Date(r.date + 'T12:00:00').toLocaleDateString('fr-FR', { day:'numeric', month:'long' })}</div>}
       </div>
+      <span style={{ fontFamily:serif, fontSize:20, fontWeight:600, color:C.vert, flexShrink:0 }}>+{fmtR(r.amount)}</span>
     </div>
   );
 }
