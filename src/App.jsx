@@ -1136,6 +1136,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
   const closeRef = useRef(null);
   const rev       = m.revenues.reduce((s,r) => s + (r.amount||0), 0);
   const revRmb    = m.revenues.filter(r => r.type === 'remboursement').reduce((s,r) => s + (r.amount||0), 0);
+  const revOnly   = rev - revRmb;
   const allBills  = m.bills.filter(b => b.selected !== false);
   const bT        = allBills.reduce((s,b) => s + billValue(b), 0);
   const bTPrevu   = allBills.reduce((s,b) => s + b.amount, 0);
@@ -1221,7 +1222,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
         {/* 4 mini-cards */}
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
           {[
-            { label:'Revenus',  val:fmtP(rev), icon:'ti-credit-card',  vw:'revenus', sub: revRmb > 0 ? `+${fmtP(revRmb)} remb.` : null, subSize: 9 },
+            { label:'Revenus',  val:fmtP(revOnly), icon:'ti-credit-card',  vw:'revenus', sub: revRmb > 0 ? `+${fmtP(revRmb)} remb.` : null, subSize: 9 },
             { label:'Factures', val:'', node:<><span style={{ color:C.vert }}>{fmtP(paidAmt)}</span><span style={{ color:C.vert }}> / {fmtP(bT)}</span></>, sub:`${pN}/${bN} prélevées`, icon:'ti-file-invoice', vw:'depenses' },
             { label:'Dépenses', val:fmtP(eT),  icon:'ti-shopping-bag', vw:'depenses' },
             { label:'Épargne',  val:fmtP(epg), icon:'ti-pig-money',    vw:'epargne'  },
