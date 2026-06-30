@@ -221,15 +221,18 @@ export const BILLS_DEFAULT = [
   {id:'b24',name:'App Sorteos',           amount:9   },
 ];
 
-const mkMonth = () => ({
-  catBudgets: {},
-  revenues:   [],
-  bills:      currentProfileId === 'elodie'
-    ? BILLS_DEFAULT.map(b => ({...b, realAmount: b.amount, paid: false, paidDate: ''}))
-    : [],
-  expenses:   [],
-  closed:     false,
-});
+const mkMonth = () => {
+  const disabled    = getDisabledBills();
+  const base        = (currentProfileId === 'elodie' ? BILLS_DEFAULT : [])
+    .filter(b => !disabled.has(b.id))
+    .map(b => ({...b, realAmount: b.amount, paid: false, paidDate: ''}));
+  const recurring   = getRecurringBills()
+    .filter(b => !disabled.has(b.id))
+    .map(b => ({...b, realAmount: b.amount, paid: false, paidDate: ''}));
+  const existingIds = new Set(base.map(b => b.id));
+  const bills       = [...base, ...recurring.filter(b => !existingIds.has(b.id))];
+  return { catBudgets: {}, revenues: [], bills, expenses: [], closed: false };
+};
 
 // ─── HELPERS ────────────────────────────────────────────────
 // mi = { month: 0-11, year: YYYY }
@@ -317,6 +320,11 @@ const savePeaRend   = (v) => localStorage.setItem(`${currentProfileId}:budget:pe
 
 const getLivretHist  = () => { try { const s = localStorage.getItem(`${currentProfileId}:budget:livret:historique`); return s ? JSON.parse(s) : []; } catch { return []; } };
 const saveLivretHist = (v) => localStorage.setItem(`${currentProfileId}:budget:livret:historique`, JSON.stringify(v));
+
+const getRecurringBills  = () => { try { return JSON.parse(localStorage.getItem(`${currentProfileId}:recurring_bills`) || '[]'); } catch { return []; } };
+const saveRecurringBills = (b) => localStorage.setItem(`${currentProfileId}:recurring_bills`, JSON.stringify(b));
+const getDisabledBills   = () => { try { return new Set(JSON.parse(localStorage.getItem(`${currentProfileId}:disabled_bills`) || '[]')); } catch { return new Set(); } };
+const addDisabledBill    = (id) => { const d = getDisabledBills(); d.add(id); localStorage.setItem(`${currentProfileId}:disabled_bills`, JSON.stringify([...d])); };
 const getPeaHist     = () => { try { const s = localStorage.getItem(`${currentProfileId}:budget:pea:historique`);    return s ? JSON.parse(s) : []; } catch { return []; } };
 const savePeaHist    = (v) => localStorage.setItem(`${currentProfileId}:budget:pea:historique`,    JSON.stringify(v));
 
@@ -1092,30 +1100,107 @@ export const AddRevenuModal = ({ onAdd, onClose, revType='revenu' }) => {
 };
 
 // Modal Ajouter facture
-export const AddBillModal = ({ onAdd, onClose }) => {
-  const [form, setForm] = useState({ name:'', amount:'' });
-  const [errs, setErrs] = useState({});
+const MOIS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+export const AddBillModal = ({ onAdd, onClose, mi }) => {
+  const [form, setForm]               = useState({ name:'', amount:'' });
+  const [errs, setErrs]               = useState({});
+  const [scope, setScope]             = useState('recurring');
+  const [selectedMonths, setSelectedMonths] = useState(mi ? [{ year: mi.year, month: mi.month }] : []);
+
+  const next12 = mi ? Array.from({ length: 12 }, (_, i) => {
+    const total = mi.month + i;
+    return { year: mi.year + Math.floor(total / 12), month: total % 12 };
+  }) : [];
+
+  const toggleMonth = ({ year, month }) => setSelectedMonths(prev => {
+    const has = prev.some(s => s.year === year && s.month === month);
+    return has ? prev.filter(s => !(s.year === year && s.month === month)) : [...prev, { year, month }];
+  });
+
   const flashErrs = (e) => { setErrs(e); setTimeout(() => setErrs({}), 700); };
+
   const submit = () => {
     const a = parseFloat(form.amount);
     if (!a || !form.name) { flashErrs({ amount: !a, name: !form.name }); return; }
-    onAdd({ id:'b'+Date.now(), name:form.name, amount:a, realAmount:a, paid:false, paidDate:'' });
+    if (scope === 'specific' && selectedMonths.length === 0) return;
+    onAdd({ id:'b'+Date.now(), name:form.name, amount:a, realAmount:a, paid:false, paidDate:'' },
+          scope === 'recurring' ? 'recurring' : selectedMonths);
     onClose();
   };
+
   return (
     <ModalShell title="Ajouter une facture" onClose={onClose}>
-      <div style={{ marginBottom:14 }}><Label>Nom de la facture</Label><TextInput placeholder="ex : EDF, Loyer..." value={form.name} onChange={e => setForm(p => ({...p, name:e.target.value}))} className={errs.name ? 'field-err' : ''} /></div>
-      <div style={{ marginBottom:20 }}>
+      <div style={{ marginBottom:14 }}>
+        <Label>Nom de la facture</Label>
+        <TextInput placeholder="ex : EDF, Loyer..." value={form.name} onChange={e => setForm(p => ({...p, name:e.target.value}))} className={errs.name ? 'field-err' : ''} />
+      </div>
+      <div style={{ marginBottom:16 }}>
         <Label>Montant</Label>
         <input type="number" inputMode="decimal" step="0.01" placeholder="0,00" value={form.amount}
           onChange={e => setForm(p => ({...p, amount:e.target.value}))}
           className={errs.amount ? 'field-err' : ''}
           style={{ width:'100%', fontFamily:serif, fontSize:36, fontWeight:700, border:'none', borderBottom:`2px solid ${C.rose}`, outline:'none', padding:'4px 0', background:'transparent', color:C.vert }} />
       </div>
+      <div style={{ marginBottom: scope === 'specific' ? 12 : 20 }}>
+        <Label>Récurrence</Label>
+        <div style={{ display:'flex', gap:8 }}>
+          {[{id:'recurring',label:'Toujours'},{id:'specific',label:'Mois spécifiques'}].map(t => (
+            <button key={t.id} onClick={() => setScope(t.id)}
+              style={{ flex:1, padding:'9px 0', borderRadius:20, fontSize:11, fontWeight:700, cursor:'pointer',
+                fontFamily:serif, letterSpacing:0.5, textTransform:'uppercase', transition:'all .2s',
+                background: scope === t.id ? C.vert : C.card,
+                color:      scope === t.id ? 'white' : C.vert,
+                border:     `1.5px solid ${scope === t.id ? C.vert : C.rose}` }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      {scope === 'specific' && (
+        <div style={{ marginBottom:20, maxHeight:180, overflowY:'auto', border:`1px solid ${C.border}`, borderRadius:10 }}>
+          {next12.map(({ year, month }) => {
+            const checked = selectedMonths.some(s => s.year === year && s.month === month);
+            return (
+              <div key={`${year}-${month}`} onClick={() => toggleMonth({ year, month })}
+                style={{ display:'flex', alignItems:'center', gap:10, padding:'9px 14px', cursor:'pointer', borderBottom:`0.5px solid ${C.border}` }}>
+                <div style={{ width:18, height:18, borderRadius:5, border:`1.5px solid ${checked ? C.vert : C.border}`, background: checked ? C.vert : 'white', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, transition:'all .15s' }}>
+                  {checked && <i className="ti ti-check" style={{ fontSize:10, color:'white' }} />}
+                </div>
+                <span style={{ fontFamily:sans, fontSize:13, color:C.vert }}>{MOIS_FR[month]} {year}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
       <SubmitBtn label="Ajouter la facture" onClick={submit} />
     </ModalShell>
   );
 };
+
+const DeleteBillScopeModal = ({ bill, onDeleteThisMonth, onDeletePermanently, onClose }) => (
+  <ModalShell title="Supprimer la facture" onClose={onClose}>
+    <div style={{ fontFamily:sans, fontSize:14, color:C.vert, marginBottom:20, lineHeight:1.5 }}>
+      Que souhaitez-vous faire avec <strong>{bill.name}</strong> ?
+    </div>
+    <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+      <button onClick={onDeleteThisMonth}
+        style={{ textAlign:'left', padding:'12px 16px', background:C.beige, border:`1px solid ${C.border}`, borderRadius:12, cursor:'pointer', fontFamily:sans, width:'100%' }}>
+        <div style={{ fontSize:13, fontWeight:600, color:C.vert, marginBottom:3 }}>Ce mois uniquement</div>
+        <div style={{ fontSize:11, color:C.muted }}>La facture reste dans les mois suivants</div>
+      </button>
+      <button onClick={onDeletePermanently}
+        style={{ textAlign:'left', padding:'12px 16px', background:'rgba(232,99,122,0.07)', border:`1px solid rgba(232,99,122,0.3)`, borderRadius:12, cursor:'pointer', fontFamily:sans, width:'100%' }}>
+        <div style={{ fontSize:13, fontWeight:600, color:'#C0394E', marginBottom:3 }}>Supprimer définitivement</div>
+        <div style={{ fontSize:11, color:C.muted }}>Retire de tous les mois à venir</div>
+      </button>
+      <button onClick={onClose}
+        style={{ padding:'10px 0', background:'none', border:`1px solid ${C.border}`, borderRadius:12, cursor:'pointer', fontFamily:sans, fontSize:13, color:C.muted, width:'100%' }}>
+        Annuler
+      </button>
+    </div>
+  </ModalShell>
+);
 
 // Petits helpers UI
 const Label = ({ children }) => (
@@ -1805,8 +1890,9 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
   const [billForm, setBillForm]     = useState({ amount:'', date:'' });
   const [editBillIdx, setEditBillIdx] = useState(null);
   const [editBillForm, setEditBillForm] = useState({ name:'', amount:'' });
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [editExp, setEditExp]       = useState(null);
+  const [deleteConfirm, setDeleteConfirm]       = useState(null);
+  const [editExp, setEditExp]                   = useState(null);
+  const [deleteBillPending, setDeleteBillPending] = useState(null);
 
   const clickBill = (realI) => {
     if (m.closed) return;
@@ -1831,6 +1917,33 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
   const unchBill = (realI) => {
     if (m.closed) return;
     updateData(mm => { mm.bills[realI] = { ...mm.bills[realI], paid:false, paidDate:'' }; });
+  };
+
+  const deleteThisMonth = (billId) => {
+    updateData(mm => { mm.bills = mm.bills.filter(b => b.id !== billId); });
+    setDeleteBillPending(null);
+  };
+
+  const deletePermanently = (billId) => {
+    saveRecurringBills(getRecurringBills().filter(b => b.id !== billId));
+    addDisabledBill(billId);
+    for (let y = mi.year; y <= mi.year + 2; y++) {
+      for (let mo = (y === mi.year ? mi.month : 0); mo < 12; mo++) {
+        const k = `${currentProfileId}:budget:${y}:${String(mo + 1).padStart(2, '0')}`;
+        const stored = localStorage.getItem(k);
+        if (stored) {
+          try {
+            const d = JSON.parse(stored);
+            if (d.bills?.some(b => b.id === billId)) {
+              d.bills = d.bills.filter(b => b.id !== billId);
+              localStorage.setItem(k, JSON.stringify(d));
+            }
+          } catch {}
+        }
+      }
+    }
+    updateData(mm => { mm.bills = mm.bills.filter(b => b.id !== billId); });
+    setDeleteBillPending(null);
   };
 
   return (
@@ -1972,7 +2085,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
                         </div>
                       </div>
                       <div style={{ display:'flex', gap:8 }}>
-                        <button onClick={() => { const ri = editBillIdx; updateData(mm => { mm.bills = mm.bills.filter((_,i) => i !== ri); }); setEditBillIdx(null); }}
+                        <button onClick={() => { setDeleteBillPending(m.bills[editBillIdx]); setEditBillIdx(null); }}
                           style={{ padding:'9px 10px', background:'white', border:`1px solid ${C.rose}`, borderRadius:8, cursor:'pointer', color:C.rose, fontFamily:sans }}>
                           <i className="ti ti-trash" style={{ fontSize:15 }} />
                         </button>
@@ -2014,7 +2127,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
                           style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
                           ✓ Confirmer prélevée
                         </button>
-                        <button onClick={() => { updateData(mm => { mm.bills = mm.bills.filter((_,i) => i !== m.bills.indexOf(b)); }); setXBill(null); }}
+                        <button onClick={() => { setDeleteBillPending(b); setXBill(null); }}
                           style={{ padding:'9px 10px', background:'white', border:`1px solid ${C.rose}`, borderRadius:8, cursor:'pointer', color:C.rose, fontFamily:sans }}>
                           <i className="ti ti-trash" style={{ fontSize:15 }} />
                         </button>
@@ -2093,6 +2206,14 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
             setEditExp(null);
           }}
           onClose={() => setEditExp(null)}
+        />
+      )}
+      {deleteBillPending && (
+        <DeleteBillScopeModal
+          bill={deleteBillPending}
+          onDeleteThisMonth={() => deleteThisMonth(deleteBillPending.id)}
+          onDeletePermanently={() => deletePermanently(deleteBillPending.id)}
+          onClose={() => setDeleteBillPending(null)}
         />
       )}
     </>
@@ -3098,7 +3219,26 @@ function MainApp({ onProfileAction }) {
 
   const addExpense = (exp)  => { if (m.closed) return; updateData(mm => { mm.expenses = [...mm.expenses, exp]; }); };
   const addRevenu  = (rev)  => { if (m.closed) return; updateData(mm => { mm.revenues = [...mm.revenues, rev]; }); };
-  const addBill    = (bill) => { if (m.closed) return; updateData(mm => { mm.bills    = [...mm.bills, bill];    }); };
+  const addBill = (bill, scope = 'recurring') => {
+    if (m.closed) return;
+    if (scope === 'recurring') {
+      const recurring = getRecurringBills();
+      if (!recurring.find(b => b.id === bill.id)) saveRecurringBills([...recurring, { id: bill.id, name: bill.name, amount: bill.amount }]);
+      updateData(mm => { mm.bills = [...mm.bills, bill]; });
+    } else {
+      scope.forEach(({ year, month }) => {
+        const key = `${currentProfileId}:budget:${year}:${String(month + 1).padStart(2, '0')}`;
+        try {
+          const stored = localStorage.getItem(key);
+          const data   = stored ? JSON.parse(stored) : mkMonth();
+          if (!data.bills.find(b => b.id === bill.id)) { data.bills = [...data.bills, bill]; localStorage.setItem(key, JSON.stringify(data)); }
+        } catch {}
+      });
+      if (scope.some(s => s.year === mi.year && s.month === mi.month)) {
+        updateData(mm => { if (!mm.bills.find(b => b.id === bill.id)) mm.bills = [...mm.bills, bill]; });
+      }
+    }
+  };
 
   if (loading) return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', background:C.beige }}>
@@ -3163,7 +3303,7 @@ function MainApp({ onProfileAction }) {
         <BottomNav view={view} setView={setView} m={m} />
         {!m.closed && modal === 'dep'  && <AddExpenseModal onAdd={addExpense} onClose={() => setModal(null)} onAddRevenu={addRevenu} noRevenu={view === 'depenses' && depTab === 'depenses'} initExpType={expTypeModal} />}
         {!m.closed && modal === 'rev'  && <AddRevenuModal  onAdd={addRevenu}  onClose={() => setModal(null)} revType={revType} />}
-        {!m.closed && modal === 'bill' && <AddBillModal    onAdd={addBill}    onClose={() => setModal(null)} />}
+        {!m.closed && modal === 'bill' && <AddBillModal    onAdd={addBill}    onClose={() => setModal(null)} mi={mi} />}
       </div>
     </>
   );
