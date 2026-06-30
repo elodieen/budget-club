@@ -762,7 +762,7 @@ const BottomNav = ({ view, setView, m }) => {
 };
 
 // Bouton FAB contextuel
-const FAB = ({ view, setModal, setView, depTab, setRevType }) => {
+const FAB = ({ view, setModal, setView, depTab, setRevType, setExpTypeModal }) => {
   const [open, setOpen] = useState(false);
   const isMenuView = view === 'accueil' || view === 'revenus';
 
@@ -786,7 +786,8 @@ const FAB = ({ view, setModal, setView, depTab, setRevType }) => {
       {open && isMenuView && (
         <div style={{ position:'absolute', bottom:128, right:16, background:'white', borderRadius:14, boxShadow:'0 4px 24px rgba(28,41,28,0.18)', overflow:'hidden', zIndex:11, minWidth:200 }}>
           {menuItem('Revenu', 'ti-plus', () => { setModal('rev'); setOpen(false); })}
-          {view === 'accueil' && menuItem('Dépense', 'ti-minus', () => { setModal('dep'); setOpen(false); })}
+          {view === 'accueil' && menuItem('Remboursement', 'ti-arrow-back-up', () => { setExpTypeModal?.('remboursement'); setModal('dep'); setOpen(false); })}
+          {view === 'accueil' && menuItem('Dépense', 'ti-minus', () => { setExpTypeModal?.('depense'); setModal('dep'); setOpen(false); })}
         </div>
       )}
       <button onClick={handleClick}
@@ -851,10 +852,10 @@ const ICON_CHOICES = [
   'ti-paw','ti-baby-carriage','ti-shirt','ti-tool','ti-phone',
 ];
 
-export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu, noRevenu }) => {
+export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu, noRevenu, initExpType }) => {
   const isEdit = !!initial;
   const [type, setType]             = useState('depense');
-  const [expType, setExpType]       = useState(initial?.type === 'remboursement' ? 'remboursement' : 'depense');
+  const [expType, setExpType]       = useState(initial?.type === 'remboursement' ? 'remboursement' : (initExpType || 'depense'));
   const [form, setForm]             = useState(
     initial
       ? { amount: String(initial.amount), cat: initial.cat, name: initial.name || '', date: initial.date || new Date().toISOString().split('T')[0] }
@@ -940,18 +941,20 @@ export const AddExpenseModal = ({ onAdd, onUpdate, initial, onClose, onAddRevenu
         </>
       ) : (
         <>
-          <div style={{ display:'flex', justifyContent:'center', gap:10, marginBottom:16 }}>
-            {[{id:'depense',label:'Dépense'},{id:'remboursement',label:'Remboursement'}].map(t => (
-              <button key={t.id} onClick={() => setExpType(t.id)}
-                style={{ width:130, padding:'10px 0', borderRadius:30, fontSize:13, fontWeight:700, cursor:'pointer',
-                  fontFamily:serif, letterSpacing:1, textTransform:'uppercase', transition:'all .2s',
-                  background: expType === t.id ? C.vert : C.card,
-                  color:      expType === t.id ? 'white' : C.vert,
-                  border:     `1.5px solid ${expType === t.id ? C.vert : C.rose}` }}>
-                {t.label}
-              </button>
-            ))}
-          </div>
+          {noRevenu && (
+            <div style={{ display:'flex', justifyContent:'center', gap:10, marginBottom:16 }}>
+              {[{id:'depense',label:'Dépense'},{id:'remboursement',label:'Remboursement'}].map(t => (
+                <button key={t.id} onClick={() => setExpType(t.id)}
+                  style={{ width:130, padding:'10px 0', borderRadius:30, fontSize:11, fontWeight:700, cursor:'pointer',
+                    fontFamily:serif, letterSpacing:0.5, textTransform:'uppercase', transition:'all .2s',
+                    background: expType === t.id ? C.vert : C.card,
+                    color:      expType === t.id ? 'white' : C.vert,
+                    border:     `1.5px solid ${expType === t.id ? C.vert : C.rose}` }}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          )}
           <div style={{ marginBottom:14 }}>
             <Label>Montant</Label>
             <input type="number" inputMode="decimal" step="0.01" placeholder="0,00" value={form.amount}
@@ -1238,7 +1241,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
           {[
             { label:'Revenus',  val:fmtP(rev), icon:'ti-credit-card',  vw:'revenus' },
             { label:'Factures', val:'', node:<><span style={{ color:C.vert }}>{fmtP(paidAmt)}</span><span style={{ color:C.vert }}> / {fmtP(bT)}</span></>, sub:`${pN}/${bN} prélevées`, icon:'ti-file-invoice', vw:'depenses' },
-            { label:'Dépenses', val:fmtP(eT - expRmb), icon:'ti-shopping-bag', vw:'depenses', sub: expRmb > 0 ? `− ${fmtP(expRmb)} remboursé` : null, subSize: 9 },
+            { label:'Dépenses', val:fmtP(eT - expRmb), icon:'ti-shopping-bag', vw:'depenses' },
             { label:'Épargne',  val:fmtP(epg), icon:'ti-pig-money',    vw:'epargne'  },
           ].map(c => (
             <div key={c.label} onClick={() => setView(c.vw)}
@@ -1704,20 +1707,6 @@ function RevenueRow({ r, i, onUpdate, onDelete, closed }) {
             <Label>Date</Label>
             <input type="date" value={form.date} onChange={e => setForm(p => ({ ...p, date:e.target.value }))}
               style={{ width:'100%', padding:'8px 6px', border:`1px solid ${C.border}`, borderRadius:8, fontSize:12, color:C.vert, background:'white', fontFamily:sans, outline:'none', boxSizing:'border-box' }} />
-          </div>
-        </div>
-        <div style={{ marginBottom:14 }}>
-          <Label>Type</Label>
-          <div style={{ display:'flex', gap:8 }}>
-            {[{id:'revenu',label:'Revenu'},{id:'remboursement',label:'Remboursement'}].map(t => (
-              <button key={t.id} onClick={() => setForm(p => ({ ...p, type:t.id }))}
-                style={{ flex:1, padding:'8px 0', borderRadius:20, fontFamily:sans, fontSize:12, fontWeight:600, cursor:'pointer',
-                  background: form.type === t.id ? C.vert : 'white',
-                  color:      form.type === t.id ? 'white' : C.vert,
-                  border:     `1.5px solid ${form.type === t.id ? C.vert : C.rose}` }}>
-                {t.label}
-              </button>
-            ))}
           </div>
         </div>
         <div style={{ display:'flex', gap:8 }}>
@@ -3024,8 +3013,9 @@ function MainApp({ onProfileAction }) {
   const [mi, setMi]               = useState(getInitialMonth);
   const [view, setView]           = useState('accueil');
   const [depTab, setDepTab]       = useState('depenses');
-  const [modal, setModal]   = useState(null);
-  const [revType, setRevType] = useState('revenu');
+  const [modal, setModal]       = useState(null);
+  const [revType, setRevType]   = useState('revenu');
+  const [expTypeModal, setExpTypeModal] = useState('depense');
   const { data: m, loading, updateData } = useMonthData(mi);
   const [autoBackupOffer, setAutoBackupOffer] = useState(null);
 
@@ -3154,10 +3144,10 @@ function MainApp({ onProfileAction }) {
           {renderView()}
         </div>
         {!['budget_edit'].includes(view) && !m.closed && (
-          <FAB view={view} setModal={setModal} setView={setView} depTab={depTab} setRevType={setRevType} />
+          <FAB view={view} setModal={setModal} setView={setView} depTab={depTab} setRevType={setRevType} setExpTypeModal={setExpTypeModal} />
         )}
         <BottomNav view={view} setView={setView} m={m} />
-        {!m.closed && modal === 'dep'  && <AddExpenseModal onAdd={addExpense} onClose={() => setModal(null)} onAddRevenu={addRevenu} noRevenu={view === 'depenses' && depTab === 'depenses'} />}
+        {!m.closed && modal === 'dep'  && <AddExpenseModal onAdd={addExpense} onClose={() => setModal(null)} onAddRevenu={addRevenu} noRevenu={view === 'depenses' && depTab === 'depenses'} initExpType={expTypeModal} />}
         {!m.closed && modal === 'rev'  && <AddRevenuModal  onAdd={addRevenu}  onClose={() => setModal(null)} revType={revType} />}
         {!m.closed && modal === 'bill' && <AddBillModal    onAdd={addBill}    onClose={() => setModal(null)} />}
       </div>
