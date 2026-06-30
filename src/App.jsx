@@ -363,15 +363,17 @@ const Logo = ({ size = 38, src = '/icon-512.png' }) => (
 );
 
 // Icône catégorie — cercle vert foncé
-const CatIcon = ({ catId, size = 42, gray = false }) => {
+const CatIcon = ({ catId, size = 42, gray = false, green = false }) => {
   const cat = [...CATS, ...getCustomCats()].find(c => c.id === catId) || CATS[CATS.length - 1];
+  const bg  = green ? '#7BA88C' : gray ? 'rgba(28,41,28,0.12)' : C.vert;
+  const ic  = gray ? 'rgba(28,41,28,0.35)' : 'white';
   return (
     <div style={{
       width:size, height:size, borderRadius:'50%',
-      background: gray ? 'rgba(28,41,28,0.12)' : C.vert,
+      background: bg,
       display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
     }}>
-      <i className={`ti ${cat.icon}`} style={{ fontSize: Math.round(size * 0.42), color: gray ? 'rgba(28,41,28,0.35)' : 'white' }} />
+      <i className={`ti ${cat.icon}`} style={{ fontSize: Math.round(size * 0.42), color: ic }} />
     </div>
   );
 };
@@ -1761,7 +1763,7 @@ export function RevenusView({ m, mi, setMi, updateData, onProfileAction }) {
         </div>
       </div>
       {/* Liste scrollable */}
-      <div style={{ flex:1, overflowY:'auto', padding:'4px 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
+      <div style={{ flex:1, overflowY:'auto', padding:'4px 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige, marginTop:10 }}>
         {revenus.length === 0 && (
           <div style={{ textAlign:'center', padding:32, color:C.muted, fontFamily:sans, fontSize:13 }}>Aucun revenu saisi ce mois</div>
         )}
@@ -1871,13 +1873,13 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
               return (
                 <div key={e.id} onClick={() => !m.closed && setEditExp(e)}
                   style={{ background:C.card, borderRadius:12, marginBottom:8, display:'flex', alignItems:'center', gap:12, padding:'12px 14px', border:`0.5px solid ${C.border}`, cursor: m.closed ? 'default' : 'pointer' }}>
-                  <CatIcon catId={e.cat} size={38} />
+                  <CatIcon catId={e.cat} size={38} green={e.type === 'remboursement'} />
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontFamily:sans, fontSize:13, fontWeight:500, color:C.text, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{e.name || cat.label}</div>
                     <div style={{ fontFamily:sans, fontSize:11, color:C.muted }}>{cat.label}</div>
                   </div>
                   <div style={{ textAlign:'right', flexShrink:0 }}>
-                    <div style={{ fontFamily:serif, fontSize:16, fontWeight:600, color:C.vert }}>{e.type === 'remboursement' ? '+' : '-'}{fmtR(e.amount)}</div>
+                    <div style={{ fontFamily:serif, fontSize:16, fontWeight:600, color: e.type === 'remboursement' ? '#7BA88C' : C.vert }}>{e.type === 'remboursement' ? '+' : '-'}{fmtR(e.amount)}</div>
                     <div style={{ fontFamily:sans, fontSize:10, color:C.muted }}>{e.date ? new Date(e.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : ''}</div>
                   </div>
                   {!m.closed && (
