@@ -730,7 +730,7 @@ const MonthHeader = ({ mi, setMi, closed, onProfileAction }) => {
 
 // Barre de navigation 5 onglets
 const TABS = [
-  { id:'accueil',  icon:'ti-home',        label:'Accueil'  },
+  { id:'accueil',  icon:'ti-layout-grid', label:'Accueil'  },
   { id:'revenus',  icon:'ti-cash',        label:'Revenus'  },
   { id:'budget',   icon:'ti-chart-bar',   label:'Budget'   },
   { id:'depenses', icon:'ti-list',        label:'Suivi'    },
@@ -1252,6 +1252,7 @@ export const AddPeaRendementModal = ({ onAdd, onClose }) => {
 export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onProfileAction }) {
   const [confirmClose, setConfirmClose] = useState(false);
   const [soldeFinalInput, setSoldeFinalInput] = useState('');
+  const [showSteps, setShowSteps] = useState(false);
   const closeRef = useRef(null);
   const rev    = m.revenues.filter(r => (r.type || 'revenu') === 'revenu').reduce((s,r) => s + (r.amount||0), 0);
   const allBills  = m.bills.filter(b => b.selected !== false);
@@ -1360,96 +1361,110 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
         <div style={{ textAlign:'center', fontFamily:serif, fontSize:11, fontStyle:'italic', color:C.muted }}>
           Gérez l'ordinaire pour vous offrir l'extraordinaire.
         </div>
-        {/* Card verte : titre + 5 étapes */}
-        <div style={{ background:C.vert, borderRadius:14, padding:'10px 14px', flexShrink:0, display:'flex', flexDirection:'column', justifyContent:'center' }}>
-          <div style={{ textAlign:'center', fontFamily:sans, fontSize:10, fontWeight:600, color:'white', letterSpacing:'3px', textTransform:'uppercase', marginTop:0, marginBottom:8 }}>
-            Mon mois en 5 étapes
-          </div>
-          {steps.map((step, i) => (
-            <div key={step.num} onClick={step.action}
-              style={{ display:'flex', alignItems:'center', gap:10, padding: i === steps.length - 1 ? '7px 0 4px' : '7px 0', borderTop: i > 0 ? '1px solid rgba(255,255,255,0.07)' : 'none', cursor:'pointer' }}>
-              <div style={{ width:24, height:24, borderRadius:'50%', background:C.rose, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, padding:0 }}>
-                <span style={{ fontFamily:serif, fontSize:12, fontWeight:700, color:C.vert, lineHeight:1, textAlign:'center', display:'block' }}>{step.num}</span>
-              </div>
-              <span style={{ fontFamily:sans, fontSize:12, color: (i === 3 ? m.closed : checks[i]) ? 'rgba(255,255,255,0.4)' : 'white', flex:1 }}>{step.label}</span>
-              {i === 3
-                ? m.closed
-                  ? <span style={{ color:C.rose, fontWeight:700, fontSize:13, flexShrink:0 }}>✓</span>
-                  : checks[i]
-                    ? <i className="ti ti-hourglass" style={{ fontSize:14, color:C.rose, flexShrink:0 }} />
-                    : <span style={{ color:'rgba(255,255,255,0.7)', fontSize:18, flexShrink:0 }}>›</span>
-                : checks[i]
-                  ? <span style={{ color:C.rose, fontWeight:700, fontSize:13, flexShrink:0 }}>✓</span>
-                  : <span style={{ color:'rgba(255,255,255,0.7)', fontSize:18, flexShrink:0 }}>›</span>
-              }
-            </div>
-          ))}
-        </div>
+        {/* Bouton Étapes du mois */}
+        <button onClick={() => setShowSteps(true)}
+          style={{ display:'flex', alignItems:'center', gap:8, background:C.vert, border:'none', borderRadius:12, padding:'13px 16px', cursor:'pointer', marginTop:'auto', width:'calc(100% - 66px)' }}>
+          <i className="ti ti-list-check" style={{ fontSize:16, color:'white', flexShrink:0 }} />
+          <span style={{ fontFamily:sans, fontSize:13, fontWeight:700, color:'white', letterSpacing:'0.02em', textTransform:'uppercase' }}>Étapes du mois</span>
+        </button>
 
-        {/* Clôture du mois */}
-        <div ref={closeRef} style={{ marginTop:8 }}>
-          {m.closed ? (
-            <button onClick={() => {
-              updateData(mm => { mm.closed = false; delete mm.soldeFinal; });
-              const nextMonth = mi.month === 11 ? 0 : mi.month + 1;
-              const nextYear  = mi.month === 11 ? mi.year + 1 : mi.year;
-              const nextKey   = `${currentProfileId}:budget:${nextYear}:${String(nextMonth + 1).padStart(2, '0')}`;
-              const reportId  = `r-report-${mi.year}-${String(mi.month + 1).padStart(2, '0')}`;
-              try {
-                const nextRaw = localStorage.getItem(nextKey);
-                if (nextRaw) {
-                  const nextData = JSON.parse(nextRaw);
-                  if (nextData.revenues?.some(r => r.id === reportId)) {
-                    nextData.revenues = nextData.revenues.filter(r => r.id !== reportId);
-                    localStorage.setItem(nextKey, JSON.stringify(nextData));
+        {showSteps && (
+          <div onClick={() => setShowSteps(false)}
+            style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(28,41,28,0.5)', display:'flex', alignItems:'flex-end', zIndex:150 }}>
+            <div onClick={e => e.stopPropagation()}
+              style={{ background:C.vert, borderRadius:'20px 20px 0 0', padding:'18px 16px', paddingBottom:'calc(18px + env(safe-area-inset-bottom))', width:'100%', maxHeight:'85%', overflowY:'auto' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+                <span style={{ fontFamily:sans, fontSize:10, fontWeight:600, color:'white', letterSpacing:'3px', textTransform:'uppercase' }}>Mon mois en 5 étapes</span>
+                <button onClick={() => setShowSteps(false)}
+                  style={{ background:'rgba(255,255,255,0.12)', border:'none', width:26, height:26, borderRadius:'50%', cursor:'pointer', fontSize:13, color:'white' }}>✕</button>
+              </div>
+              {steps.map((step, i) => (
+                <div key={step.num} onClick={() => { step.action(); if (step.num !== 5) setShowSteps(false); }}
+                  style={{ display:'flex', alignItems:'center', gap:10, padding: i === steps.length - 1 ? '7px 0 4px' : '7px 0', borderTop: i > 0 ? '1px solid rgba(255,255,255,0.07)' : 'none', cursor:'pointer' }}>
+                  <div style={{ width:24, height:24, borderRadius:'50%', background:C.rose, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, padding:0 }}>
+                    <span style={{ fontFamily:serif, fontSize:12, fontWeight:700, color:C.vert, lineHeight:1, textAlign:'center', display:'block' }}>{step.num}</span>
+                  </div>
+                  <span style={{ fontFamily:sans, fontSize:12, color: (i === 3 ? m.closed : checks[i]) ? 'rgba(255,255,255,0.4)' : 'white', flex:1 }}>{step.label}</span>
+                  {i === 3
+                    ? m.closed
+                      ? <span style={{ color:C.rose, fontWeight:700, fontSize:13, flexShrink:0 }}>✓</span>
+                      : checks[i]
+                        ? <i className="ti ti-hourglass" style={{ fontSize:14, color:C.rose, flexShrink:0 }} />
+                        : <span style={{ color:'rgba(255,255,255,0.7)', fontSize:18, flexShrink:0 }}>›</span>
+                    : checks[i]
+                      ? <span style={{ color:C.rose, fontWeight:700, fontSize:13, flexShrink:0 }}>✓</span>
+                      : <span style={{ color:'rgba(255,255,255,0.7)', fontSize:18, flexShrink:0 }}>›</span>
                   }
-                }
-              } catch {}
-            }}
-              style={{ width:'100%', padding:'10px 0', background:C.rose, border:'none', borderRadius:10, fontFamily:sans, fontSize:13, fontWeight:600, color:C.vert, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
-              <i className="ti ti-lock-open" style={{ fontSize:15 }} /> Réouvrir le mois
-            </button>
-          ) : confirmClose ? (
-            <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:200, background:'white', border:'1px solid rgba(28,41,28,0.1)', borderRadius:'10px 10px 0 0', padding:'12px 14px', paddingBottom:'calc(80px + env(safe-area-inset-bottom))' }}>
-              <div style={{ fontFamily:sans, fontSize:12, fontWeight:600, color:C.vert, marginBottom:6, textAlign:'center' }}>Clôturer le mois</div>
-              <div style={{ fontFamily:sans, fontSize:11, color:C.muted, marginBottom:8 }}>Solde sur votre compte à la clôture</div>
-              <input
-                type="number" step="0.01" placeholder="ex : 1 250"
-                value={soldeFinalInput}
-                onChange={e => setSoldeFinalInput(e.target.value)}
-                style={{ width:'100%', padding:'9px 12px', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, fontSize:15, fontFamily:serif, color:C.vert, background:'white', marginBottom:10, boxSizing:'border-box' }}
-              />
-              <div style={{ display:'flex', gap:8 }}>
-                <button onClick={() => {
-                  const sf = parseFloat(soldeFinalInput);
-                  updateData(mm => { mm.closed = true; if (sf) mm.soldeFinal = sf; });
-                  setConfirmClose(false);
-                  setSoldeFinalInput('');
-                }}
-                  style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
-                  Confirmer
-                </button>
-                <button onClick={() => {
-                  updateData(mm => { mm.closed = true; });
-                  setConfirmClose(false);
-                  setSoldeFinalInput('');
-                }}
-                  style={{ padding:'9px 12px', background:'white', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, cursor:'pointer', color:C.muted, fontFamily:sans, fontSize:13 }}>
-                  Passer
-                </button>
-                <button onClick={() => { setConfirmClose(false); setSoldeFinalInput(''); }}
-                  style={{ padding:'9px 12px', background:'white', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, cursor:'pointer', color:C.muted, fontFamily:sans, fontSize:13 }}>
-                  ✕
-                </button>
+                </div>
+              ))}
+
+              {/* Clôture du mois */}
+              <div ref={closeRef} style={{ marginTop:14 }}>
+                {m.closed ? (
+                  <button onClick={() => {
+                    updateData(mm => { mm.closed = false; delete mm.soldeFinal; });
+                    const nextMonth = mi.month === 11 ? 0 : mi.month + 1;
+                    const nextYear  = mi.month === 11 ? mi.year + 1 : mi.year;
+                    const nextKey   = `${currentProfileId}:budget:${nextYear}:${String(nextMonth + 1).padStart(2, '0')}`;
+                    const reportId  = `r-report-${mi.year}-${String(mi.month + 1).padStart(2, '0')}`;
+                    try {
+                      const nextRaw = localStorage.getItem(nextKey);
+                      if (nextRaw) {
+                        const nextData = JSON.parse(nextRaw);
+                        if (nextData.revenues?.some(r => r.id === reportId)) {
+                          nextData.revenues = nextData.revenues.filter(r => r.id !== reportId);
+                          localStorage.setItem(nextKey, JSON.stringify(nextData));
+                        }
+                      }
+                    } catch {}
+                  }}
+                    style={{ width:'100%', padding:'10px 0', background:C.rose, border:'none', borderRadius:10, fontFamily:sans, fontSize:13, fontWeight:600, color:C.vert, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+                    <i className="ti ti-lock-open" style={{ fontSize:15 }} /> Réouvrir le mois
+                  </button>
+                ) : confirmClose ? (
+                  <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:200, background:'white', border:'1px solid rgba(28,41,28,0.1)', borderRadius:'10px 10px 0 0', padding:'12px 14px', paddingBottom:'calc(80px + env(safe-area-inset-bottom))' }}>
+                    <div style={{ fontFamily:sans, fontSize:12, fontWeight:600, color:C.vert, marginBottom:6, textAlign:'center' }}>Clôturer le mois</div>
+                    <div style={{ fontFamily:sans, fontSize:11, color:C.muted, marginBottom:8 }}>Solde sur votre compte à la clôture</div>
+                    <input
+                      type="number" step="0.01" placeholder="ex : 1 250"
+                      value={soldeFinalInput}
+                      onChange={e => setSoldeFinalInput(e.target.value)}
+                      style={{ width:'100%', padding:'9px 12px', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, fontSize:15, fontFamily:serif, color:C.vert, background:'white', marginBottom:10, boxSizing:'border-box' }}
+                    />
+                    <div style={{ display:'flex', gap:8 }}>
+                      <button onClick={() => {
+                        const sf = parseFloat(soldeFinalInput);
+                        updateData(mm => { mm.closed = true; if (sf) mm.soldeFinal = sf; });
+                        setConfirmClose(false);
+                        setSoldeFinalInput('');
+                      }}
+                        style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                        Confirmer
+                      </button>
+                      <button onClick={() => {
+                        updateData(mm => { mm.closed = true; });
+                        setConfirmClose(false);
+                        setSoldeFinalInput('');
+                      }}
+                        style={{ padding:'9px 12px', background:'white', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, cursor:'pointer', color:C.muted, fontFamily:sans, fontSize:13 }}>
+                        Passer
+                      </button>
+                      <button onClick={() => { setConfirmClose(false); setSoldeFinalInput(''); }}
+                        style={{ padding:'9px 12px', background:'white', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, cursor:'pointer', color:C.muted, fontFamily:sans, fontSize:13 }}>
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => setConfirmClose(true)}
+                    style={{ width:'100%', padding:'10px 0', background:'none', border:'1.5px solid rgba(255,255,255,0.3)', borderRadius:10, fontFamily:sans, fontSize:13, fontWeight:500, color:'white', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+                    <i className="ti ti-lock" style={{ fontSize:15 }} /> Clôturer le mois
+                  </button>
+                )}
               </div>
             </div>
-          ) : (
-            <button onClick={() => setConfirmClose(true)}
-              style={{ width:'100%', padding:'10px 0', background:'none', border:`1.5px solid rgba(28,41,28,0.25)`, borderRadius:10, fontFamily:sans, fontSize:13, fontWeight:500, color:C.vert, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
-              <i className="ti ti-lock" style={{ fontSize:15 }} /> Clôturer le mois
-            </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </>
   );
