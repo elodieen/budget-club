@@ -1310,9 +1310,9 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
     <>
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
-      <div style={{ display:'flex', flexDirection:'column', flex:1, justifyContent:'space-between', gap:8, padding:'8px 16px', paddingBottom:'calc(10px + env(safe-area-inset-bottom))', background:C.beige, overflow:'hidden' }}>
+      <div style={{ display:'flex', flexDirection:'column', flex:1, gap:10, padding:'8px 16px', paddingBottom:'calc(10px + env(safe-area-inset-bottom))', background:C.beige, overflow:'hidden' }}>
         {/* Card Reste à vivre du mois */}
-        <div style={{ background:C.vert, borderRadius:16, padding:'12px 14px 10px', textAlign:'center', marginTop: m.closed ? 8 : 0, marginBottom:8 }}>
+        <div style={{ background:C.vert, borderRadius:16, padding:'18px 18px 16px', textAlign:'center', marginTop: m.closed ? 8 : 0, flexShrink:0 }}>
           <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'white', marginBottom:4 }}>Reste à vivre du mois</div>
           {rev === 0
             ? <div style={{ fontFamily:serif, fontSize:26, fontStyle:'italic', color:C.rose, lineHeight:1.3 }}>Revenus non saisis</div>
@@ -1324,22 +1324,22 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
           {/* Jauge unique avec verdict + trait de position mois */}
           {rev > 0 && (
             <div style={{ marginTop:10 }}>
-              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                <span style={{ display:'flex', alignItems:'center', gap:5, flexShrink:0 }}>
+              <div style={{ position:'relative', height:5, background:'rgba(255,255,255,0.15)', borderRadius:3 }}>
+                <div style={{ position:'absolute', top:0, left:0, height:'100%', width:'100%', background:'#EEC4C4', borderRadius:3, transformOrigin:'left', transform:`scaleX(${pctConsomme / 100})`, transition:'transform 0.6s ease' }} />
+                <div style={{ position:'absolute', top:-3.5, left:`${pctMois}%`, transform:'translateX(-50%)', width:2, height:12, background:'rgba(255,255,255,0.8)', borderRadius:1 }} />
+              </div>
+              <div style={{ display:'flex', justifyContent:'space-between', marginTop:4 }}>
+                <span style={{ display:'flex', alignItems:'center', gap:5 }}>
                   <span style={{ width:6, height:6, borderRadius:'50%', background:verdictColor, display:'inline-block', flexShrink:0 }} />
                   <span style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.75)', whiteSpace:'nowrap' }}>{verdictLabel}</span>
                 </span>
-                <div style={{ flex:1, position:'relative', height:5, background:'rgba(255,255,255,0.15)', borderRadius:3 }}>
-                  <div style={{ position:'absolute', top:0, left:0, height:'100%', width:'100%', background:'#EEC4C4', borderRadius:3, transformOrigin:'left', transform:`scaleX(${pctConsomme / 100})`, transition:'transform 0.6s ease' }} />
-                  <div style={{ position:'absolute', top:-3.5, left:`${pctMois}%`, transform:'translateX(-50%)', width:2, height:12, background:'rgba(255,255,255,0.8)', borderRadius:1 }} />
-                </div>
-                <span style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.6)', flexShrink:0, whiteSpace:'nowrap' }}>Encore {joursRestants}j</span>
+                <span style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.6)', whiteSpace:'nowrap' }}>Encore {joursRestants}j</span>
               </div>
             </div>
           )}
         </div>
         {/* 4 mini-cards */}
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gridTemplateRows:'1fr 1fr', gap:10, flex:1, minHeight:0 }}>
           {[
             { label:'Revenus',  val:fmtP(rev), icon:'ti-credit-card',  vw:'revenus' },
             { label:'Factures', val:'', node:<><span style={{ color:C.vert }}>{fmtP(paidAmt)}</span><span style={{ color:C.vert }}> / {fmtP(bT)}</span></>, sub:`${pN}/${bN} prélevées`, icon:'ti-file-invoice', vw:'depenses' },
@@ -1347,23 +1347,25 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
             { label:'Dépenses', val:fmtP(eT - expRmb), icon:'ti-shopping-bag', vw:'depenses' },
           ].map(c => (
             <div key={c.label} onClick={() => setView(c.vw)}
-              style={{ background:C.card, borderRadius:12, padding:10, border:`0.5px solid ${C.border}`, cursor:'pointer' }}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4 }}>
-                <span style={{ fontFamily:sans, fontSize:11, color:C.muted, fontWeight:500 }}>{c.label}</span>
-                <i className={`ti ${c.icon}`} style={{ fontSize:15, color:'rgba(28,41,28,0.25)' }} />
+              style={{ background:C.card, borderRadius:14, padding:16, border:`0.5px solid ${C.border}`, cursor:'pointer', display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <span style={{ fontFamily:sans, fontSize:12, color:C.muted, fontWeight:500 }}>{c.label}</span>
+                <i className={`ti ${c.icon}`} style={{ fontSize:17, color:'rgba(28,41,28,0.25)' }} />
               </div>
-              <div style={{ fontFamily:serif, fontSize:c.sub ? 14 : 17, fontWeight:600, color:C.vert }}>{c.node || c.val}</div>
-              {c.sub && <div style={{ fontFamily:sans, fontSize:c.subSize || 10, color:C.muted, marginTop:1 }}>{c.sub}</div>}
+              <div>
+                <div style={{ fontFamily:serif, fontSize:c.sub ? 18 : 22, fontWeight:600, color:C.vert }}>{c.node || c.val}</div>
+                {c.sub && <div style={{ fontFamily:sans, fontSize:c.subSize || 11, color:C.muted, marginTop:2 }}>{c.sub}</div>}
+              </div>
             </div>
           ))}
         </div>
         {/* Citation */}
-        <div style={{ textAlign:'center', fontFamily:serif, fontSize:11, fontStyle:'italic', color:C.muted }}>
+        <div style={{ textAlign:'center', fontFamily:serif, fontSize:11, fontStyle:'italic', color:C.muted, flexShrink:0 }}>
           Gérez l'ordinaire pour vous offrir l'extraordinaire.
         </div>
         {/* Bouton Étapes du mois */}
         <button onClick={() => setShowSteps(true)}
-          style={{ display:'flex', alignItems:'center', gap:8, background:C.vert, border:'none', borderRadius:12, paddingTop:13, paddingBottom:13, paddingLeft:20, paddingRight:20, cursor:'pointer', width:'auto', alignSelf:'flex-start' }}>
+          style={{ display:'flex', alignItems:'center', gap:8, background:C.vert, border:'none', borderRadius:12, paddingTop:13, paddingBottom:13, paddingLeft:20, paddingRight:20, cursor:'pointer', width:'auto', alignSelf:'flex-start', flexShrink:0 }}>
           <i className="ti ti-list-check" style={{ fontSize:16, color:'white', flexShrink:0 }} />
           <span style={{ fontFamily:sans, fontSize:13, fontWeight:700, color:'white', letterSpacing:'0.02em', textTransform:'uppercase' }}>Étapes du mois</span>
         </button>
