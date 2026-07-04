@@ -805,11 +805,11 @@ const FAB = ({ view, setModal, setView, depTab, setRevType, setExpTypeModal }) =
       <button onClick={handleClick}
         style={{
           position:'absolute', bottom:68, right:16,
-          width:50, height:50, borderRadius:'50%',
-          background:C.rose, border:'none', color:C.vert,
+          width:50, height:50, borderRadius:8,
+          background:C.vert, border:'none', color:'white',
           fontSize:24, cursor:'pointer',
           display:'flex', alignItems:'center', justifyContent:'center',
-          boxShadow:`0 4px 18px rgba(238,196,196,0.8)`, zIndex:10,
+          boxShadow:`0 4px 18px rgba(30,51,40,0.4)`, zIndex:10,
         }}>
         <i className="ti ti-plus" />
       </button>
@@ -1310,16 +1310,16 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
     <>
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
-      <div style={{ display:'flex', flexDirection:'column', flex:1, gap:10, padding:'8px 16px', paddingBottom:'calc(10px + env(safe-area-inset-bottom))', background:C.beige, overflow:'hidden' }}>
+      <div style={{ display:'flex', flexDirection:'column', flex:1, gap:10, padding:'16px 20px', paddingBottom:'calc(16px + env(safe-area-inset-bottom))', background:C.beige, overflow:'hidden' }}>
         {/* Card Reste à vivre du mois */}
-        <div style={{ background:C.vert, borderRadius:16, padding:'18px 18px 16px', textAlign:'center', marginTop: m.closed ? 8 : 0, flex:1, display:'flex', flexDirection:'column', justifyContent:'center' }}>
+        <div style={{ background:C.vert, borderRadius:16, padding:'12px 16px', textAlign:'center', marginTop: m.closed ? 8 : 0, flex:1, display:'flex', flexDirection:'column', justifyContent:'center' }}>
           <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'white', marginBottom:4 }}>Reste à vivre du mois</div>
           {rev === 0
             ? <div style={{ fontFamily:serif, fontSize:26, fontStyle:'italic', color:C.rose, lineHeight:1.3 }}>Revenus non saisis</div>
-            : <div style={{ display:'inline-flex', alignItems:'flex-end', gap:4 }}>
-                <span style={{ fontFamily:serif, fontSize:38, fontWeight:700, color: reste >= 0 ? C.rose : '#E8637A', lineHeight:1 }}>{fmtR(reste)}</span>
-                <span style={{ fontFamily:sans, fontSize:13, color:'rgba(255,255,255,0.45)', lineHeight:'1.15', paddingBottom:2 }}>/ {fmtR(totalDisponible)}</span>
-              </div>
+            : <>
+                <div style={{ fontFamily:serif, fontSize:40, fontWeight:700, color: reste >= 0 ? C.rose : '#E8637A', lineHeight:1 }}>{fmtR(reste)}</div>
+                <div style={{ fontFamily:sans, fontSize:12, color:'rgba(255,255,255,0.5)', marginTop:2 }}>sur {fmtR(totalDisponible)}</div>
+              </>
           }
           {/* Jauge unique avec verdict + trait de position mois */}
           {rev > 0 && (
@@ -1338,8 +1338,12 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
             </div>
           )}
         </div>
+        {/* Citation */}
+        <div style={{ textAlign:'center', fontFamily:serif, fontSize:11, fontStyle:'italic', color:C.muted, flexShrink:0, margin:'10px 0' }}>
+          Gérez l'ordinaire pour vous offrir l'extraordinaire.
+        </div>
         {/* 4 mini-cards */}
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gridTemplateRows:'1fr 1fr', gap:10, flex:1, minHeight:0 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gridTemplateRows:'1fr 1fr', gap:12, flex:1, minHeight:0 }}>
           {[
             { label:'Revenus',  val:fmtP(rev), icon:'ti-credit-card',  vw:'revenus' },
             { label:'Factures', val:'', node:<><span style={{ color:C.vert }}>{fmtP(paidAmt)}</span><span style={{ color:C.vert }}> / {fmtP(bT)}</span></>, sub:`${pN}/${bN} prélevées`, icon:'ti-file-invoice', vw:'depenses' },
@@ -1347,25 +1351,28 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
             { label:'Dépenses', val:fmtP(eT - expRmb), icon:'ti-shopping-bag', vw:'depenses' },
           ].map(c => (
             <div key={c.label} onClick={() => setView(c.vw)}
-              style={{ background:C.card, borderRadius:14, padding:16, border:`0.5px solid ${C.border}`, cursor:'pointer', display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
+              style={{ background:C.card, borderRadius:14, padding:'10px 12px', border:`0.5px solid ${C.border}`, cursor:'pointer', display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                 <span style={{ fontFamily:sans, fontSize:12, color:C.muted, fontWeight:500 }}>{c.label}</span>
                 <i className={`ti ${c.icon}`} style={{ fontSize:17, color:'rgba(28,41,28,0.25)' }} />
               </div>
               <div>
-                <div style={{ fontFamily:serif, fontSize:c.sub ? 18 : 22, fontWeight:600, color:C.vert }}>{c.node || c.val}</div>
+                <div style={{ fontFamily:serif, fontSize:18, fontWeight:600, color:C.vert }}>{c.node || c.val}</div>
                 {c.sub && <div style={{ fontFamily:sans, fontSize:c.subSize || 11, color:C.muted, marginTop:2 }}>{c.sub}</div>}
               </div>
             </div>
           ))}
         </div>
-        {/* Citation */}
-        <div style={{ textAlign:'center', fontFamily:serif, fontSize:11, fontStyle:'italic', color:C.muted, flexShrink:0 }}>
-          Gérez l'ordinaire pour vous offrir l'extraordinaire.
-        </div>
+        {/* Bouton Clôturer le mois */}
+        {!m.closed && (
+          <button onClick={() => setConfirmClose(true)}
+            style={{ width:'100%', padding:'10px 16px', background:'white', border:'1px solid rgba(28,41,28,0.2)', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, color:C.vert, cursor:'pointer', flexShrink:0 }}>
+            🔒 Clôturer le mois
+          </button>
+        )}
         {/* Bouton Étapes du mois */}
         <button onClick={() => setShowSteps(true)}
-          style={{ display:'flex', alignItems:'center', gap:8, background:C.vert, border:'none', borderRadius:12, paddingTop:13, paddingBottom:13, paddingLeft:20, paddingRight:20, cursor:'pointer', width:'auto', alignSelf:'flex-start', flexShrink:0 }}>
+          style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, background:C.vert, border:'none', borderRadius:8, paddingTop:13, paddingBottom:13, paddingLeft:20, paddingRight:20, cursor:'pointer', width:'100%', flexShrink:0 }}>
           <i className="ti ti-list-check" style={{ fontSize:16, color:'white', flexShrink:0 }} />
           <span style={{ fontFamily:sans, fontSize:13, fontWeight:700, color:'white', letterSpacing:'0.02em', textTransform:'uppercase' }}>Étapes du mois</span>
         </button>
@@ -1423,40 +1430,6 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
                     style={{ width:'100%', padding:'10px 0', background:C.rose, border:'none', borderRadius:10, fontFamily:sans, fontSize:13, fontWeight:600, color:C.vert, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
                     <i className="ti ti-lock-open" style={{ fontSize:15 }} /> Réouvrir le mois
                   </button>
-                ) : confirmClose ? (
-                  <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:200, background:'white', border:'1px solid rgba(28,41,28,0.1)', borderRadius:'10px 10px 0 0', padding:'12px 14px', paddingBottom:'calc(80px + env(safe-area-inset-bottom))' }}>
-                    <div style={{ fontFamily:sans, fontSize:12, fontWeight:600, color:C.vert, marginBottom:6, textAlign:'center' }}>Clôturer le mois</div>
-                    <div style={{ fontFamily:sans, fontSize:11, color:C.muted, marginBottom:8 }}>Solde sur votre compte à la clôture</div>
-                    <input
-                      type="number" step="0.01" placeholder="ex : 1 250"
-                      value={soldeFinalInput}
-                      onChange={e => setSoldeFinalInput(e.target.value)}
-                      style={{ width:'100%', padding:'9px 12px', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, fontSize:15, fontFamily:serif, color:C.vert, background:'white', marginBottom:10, boxSizing:'border-box' }}
-                    />
-                    <div style={{ display:'flex', gap:8 }}>
-                      <button onClick={() => {
-                        const sf = parseFloat(soldeFinalInput);
-                        updateData(mm => { mm.closed = true; if (sf) mm.soldeFinal = sf; });
-                        setConfirmClose(false);
-                        setSoldeFinalInput('');
-                      }}
-                        style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
-                        Confirmer
-                      </button>
-                      <button onClick={() => {
-                        updateData(mm => { mm.closed = true; });
-                        setConfirmClose(false);
-                        setSoldeFinalInput('');
-                      }}
-                        style={{ padding:'9px 12px', background:'white', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, cursor:'pointer', color:C.muted, fontFamily:sans, fontSize:13 }}>
-                        Passer
-                      </button>
-                      <button onClick={() => { setConfirmClose(false); setSoldeFinalInput(''); }}
-                        style={{ padding:'9px 12px', background:'white', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, cursor:'pointer', color:C.muted, fontFamily:sans, fontSize:13 }}>
-                        ✕
-                      </button>
-                    </div>
-                  </div>
                 ) : (
                   <button onClick={() => setConfirmClose(true)}
                     style={{ width:'100%', padding:'10px 0', background:'none', border:'1.5px solid rgba(255,255,255,0.3)', borderRadius:10, fontFamily:sans, fontSize:13, fontWeight:500, color:'white', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
@@ -1464,6 +1437,41 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
                   </button>
                 )}
               </div>
+            </div>
+          </div>
+        )}
+        {confirmClose && (
+          <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:200, background:'white', border:'1px solid rgba(28,41,28,0.1)', borderRadius:'10px 10px 0 0', padding:'12px 14px', paddingBottom:'calc(80px + env(safe-area-inset-bottom))' }}>
+            <div style={{ fontFamily:sans, fontSize:12, fontWeight:600, color:C.vert, marginBottom:6, textAlign:'center' }}>Clôturer le mois</div>
+            <div style={{ fontFamily:sans, fontSize:11, color:C.muted, marginBottom:8 }}>Solde sur votre compte à la clôture</div>
+            <input
+              type="number" step="0.01" placeholder="ex : 1 250"
+              value={soldeFinalInput}
+              onChange={e => setSoldeFinalInput(e.target.value)}
+              style={{ width:'100%', padding:'9px 12px', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, fontSize:15, fontFamily:serif, color:C.vert, background:'white', marginBottom:10, boxSizing:'border-box' }}
+            />
+            <div style={{ display:'flex', gap:8 }}>
+              <button onClick={() => {
+                const sf = parseFloat(soldeFinalInput);
+                updateData(mm => { mm.closed = true; if (sf) mm.soldeFinal = sf; });
+                setConfirmClose(false);
+                setSoldeFinalInput('');
+              }}
+                style={{ flex:1, padding:9, background:C.vert, color:'white', border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                Confirmer
+              </button>
+              <button onClick={() => {
+                updateData(mm => { mm.closed = true; });
+                setConfirmClose(false);
+                setSoldeFinalInput('');
+              }}
+                style={{ padding:'9px 12px', background:'white', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, cursor:'pointer', color:C.muted, fontFamily:sans, fontSize:13 }}>
+                Passer
+              </button>
+              <button onClick={() => { setConfirmClose(false); setSoldeFinalInput(''); }}
+                style={{ padding:'9px 12px', background:'white', border:'1px solid rgba(28,41,28,0.15)', borderRadius:8, cursor:'pointer', color:C.muted, fontFamily:sans, fontSize:13 }}>
+                ✕
+              </button>
             </div>
           </div>
         )}
