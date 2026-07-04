@@ -787,7 +787,7 @@ const FAB = ({ view, setModal, setView, depTab, setRevType, setExpTypeModal }) =
 
   const menuItem = (label, icon, action) => (
     <button onMouseDown={action}
-      style={{ display:'flex', alignItems:'center', gap:10, width:'100%', padding:'12px 16px', background:'none', border:'none', borderBottom:`1px solid ${C.rose}`, fontFamily:sans, fontSize:13, fontWeight:600, color:C.vert, cursor:'pointer', textAlign:'left' }}>
+      style={{ display:'flex', alignItems:'center', gap:10, width:'100%', padding:'12px 16px', background:'none', border:'none', borderBottom:`1px solid ${C.vert}`, fontFamily:sans, fontSize:13, fontWeight:600, color:C.vert, cursor:'pointer', textAlign:'left' }}>
       <i className={`ti ${icon}`} style={{ fontSize:16, color:C.vert }} />{label}
     </button>
   );
