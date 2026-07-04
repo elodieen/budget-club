@@ -1310,7 +1310,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
     <>
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
-      <div style={{ display:'flex', flexDirection:'column', flex:1, gap:10, padding:'16px 20px', paddingBottom:'calc(16px + env(safe-area-inset-bottom))', background:C.beige, overflow:'hidden' }}>
+      <div style={{ display:'flex', flexDirection:'column', flex:1, gap:10, padding:'16px 28px', paddingBottom:'calc(16px + env(safe-area-inset-bottom))', background:C.beige, overflow:'hidden' }}>
         {/* Card Reste à vivre du mois */}
         <div style={{ background:C.vert, borderRadius:16, padding:'24px 20px', textAlign:'center', marginTop: m.closed ? 8 : 0, display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
           <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'white', marginBottom:4 }}>Reste à vivre du mois</div>
@@ -1365,13 +1365,14 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
         </div>
         {/* Boutons Clôturer le mois / Étapes du mois */}
         <div style={{ display:'flex', flexDirection:'column', width:'100%', gap:10 }}>
-          {!m.closed && (
-            <button onClick={() => setConfirmClose(true)}
-              style={{ position:'relative', display:'flex', alignItems:'center', justifyContent:'center', gap:8, width:'100%', padding:'12px 20px', background:C.vert, border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:700, color:'white', cursor:'pointer', flexShrink:0, letterSpacing:'0.02em', textTransform:'uppercase' }}>
-              <i className="ti ti-lock" style={{ fontSize:16, color:'white', flexShrink:0 }} /> Clôturer le mois
-              <span style={{ position:'absolute', top:-3, right:-3, width:9, height:9, borderRadius:'50%', background:C.rose, border:`2px solid ${C.beige}` }} />
-            </button>
-          )}
+          <button onClick={() => { if (!m.closed) setConfirmClose(true); }}
+            style={m.closed
+              ? { display:'flex', alignItems:'center', justifyContent:'center', gap:8, background:'transparent', border:'1px solid rgba(28,41,28,0.2)', borderRadius:8, padding:'10px 16px', cursor:'default', width:'100%', flexShrink:0 }
+              : { display:'flex', alignItems:'center', justifyContent:'center', gap:8, width:'100%', padding:'12px 20px', background:C.vert, border:'none', borderRadius:8, cursor:'pointer', flexShrink:0 }
+            }>
+            <i className="ti ti-lock" style={{ fontSize: m.closed ? 15 : 16, color: m.closed ? C.vert : 'white', flexShrink:0 }} />
+            <span style={{ fontFamily:sans, fontSize:13, fontWeight: m.closed ? 600 : 700, color: m.closed ? C.vert : 'white' }}>Clôturer le mois</span>
+          </button>
           <button onClick={() => setShowSteps(true)}
             style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, background:'transparent', border:'1px solid rgba(28,41,28,0.2)', borderRadius:8, padding:'10px 16px', cursor:'pointer', width:'100%', flexShrink:0 }}>
             <i className="ti ti-list-check" style={{ fontSize:15, color:C.vert, flexShrink:0 }} />
