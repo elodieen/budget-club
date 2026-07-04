@@ -1282,9 +1282,10 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
   const depensesLibres = Math.max(0, totalDisponible - reste);
   const pctConsomme = totalDisponible > 0 ? Math.min(100, depensesLibres / totalDisponible * 100) : 0;
   const ecart = pctConsomme - pctMois;
-  let jaugeIcon, jaugeIconColor;
-  if (reste < 0)       { jaugeIcon = 'ti-alert-circle';   jaugeIconColor = '#E8637A'; }
-  else if (ecart > 15) { jaugeIcon = 'ti-alert-triangle'; jaugeIconColor = '#EEC4C4'; }
+  let verdictLabel, verdictColor;
+  if (reste < 0)       { verdictLabel = 'Budget critique';  verdictColor = '#E8637A'; }
+  else if (ecart > 15) { verdictLabel = 'Budget critique';  verdictColor = '#EEC4C4'; }
+  else                 { verdictLabel = 'Budget maîtrisé';  verdictColor = 'white'; }
 
   const cb5    = m.catBudgets || {};
   const tvBgt5 = Object.values(cb5).reduce((s, v) => s + (parseFloat(v) || 0), 0);
@@ -1320,20 +1321,19 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
                 <span style={{ fontFamily:sans, fontSize:13, color:'rgba(255,255,255,0.45)', lineHeight:'1.15', paddingBottom:2 }}>/ {fmtR(totalDisponible)}</span>
               </div>
           }
-          {/* Jauge unique avec icône + trait de position mois */}
+          {/* Jauge unique avec verdict + trait de position mois */}
           {rev > 0 && (
             <div style={{ marginTop:10 }}>
-              <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                {jaugeIcon && <i className={`ti ${jaugeIcon}`} style={{ fontSize:14, color:jaugeIconColor, flexShrink:0 }} />}
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <span style={{ display:'flex', alignItems:'center', gap:5, flexShrink:0 }}>
+                  <span style={{ width:6, height:6, borderRadius:'50%', background:verdictColor, display:'inline-block', flexShrink:0 }} />
+                  <span style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.75)', whiteSpace:'nowrap' }}>{verdictLabel}</span>
+                </span>
                 <div style={{ flex:1, position:'relative', height:5, background:'rgba(255,255,255,0.15)', borderRadius:3 }}>
                   <div style={{ position:'absolute', top:0, left:0, height:'100%', width:'100%', background:'#EEC4C4', borderRadius:3, transformOrigin:'left', transform:`scaleX(${pctConsomme / 100})`, transition:'transform 0.6s ease' }} />
                   <div style={{ position:'absolute', top:-3.5, left:`${pctMois}%`, transform:'translateX(-50%)', width:2, height:12, background:'rgba(255,255,255,0.8)', borderRadius:1 }} />
                 </div>
-              </div>
-              <div style={{ marginTop:4, marginBottom:4, textAlign:'center' }}>
-                <span style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.6)' }}>
-                  {Math.round(pctConsomme)}% du reste à vivre dépensé, encore {joursRestants}j devant toi
-                </span>
+                <span style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.6)', flexShrink:0, whiteSpace:'nowrap' }}>Encore {joursRestants}j</span>
               </div>
             </div>
           )}
