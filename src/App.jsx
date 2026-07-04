@@ -10,7 +10,7 @@ const C = {
   nav:    '#1C291C',
   rose:   '#EEC4C4',
   roseL:  '#F9EDED',
-  beige:  '#F5EDE1',
+  beige:  '#F9F7F5',
   gold:   '#EEC4C4',
   card:   '#FFFFFF',
   text:   '#2A2A2A',
@@ -746,23 +746,25 @@ const BottomNav = ({ view, setView, m }) => {
   const badges   = { revenus: m.revenues.filter(r => (r.type||'revenu') === 'revenu').length > 0, budget: m.budgetLocked || (rev > 0 && tv > 0 && nonV < 1), depenses: !!m.closed };
 
   return (
-    <div style={{ display:'flex', alignItems:'stretch', background:C.nav, flexShrink:0, paddingTop:8, paddingBottom:'env(safe-area-inset-bottom)' }}>
+    <div style={{ display:'flex', alignItems:'stretch', background:'#FFFFFF', borderTop:'1px solid rgba(28,41,28,0.08)', flexShrink:0, height:60, boxSizing:'content-box', paddingBottom:'env(safe-area-inset-bottom)' }}>
       {TABS.map(t => {
         const active    = view === t.id || view === t.id + '_edit';
         const hasBadge  = badges[t.id];
+        const inactiveColor = '#737874';
         return (
           <button key={t.id} onClick={() => setView(t.id)}
-            style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', border:'none', background:'none', cursor:'pointer', padding:'2px 1px' }}>
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3, background: active ? 'rgba(255,255,255,0.12)' : 'transparent', borderRadius:12, padding:'4px 12px', transition:'all 0.2s' }}>
+            style={{ flex:1, position:'relative', display:'flex', alignItems:'center', justifyContent:'center', border:'none', background:'none', cursor:'pointer', padding:0 }}>
+            {active && <div style={{ position:'absolute', top:0, left:'50%', transform:'translateX(-50%)', width:28, height:2, background:C.vert }} />}
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3 }}>
               <div style={{ position:'relative', display:'inline-flex' }}>
-                <i className={`ti ${t.icon}`} style={{ fontSize:20, color: active ? 'white' : 'rgba(255,255,255,0.4)' }} />
+                <i className={`ti ${t.icon}`} style={{ fontSize:20, color: active ? C.vert : inactiveColor }} />
                 {hasBadge && (
                   <div style={{ position:'absolute', top:-4, right:-6, width:13, height:13, borderRadius:'50%', background:C.rose, display:'flex', alignItems:'center', justifyContent:'center' }}>
                     <span style={{ fontSize:7, color:C.nav, fontWeight:800, lineHeight:1 }}>✓</span>
                   </div>
                 )}
               </div>
-              <span style={{ fontSize:9, color: active ? 'white' : 'rgba(255,255,255,0.4)', fontWeight: active ? 600 : 400, fontFamily:sans }}>{t.label}</span>
+              <span style={{ fontSize:11, color: active ? C.vert : inactiveColor, fontWeight: active ? 600 : 400, fontFamily:sans }}>{t.label}</span>
             </div>
           </button>
         );
