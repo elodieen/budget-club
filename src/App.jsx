@@ -1312,7 +1312,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
       {m.closed && <ClosedBanner />}
       <div style={{ display:'flex', flexDirection:'column', flex:1, gap:10, padding:'8px 16px', paddingBottom:'calc(10px + env(safe-area-inset-bottom))', background:C.beige, overflow:'hidden' }}>
         {/* Card Reste à vivre du mois */}
-        <div style={{ background:C.vert, borderRadius:16, padding:'18px 18px 16px', textAlign:'center', marginTop: m.closed ? 8 : 0, flexShrink:0 }}>
+        <div style={{ background:C.vert, borderRadius:16, padding:'18px 18px 16px', textAlign:'center', marginTop: m.closed ? 8 : 0, flex:1, display:'flex', flexDirection:'column', justifyContent:'center' }}>
           <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'white', marginBottom:4 }}>Reste à vivre du mois</div>
           {rev === 0
             ? <div style={{ fontFamily:serif, fontSize:26, fontStyle:'italic', color:C.rose, lineHeight:1.3 }}>Revenus non saisis</div>
