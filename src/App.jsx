@@ -1358,7 +1358,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
               </div>
               <div>
                 <div style={{ fontFamily:serif, fontSize:16, fontWeight:600, color:C.vert }}>{c.node || c.val}</div>
-                {c.sub && <div style={{ fontFamily:sans, fontSize:c.subSize || 11, color:C.muted, marginTop:2 }}>{c.sub}</div>}
+                <div style={{ fontFamily:sans, fontSize:c.subSize || 11, color:C.muted, marginTop:2, visibility: c.sub ? 'visible' : 'hidden' }}>{c.sub || ' '}</div>
               </div>
             </div>
           ))}
@@ -2893,7 +2893,7 @@ const SplashBg = ({ children }) => (
     </div>
     <div style={{ position:'absolute', bottom:20, width:'100%', textAlign:'center', fontFamily:sans, fontSize:10, pointerEvents:'none' }}>
       <span style={{ color:'white' }}>✦</span>
-      <span style={{ color:'rgba(255,255,255,0.6)' }}> Built different. Built by Elodie. </span>
+      <span style={{ color:'rgba(255,255,255,0.6)' }}> Be your own club. </span>
       <span style={{ color:'white' }}>✦</span>
     </div>
   </div>
@@ -3171,7 +3171,7 @@ const SplashScreen = ({ onDone }) => {
       </div>
       <div style={{ position:'absolute', bottom:20, width:'100%', textAlign:'center', fontFamily:sans, fontSize:10, pointerEvents:'none' }}>
         <span style={{ color:'white' }}>✦</span>
-        <span style={{ color:'rgba(255,255,255,0.6)' }}> Built different. Built by Elodie. </span>
+        <span style={{ color:'rgba(255,255,255,0.6)' }}> Be your own club. </span>
         <span style={{ color:'white' }}>✦</span>
       </div>
     </div>
