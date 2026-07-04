@@ -1312,7 +1312,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
       {m.closed && <ClosedBanner />}
       <div style={{ display:'flex', flexDirection:'column', flex:1, gap:10, padding:'16px 20px', paddingBottom:'calc(16px + env(safe-area-inset-bottom))', background:C.beige, overflow:'hidden' }}>
         {/* Card Reste à vivre du mois */}
-        <div style={{ background:C.vert, borderRadius:16, padding:'12px 16px', textAlign:'center', marginTop: m.closed ? 8 : 0, flex:1, display:'flex', flexDirection:'column', justifyContent:'center' }}>
+        <div style={{ background:C.vert, borderRadius:16, padding:'12px 16px', textAlign:'center', marginTop: m.closed ? 8 : 0, display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
           <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'white', marginBottom:4 }}>Reste à vivre du mois</div>
           {rev === 0
             ? <div style={{ fontFamily:serif, fontSize:26, fontStyle:'italic', color:C.rose, lineHeight:1.3 }}>Revenus non saisis</div>
@@ -1339,7 +1339,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
           )}
         </div>
         {/* Citation */}
-        <div style={{ textAlign:'center', fontFamily:serif, fontSize:11, fontStyle:'italic', color:C.muted, flexShrink:0, margin:'10px 0' }}>
+        <div style={{ textAlign:'center', fontFamily:serif, fontSize:15, fontStyle:'italic', color:C.muted, flexShrink:0, margin:'10px 0' }}>
           Gérez l'ordinaire pour vous offrir l'extraordinaire.
         </div>
         {/* 4 mini-cards */}
@@ -1366,13 +1366,13 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
         {/* Bouton Clôturer le mois */}
         {!m.closed && (
           <button onClick={() => setConfirmClose(true)}
-            style={{ width:'100%', padding:'10px 16px', background:'white', border:'1px solid rgba(28,41,28,0.2)', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, color:C.vert, cursor:'pointer', flexShrink:0 }}>
-            🔒 Clôturer le mois
+            style={{ display:'flex', alignItems:'center', gap:8, alignSelf:'flex-start', padding:'10px 16px', background:'transparent', border:'1px solid rgba(28,41,28,0.2)', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, color:C.vert, cursor:'pointer', flexShrink:0 }}>
+            <i className="ti ti-lock" style={{ fontSize:15 }} /> Clôturer le mois
           </button>
         )}
         {/* Bouton Étapes du mois */}
         <button onClick={() => setShowSteps(true)}
-          style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, background:C.vert, border:'none', borderRadius:8, paddingTop:13, paddingBottom:13, paddingLeft:20, paddingRight:20, cursor:'pointer', width:'100%', flexShrink:0 }}>
+          style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, background:C.vert, border:'none', borderRadius:8, padding:'12px 20px', cursor:'pointer', alignSelf:'flex-start', flexShrink:0 }}>
           <i className="ti ti-list-check" style={{ fontSize:16, color:'white', flexShrink:0 }} />
           <span style={{ fontFamily:sans, fontSize:13, fontWeight:700, color:'white', letterSpacing:'0.02em', textTransform:'uppercase' }}>Étapes du mois</span>
         </button>
