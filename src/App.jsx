@@ -1312,7 +1312,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
       {m.closed && <ClosedBanner />}
       <div style={{ display:'flex', flexDirection:'column', flex:1, gap:10, padding:'16px 20px', paddingBottom:'calc(16px + env(safe-area-inset-bottom))', background:C.beige, overflow:'hidden' }}>
         {/* Card Reste à vivre du mois */}
-        <div style={{ background:C.vert, borderRadius:16, padding:'20px 16px', textAlign:'center', marginTop: m.closed ? 8 : 0, display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
+        <div style={{ background:C.vert, borderRadius:16, padding:'24px 20px', textAlign:'center', marginTop: m.closed ? 8 : 0, display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
           <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'white', marginBottom:4 }}>Reste à vivre du mois</div>
           {rev === 0
             ? <div style={{ fontFamily:serif, fontSize:26, fontStyle:'italic', color:C.rose, lineHeight:1.3 }}>Revenus non saisis</div>
@@ -1351,7 +1351,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
             { label:'Dépenses', val:fmtP(eT - expRmb), icon:'ti-shopping-bag', vw:'depenses' },
           ].map(c => (
             <div key={c.label} onClick={() => setView(c.vw)}
-              style={{ background:C.card, borderRadius:14, paddingTop:'12px', paddingBottom:'12px', paddingLeft:'12px', paddingRight:'12px', border:`0.5px solid ${C.border}`, cursor:'pointer', display:'flex', flexDirection:'column' }}>
+              style={{ background:C.card, borderRadius:14, paddingTop:'16px', paddingBottom:'16px', paddingLeft:'16px', paddingRight:'16px', border:`0.5px solid ${C.border}`, cursor:'pointer', display:'flex', flexDirection:'column' }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                 <span style={{ fontFamily:sans, fontSize:12, color:C.muted, fontWeight:500 }}>{c.label}</span>
                 <i className={`ti ${c.icon}`} style={{ fontSize:17, color:'rgba(28,41,28,0.25)' }} />
@@ -1367,14 +1367,15 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
         <div style={{ display:'flex', flexDirection:'column', width:'100%', gap:10 }}>
           {!m.closed && (
             <button onClick={() => setConfirmClose(true)}
-              style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, width:'100%', padding:'10px 16px', background:'transparent', border:'1px solid rgba(28,41,28,0.2)', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:600, color:C.vert, cursor:'pointer', flexShrink:0 }}>
-              <i className="ti ti-lock" style={{ fontSize:15 }} /> Clôturer le mois
+              style={{ position:'relative', display:'flex', alignItems:'center', justifyContent:'center', gap:8, width:'100%', padding:'12px 20px', background:C.vert, border:'none', borderRadius:8, fontFamily:sans, fontSize:13, fontWeight:700, color:'white', cursor:'pointer', flexShrink:0, letterSpacing:'0.02em', textTransform:'uppercase' }}>
+              <i className="ti ti-lock" style={{ fontSize:16, color:'white', flexShrink:0 }} /> Clôturer le mois
+              <span style={{ position:'absolute', top:-3, right:-3, width:9, height:9, borderRadius:'50%', background:C.rose, border:`2px solid ${C.beige}` }} />
             </button>
           )}
           <button onClick={() => setShowSteps(true)}
-            style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, background:C.vert, border:'none', borderRadius:8, padding:'12px 20px', cursor:'pointer', width:'100%', flexShrink:0 }}>
-            <i className="ti ti-list-check" style={{ fontSize:16, color:'white', flexShrink:0 }} />
-            <span style={{ fontFamily:sans, fontSize:13, fontWeight:700, color:'white', letterSpacing:'0.02em', textTransform:'uppercase' }}>Étapes du mois</span>
+            style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, background:'transparent', border:'1px solid rgba(28,41,28,0.2)', borderRadius:8, padding:'10px 16px', cursor:'pointer', width:'100%', flexShrink:0 }}>
+            <i className="ti ti-list-check" style={{ fontSize:15, color:C.vert, flexShrink:0 }} />
+            <span style={{ fontFamily:sans, fontSize:13, fontWeight:600, color:C.vert }}>Étapes du mois</span>
           </button>
         </div>
 
