@@ -1309,7 +1309,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
     <>
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
-      <div style={{ display:'flex', flexDirection:'column', flex:1, gap:8, padding:'8px 16px', paddingBottom:'calc(10px + env(safe-area-inset-bottom))', background:C.beige, overflow:'hidden' }}>
+      <div style={{ display:'flex', flexDirection:'column', flex:1, justifyContent:'space-between', gap:8, padding:'8px 16px', paddingBottom:'calc(10px + env(safe-area-inset-bottom))', background:C.beige, overflow:'hidden' }}>
         {/* Card Reste à vivre du mois */}
         <div style={{ background:C.vert, borderRadius:16, padding:'12px 14px 10px', textAlign:'center', marginTop: m.closed ? 8 : 0, marginBottom:8 }}>
           <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'white', marginBottom:4 }}>Reste à vivre du mois</div>
@@ -1363,7 +1363,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
         </div>
         {/* Bouton Étapes du mois */}
         <button onClick={() => setShowSteps(true)}
-          style={{ display:'flex', alignItems:'center', gap:8, background:C.vert, border:'none', borderRadius:12, padding:'13px 16px', cursor:'pointer', marginTop:'auto', width:'calc(100% - 66px)' }}>
+          style={{ display:'flex', alignItems:'center', gap:8, background:C.vert, border:'none', borderRadius:12, paddingTop:13, paddingBottom:13, paddingLeft:20, paddingRight:20, cursor:'pointer', width:'auto', alignSelf:'flex-start' }}>
           <i className="ti ti-list-check" style={{ fontSize:16, color:'white', flexShrink:0 }} />
           <span style={{ fontFamily:sans, fontSize:13, fontWeight:700, color:'white', letterSpacing:'0.02em', textTransform:'uppercase' }}>Étapes du mois</span>
         </button>
