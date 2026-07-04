@@ -1433,12 +1433,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
                     style={{ width:'100%', padding:'10px 0', background:C.rose, border:'none', borderRadius:10, fontFamily:sans, fontSize:13, fontWeight:600, color:C.vert, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
                     <i className="ti ti-lock-open" style={{ fontSize:15 }} /> Réouvrir le mois
                   </button>
-                ) : (
-                  <button onClick={() => setConfirmClose(true)}
-                    style={{ width:'100%', padding:'10px 0', background:'none', border:'1.5px solid rgba(255,255,255,0.3)', borderRadius:10, fontFamily:sans, fontSize:13, fontWeight:500, color:'white', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
-                    <i className="ti ti-lock" style={{ fontSize:15 }} /> Clôturer le mois
-                  </button>
-                )}
+                ) : null}
               </div>
             </div>
           </div>
