@@ -1515,13 +1515,13 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
     <>
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
-      <div style={{ padding:'16px 20px 4px', background:C.beige, flexShrink:0 }}>
+      <div style={{ padding:'16px 28px 4px', background:C.beige, flexShrink:0 }}>
         <div style={{ fontFamily:serif, fontSize:24, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left' }}>Budget</div>
         <div style={{ fontFamily:serif, fontSize:14, fontStyle:'italic', color:'#737874', textAlign:'left', marginTop:4, marginBottom:12 }}>
           Un bon budget est la première étape vers la liberté financière.
         </div>
       </div>
-      <div style={{ flex:1, overflowY:'auto', padding:'0 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
+      <div style={{ flex:1, overflowY:'auto', padding:'0 28px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
         {/* Card état budget */}
         <div onClick={() => setView('budget_edit')}
           style={{ background:C.vert, borderRadius:14, padding:'14px 18px', marginBottom:(done || m.budgetLocked) ? 8 : 16, marginTop:8, display:'flex', justifyContent:'space-between', alignItems:'center', cursor:'pointer' }}>
@@ -1882,19 +1882,19 @@ export function RevenusView({ m, mi, setMi, updateData, onProfileAction }) {
     <>
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
-      <div style={{ padding:'16px 20px 4px', background:C.beige, flexShrink:0 }}>
+      <div style={{ padding:'16px 28px 4px', background:C.beige, flexShrink:0 }}>
         <div style={{ fontFamily:serif, fontSize:24, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left' }}>Revenus</div>
         <div style={{ fontFamily:serif, fontSize:14, fontStyle:'italic', color:'#737874', textAlign:'left', marginTop:4, marginBottom:12 }}>Ce n'est pas ce qu'on gagne qui compte, c'est ce qu'on en fait.</div>
       </div>
       {/* Card total */}
-      <div style={{ background:'#1E3328', borderRadius:'16px', margin:'0 16px', padding:'16px 20px', flexShrink:0 }}>
+      <div style={{ background:'#1E3328', borderRadius:'16px', margin:'0 28px', padding:'16px 20px', flexShrink:0 }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
           <span style={{ fontFamily:sans, fontSize:12, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.5)' }}>Total</span>
           <span style={{ fontFamily:serif, fontSize:30, fontWeight:700, color:C.rose }}>{fmtR(total)}</span>
         </div>
       </div>
       {/* Liste scrollable */}
-      <div style={{ flex:1, overflowY:'auto', padding:'4px 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige, marginTop:10 }}>
+      <div style={{ flex:1, overflowY:'auto', padding:'4px 28px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige, marginTop:10 }}>
         {revenus.length === 0 && (
           <div style={{ textAlign:'center', padding:32, color:C.muted, fontFamily:sans, fontSize:13 }}>Aucun revenu saisi ce mois</div>
         )}
@@ -1984,14 +1984,14 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
     <>
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
-      <div style={{ padding:'16px 16px 4px', background:C.beige, flexShrink:0 }}>
+      <div style={{ padding:'16px 28px 4px', background:C.beige, flexShrink:0 }}>
         <div style={{ fontFamily:serif, fontSize:24, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left' }}>Suivi</div>
         <div style={{ fontFamily:serif, fontSize:14, fontStyle:'italic', color:'#737874', textAlign:'left', marginTop:4 }}>
           {depTab === 'factures' ? 'Maîtrisez vos charges. Elles ne vous surprendront plus.' : 'Le luxe, c\'est de ne jamais être surpris par ses comptes.'}
         </div>
       </div>
       {/* Switcher capsule */}
-      <div style={{ padding:'12px 16px', background:C.beige, flexShrink:0 }}>
+      <div style={{ padding:'12px 28px', background:C.beige, flexShrink:0 }}>
         <div style={{ display:'flex', background:'#EFEDEC', borderRadius:12, padding:4 }}>
           {[{id:'factures',label:'Factures'},{id:'depenses',label:'Dépenses'}].map(t => (
             <button key={t.id} onClick={() => setDepTab(t.id)}
@@ -2008,14 +2008,14 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
       {depTab === 'depenses' ? (
         <>
           {/* Card reste à dépenser */}
-          <div style={{ background:'#1E3328', borderRadius:'16px', margin:'0 16px', padding:'16px', flexShrink:0, textAlign:'center', marginTop:8 }}>
+          <div style={{ background:'#1E3328', borderRadius:'16px', margin:'0 28px', padding:'16px', flexShrink:0, textAlign:'center', marginTop:8 }}>
             <div style={{ fontFamily:sans, fontSize:9, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.5)', marginBottom:4 }}>Reste à vivre du mois</div>
             {rev === 0
               ? <div style={{ fontFamily:serif, fontSize:24, fontStyle:'italic', color:C.rose }}>Revenus non saisis</div>
               : <div style={{ fontFamily:serif, fontSize:32, fontWeight:700, color:C.rose }}>{fmtR(reste)}</div>
             }
           </div>
-          <div style={{ flex:1, overflowY:'auto', padding:'8px 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
+          <div style={{ flex:1, overflowY:'auto', padding:'8px 28px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
             {exps.length === 0 && <div style={{ textAlign:'center', padding:24, color:C.muted, fontFamily:sans, fontSize:13 }}>Aucune dépense ce mois</div>}
             {byDate(exps).map(e => {
               const cat = CATS.find(c => c.id === e.cat) || CATS[CATS.length-1];
@@ -2062,7 +2062,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
       ) : (
         <>
           {/* Card récap factures */}
-          <div style={{ background:'#1E3328', borderRadius:'16px', margin:'0 16px', padding:'16px', flexShrink:0, marginTop:8 }}>
+          <div style={{ background:'#1E3328', borderRadius:'16px', margin:'0 28px', padding:'16px', flexShrink:0, marginTop:8 }}>
             <div style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.5)', letterSpacing:1, textTransform:'uppercase', marginBottom:4 }}>{pN}/{bN} prélevées</div>
             <div style={{ display:'flex', alignItems:'baseline', gap:6 }}>
               <span style={{ fontFamily:serif, fontSize:28, fontWeight:700, color:C.rose }}>{fmt2(paidAmt)}</span>
@@ -2073,7 +2073,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
             </div>
           </div>
           {/* Bouton valider liste */}
-          <div style={{ padding:'10px 16px 4px', background:C.beige, flexShrink:0 }}>
+          <div style={{ padding:'10px 28px 4px', background:C.beige, flexShrink:0 }}>
             {m.facturesValidees ? (
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', background:'rgba(28,41,28,0.08)', borderRadius:10 }}>
                 <span style={{ fontFamily:sans, fontSize:13, color:C.muted, fontWeight:500 }}>Liste validée ✓</span>
@@ -2091,7 +2091,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
             )}
           </div>
           {/* Liste unifiée — non cochées en haut, cochées en bas */}
-          <div style={{ flex:1, overflowY:'auto', padding:'8px 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
+          <div style={{ flex:1, overflowY:'auto', padding:'8px 28px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
             {unpaid.length > 0 && <div style={{ padding:'6px 0 8px' }}><span style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:1, textTransform:'uppercase', color:C.muted }}>À prélever — {unpaid.length}</span></div>}
             {unpaid.map((b) => (
               <div key={b.id} style={{ background:C.card, borderRadius:12, marginBottom:8, border:`0.5px solid ${C.border}` }}>
@@ -2624,7 +2624,7 @@ export function EpargneView({ currentYear, onProfileAction }) {
   return (
     <>
       {/* Header avec navigation année */}
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px 10px', background:C.beige, flexShrink:0 }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 28px 10px', background:C.beige, flexShrink:0 }}>
         <img src="/logo-budget-club-favicon-rose.png" style={{ width:38, height:38, borderRadius:'50%', objectFit:'cover' }} />
         <div style={{ display:'flex', alignItems:'center', gap:4 }}>
           <button onClick={prevYear}
@@ -2641,23 +2641,23 @@ export function EpargneView({ currentYear, onProfileAction }) {
 
       {/* Bandeau clôture annuelle */}
       {allClosed && (
-        <div style={{ margin:'8px 16px 0', background:C.rose, borderRadius:10, padding:'8px 16px', display:'flex', alignItems:'center', justifyContent:'center', gap:6, flexShrink:0 }}>
+        <div style={{ margin:'8px 28px 0', background:C.rose, borderRadius:10, padding:'8px 16px', display:'flex', alignItems:'center', justifyContent:'center', gap:6, flexShrink:0 }}>
           <span style={{ fontFamily:sans, fontSize:11, fontWeight:600, color:'#1E3328' }}>Année {epargneYear} clôturée ✓</span>
         </div>
       )}
 
-      <div style={{ textAlign:'center', padding:'4px 16px 10px', background:C.beige, flexShrink:0 }}>
+      <div style={{ textAlign:'center', padding:'4px 28px 10px', background:C.beige, flexShrink:0 }}>
         <div style={{ fontFamily:serif, fontSize:16, letterSpacing:'3px', color:C.vert, textAlign:'center', lineHeight:1.5 }}>
           <span style={{ color:C.vert }}>❧</span> ÉPARGNE &amp;<br />{"    "}INVESTISSEMENT <span style={{ color:C.vert }}>❧</span>
         </div>
       </div>
-      <div style={{ textAlign:'center', padding:'4px 16px 8px', fontFamily:serif, fontSize:12, fontStyle:'italic', color:C.muted, flexShrink:0, background:C.beige }}>Investir, c'est croire en son avenir — et bâtir son indépendance un versement à la fois.</div>
+      <div style={{ textAlign:'center', padding:'4px 28px 8px', fontFamily:serif, fontSize:12, fontStyle:'italic', color:C.muted, flexShrink:0, background:C.beige }}>Investir, c'est croire en son avenir — et bâtir son indépendance un versement à la fois.</div>
 
       {/* Wrapper : cards fixes + jauges scrollables */}
       <div style={{ display:'flex', flexDirection:'column', flex:1, overflow:'hidden', background:C.beige }}>
 
         {/* ── Cards fixes ── */}
-        <div style={{ flexShrink:0, padding:'0 16px', background:C.beige }}>
+        <div style={{ flexShrink:0, padding:'0 28px', background:C.beige }}>
           {/* ── Livret A ── */}
           <div style={{ background:C.vert, borderRadius:12, padding:'12px 16px', marginBottom: editSolde ? 0 : 8, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
             <div>
@@ -2790,7 +2790,7 @@ export function EpargneView({ currentYear, onProfileAction }) {
         </div>
 
         {/* Total année — fixe */}
-        <div style={{ flexShrink:0, display:'flex', alignItems:'center', gap:10, padding:'8px 16px', background:C.beige }}>
+        <div style={{ flexShrink:0, display:'flex', alignItems:'center', gap:10, padding:'8px 28px', background:C.beige }}>
           <span style={{ fontFamily:sans, fontSize:13, fontWeight:700, color:C.vert, flexShrink:0 }}>{epargneYear}</span>
           <div style={{ display:'flex', alignItems:'center', gap:6, flexShrink:0 }}>
             <div style={{ width:8, height:8, borderRadius:2, background:C.vert, flexShrink:0 }} />
@@ -2804,7 +2804,7 @@ export function EpargneView({ currentYear, onProfileAction }) {
           </div>
         </div>
         {/* ── Jauges mensuelles scrollables ── */}
-        <div style={{ flex:1, overflowY:'auto', padding:'0 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
+        <div style={{ flex:1, overflowY:'auto', padding:'0 28px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
           {/* Barres mensuelles bicolores */}
           {md.map(d => (
             <div key={d.idx} style={{ display:'flex', alignItems:'center', gap:8, padding:'4px 0' }}>
