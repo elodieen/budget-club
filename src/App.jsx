@@ -1356,7 +1356,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
             { label:'Dépenses', val:fmtP(eT - expRmb), icon:'ti-shopping-bag', vw:'depenses' },
           ].map(c => (
             <div key={c.label} onClick={() => setView(c.vw)}
-              style={{ background:C.card, borderRadius:14, paddingTop:'16px', paddingBottom:'16px', paddingLeft:'16px', paddingRight:'16px', border:`0.5px solid ${C.border}`, cursor:'pointer', display:'flex', flexDirection:'column' }}>
+              style={{ background:C.card, borderRadius:12, paddingTop:'16px', paddingBottom:'16px', paddingLeft:'16px', paddingRight:'16px', boxShadow:'0 1px 8px rgba(28,41,28,0.08)', cursor:'pointer', display:'flex', flexDirection:'column' }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                 <span style={{ fontFamily:sans, fontSize:12, color:C.muted, fontWeight:500 }}>{c.label}</span>
                 <i className={`ti ${c.icon}`} style={{ fontSize:17, color:'rgba(28,41,28,0.25)' }} />
