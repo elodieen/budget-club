@@ -1319,7 +1319,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
             ? <div style={{ fontFamily:serif, fontSize:26, fontStyle:'italic', color:C.rose, lineHeight:1.3 }}>Revenus non saisis</div>
             : <>
                 <div style={{ fontFamily:serif, fontSize:40, fontWeight:700, color: reste >= 0 ? C.rose : '#E8637A', lineHeight:1 }}>{fmtR(reste)}</div>
-                <div style={{ fontFamily:sans, fontSize:12, color:'rgba(255,255,255,0.5)', marginTop:2 }}>sur {fmtR(totalDisponible)}</div>
+                <div style={{ fontFamily:sans, fontSize:12, color:'rgba(255,255,255,0.5)', marginTop:8 }}>sur {fmtR(totalDisponible)}</div>
               </>
           }
           {/* Jauge unique avec verdict + trait de position mois */}
@@ -1327,7 +1327,6 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
             <div style={{ marginTop:12 }}>
               <div style={{ position:'relative', height:5, background:'rgba(255,255,255,0.15)', borderRadius:3 }}>
                 <div style={{ position:'absolute', top:0, left:0, height:'100%', width:'100%', background:'white', borderRadius:3, transformOrigin:'left', transform:`scaleX(${pctConsomme / 100})`, transition:'transform 0.6s ease' }} />
-                <div style={{ position:'absolute', top:-3.5, left:`${pctMois}%`, transform:'translateX(-50%)', width:2, height:12, background:C.rose, borderRadius:1 }} />
               </div>
               <div style={{ display:'flex', justifyContent:'space-between', marginTop:4 }}>
                 <span style={{ display:'flex', alignItems:'center', gap:5 }}>
