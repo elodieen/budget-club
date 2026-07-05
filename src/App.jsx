@@ -1883,7 +1883,7 @@ export function RevenusView({ m, mi, setMi, updateData, onProfileAction }) {
       <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.vert }}>❧</span> REVENUS <span style={{ color:C.vert }}>❧</span></div>
       <div style={{ textAlign:'center', padding:'4px 16px 8px', fontFamily:serif, fontSize:12, fontStyle:'italic', color:C.muted, flexShrink:0, background:C.beige, marginBottom:8 }}>Ce n'est pas ce qu'on gagne qui compte, c'est ce qu'on en fait.</div>
       {/* Card total */}
-      <div style={{ background:C.vert, flexShrink:0, padding:'12px 20px' }}>
+      <div style={{ background:'#1E3328', borderRadius:'16px', margin:'0 16px', padding:'16px 20px', flexShrink:0 }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
           <span style={{ fontFamily:sans, fontSize:12, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.5)' }}>Total</span>
           <span style={{ fontFamily:serif, fontSize:30, fontWeight:700, color:C.rose }}>{fmtR(total)}</span>
@@ -2004,7 +2004,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
       {depTab === 'depenses' ? (
         <>
           {/* Card reste à dépenser */}
-          <div style={{ background:C.vert, padding:'10px 18px', flexShrink:0, textAlign:'center', marginTop:8 }}>
+          <div style={{ background:'#1E3328', borderRadius:'16px', margin:'0 16px', padding:'16px 20px', flexShrink:0, textAlign:'center', marginTop:8 }}>
             <div style={{ fontFamily:sans, fontSize:9, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.5)', marginBottom:4 }}>Reste à vivre du mois</div>
             {rev === 0
               ? <div style={{ fontFamily:serif, fontSize:24, fontStyle:'italic', color:C.rose }}>Revenus non saisis</div>
@@ -2058,7 +2058,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
       ) : (
         <>
           {/* Card récap factures */}
-          <div style={{ background:C.vert, padding:'14px 18px', flexShrink:0, marginTop:8 }}>
+          <div style={{ background:'#1E3328', borderRadius:'16px', margin:'0 16px', padding:'16px 20px', flexShrink:0, marginTop:8 }}>
             <div style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.5)', letterSpacing:1, textTransform:'uppercase', marginBottom:4 }}>{pN}/{bN} prélevées</div>
             <div style={{ display:'flex', alignItems:'baseline', gap:6 }}>
               <span style={{ fontFamily:serif, fontSize:28, fontWeight:700, color:C.rose }}>{fmt2(paidAmt)}</span>
