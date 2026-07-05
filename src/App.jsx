@@ -1517,7 +1517,7 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
       {m.closed && <ClosedBanner />}
       <div style={{ padding:'16px 20px 4px', background:C.beige, flexShrink:0 }}>
         <div style={{ fontFamily:serif, fontSize:24, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left' }}>Budget</div>
-        <div style={{ fontFamily:serif, fontSize:14, fontStyle:'italic', color:'#737874', textAlign:'left', marginTop:4 }}>
+        <div style={{ fontFamily:serif, fontSize:14, fontStyle:'italic', color:'#737874', textAlign:'left', marginTop:4, marginBottom:12 }}>
           Un bon budget est la première étape vers la liberté financière.
         </div>
       </div>
@@ -1884,7 +1884,7 @@ export function RevenusView({ m, mi, setMi, updateData, onProfileAction }) {
       {m.closed && <ClosedBanner />}
       <div style={{ padding:'16px 20px 4px', background:C.beige, flexShrink:0 }}>
         <div style={{ fontFamily:serif, fontSize:24, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left' }}>Revenus</div>
-        <div style={{ fontFamily:serif, fontSize:14, fontStyle:'italic', color:'#737874', textAlign:'left', marginTop:4 }}>Ce n'est pas ce qu'on gagne qui compte, c'est ce qu'on en fait.</div>
+        <div style={{ fontFamily:serif, fontSize:14, fontStyle:'italic', color:'#737874', textAlign:'left', marginTop:4, marginBottom:12 }}>Ce n'est pas ce qu'on gagne qui compte, c'est ce qu'on en fait.</div>
       </div>
       {/* Card total */}
       <div style={{ background:'#1E3328', borderRadius:'16px', margin:'0 16px', padding:'16px 20px', flexShrink:0 }}>
