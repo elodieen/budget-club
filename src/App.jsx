@@ -1980,22 +1980,25 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
     <>
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
-      <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.vert }}>❧</span> SUIVI <span style={{ color:C.vert }}>❧</span></div>
-      <div style={{ textAlign:'center', padding:'4px 16px 8px', fontFamily:serif, fontSize:12, fontStyle:'italic', color:C.muted, flexShrink:0, background:C.beige }}>
-        {depTab === 'factures' ? 'Maîtrisez vos charges. Elles ne vous surprendront plus.' : 'Le luxe, c\'est de ne jamais être surpris par ses comptes.'}
+      <div style={{ padding:'16px 20px 4px', background:C.beige, flexShrink:0 }}>
+        <div style={{ fontFamily:serif, fontSize:32, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left' }}>Suivi</div>
+        <div style={{ fontFamily:serif, fontSize:14, fontStyle:'italic', color:'#737874', textAlign:'left', marginTop:4 }}>
+          {depTab === 'factures' ? 'Maîtrisez vos charges. Elles ne vous surprendront plus.' : 'Le luxe, c\'est de ne jamais être surpris par ses comptes.'}
+        </div>
       </div>
       {/* Switcher capsule */}
-      <div style={{ padding:'8px 16px', background:C.beige, flexShrink:0, display:'flex', justifyContent:'center', alignItems:'center', gap:10 }}>
-        {[{id:'factures',label:'Factures'},{id:'depenses',label:'Dépenses'}].map(t => (
-          <button key={t.id} onClick={() => setDepTab(t.id)}
-            style={{ width:140, padding:'10px 0', borderRadius:30, fontSize:13, fontWeight:700, cursor:'pointer',
-              fontFamily:serif, letterSpacing:1, textTransform:'uppercase', transition:'all .2s',
-              background: depTab === t.id ? C.vert : C.card,
-              color:      depTab === t.id ? 'white' : C.vert,
-              border:     `1.5px solid ${depTab === t.id ? C.vert : C.rose}` }}>
-            {t.label}
-          </button>
-        ))}
+      <div style={{ padding:'12px 20px', background:C.beige, flexShrink:0 }}>
+        <div style={{ display:'flex', background:'#EFEDEC', borderRadius:12, padding:4 }}>
+          {[{id:'factures',label:'Factures'},{id:'depenses',label:'Dépenses'}].map(t => (
+            <button key={t.id} onClick={() => setDepTab(t.id)}
+              style={{ flex:1, padding: depTab === t.id ? '10px 24px' : '10px 0', borderRadius: depTab === t.id ? 10 : 0, border:'none', cursor:'pointer',
+                fontFamily:sans, fontSize:13, fontWeight:700, textTransform:'uppercase', transition:'all .2s',
+                background: depTab === t.id ? C.vert : 'transparent',
+                color:      depTab === t.id ? 'white' : '#737874' }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {depTab === 'depenses' ? (
