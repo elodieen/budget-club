@@ -1516,7 +1516,7 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
       <div style={{ padding:'16px 28px 4px', background:C.beige, flexShrink:0 }}>
-        <div style={{ fontFamily:serif, fontSize:24, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left' }}>Budget</div>
+        <div style={{ fontFamily:serif, fontSize:20, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left' }}>Budget</div>
         <div style={{ fontFamily:serif, fontSize:14, fontStyle:'italic', color:'#737874', textAlign:'left', marginTop:4, marginBottom:12 }}>
           Un bon budget est la première étape vers la liberté financière.
         </div>
@@ -1883,7 +1883,7 @@ export function RevenusView({ m, mi, setMi, updateData, onProfileAction }) {
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
       <div style={{ padding:'16px 28px 4px', background:C.beige, flexShrink:0 }}>
-        <div style={{ fontFamily:serif, fontSize:24, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left' }}>Revenus</div>
+        <div style={{ fontFamily:serif, fontSize:20, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left' }}>Revenus</div>
         <div style={{ fontFamily:serif, fontSize:14, fontStyle:'italic', color:'#737874', textAlign:'left', marginTop:4, marginBottom:12 }}>Ce n'est pas ce qu'on gagne qui compte, c'est ce qu'on en fait.</div>
       </div>
       {/* Card total */}
@@ -1985,7 +1985,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
       <div style={{ padding:'16px 28px 4px', background:C.beige, flexShrink:0 }}>
-        <div style={{ fontFamily:serif, fontSize:24, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left' }}>Suivi</div>
+        <div style={{ fontFamily:serif, fontSize:20, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left' }}>Suivi</div>
         <div style={{ fontFamily:serif, fontSize:14, fontStyle:'italic', color:'#737874', textAlign:'left', marginTop:4 }}>
           {depTab === 'factures' ? 'Maîtrisez vos charges. Elles ne vous surprendront plus.' : 'Le luxe, c\'est de ne jamais être surpris par ses comptes.'}
         </div>
