@@ -1283,7 +1283,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
   const pctConsomme = totalDisponible > 0 ? Math.min(100, depensesLibres / totalDisponible * 100) : 0;
   const ecart = pctConsomme - pctMois;
   let verdictLabel, verdictColor;
-  if (reste < 50)          { verdictLabel = 'Budget critique';  verdictColor = '#E8637A'; }
+  if (reste < 50)          { verdictLabel = "T'as tout dépensé, pose ta CB";  verdictColor = '#E8637A'; }
   else if (reste < 100)    { verdictLabel = 'On freine un peu'; verdictColor = C.rose; }
   else if (ecart > 15)     { verdictLabel = 'On freine un peu'; verdictColor = C.rose; }
   else                     { verdictLabel = 'Queen du budget';  verdictColor = 'white'; }
