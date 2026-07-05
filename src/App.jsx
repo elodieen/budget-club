@@ -1324,7 +1324,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
           }
           {/* Jauge unique avec verdict + trait de position mois */}
           {rev > 0 && (
-            <div style={{ marginTop:24 }}>
+            <div style={{ marginTop:20 }}>
               <div style={{ position:'relative', height:5, background:'rgba(255,255,255,0.15)', borderRadius:3 }}>
                 <div style={{ position:'absolute', top:0, left:0, height:'100%', width:'100%', background:'white', borderRadius:3, transformOrigin:'left', transform:`scaleX(${pctConsomme / 100})`, transition:'transform 0.6s ease' }} />
               </div>
