@@ -1283,9 +1283,10 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
   const pctConsomme = totalDisponible > 0 ? Math.min(100, depensesLibres / totalDisponible * 100) : 0;
   const ecart = pctConsomme - pctMois;
   let verdictLabel, verdictColor;
-  if (reste < 0)       { verdictLabel = 'Budget critique';  verdictColor = '#E8637A'; }
-  else if (ecart > 15) { verdictLabel = 'Budget critique';  verdictColor = '#EEC4C4'; }
-  else                 { verdictLabel = 'Budget maîtrisé';  verdictColor = 'white'; }
+  if (reste < 50)          { verdictLabel = 'Budget critique';  verdictColor = '#E8637A'; }
+  else if (reste < 100)    { verdictLabel = 'On freine un peu'; verdictColor = C.rose; }
+  else if (ecart > 15)     { verdictLabel = 'On freine un peu'; verdictColor = C.rose; }
+  else                     { verdictLabel = 'Queen du budget';  verdictColor = 'white'; }
 
   const cb5    = m.catBudgets || {};
   const tvBgt5 = Object.values(cb5).reduce((s, v) => s + (parseFloat(v) || 0), 0);
@@ -1310,7 +1311,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
     <>
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
-      <div style={{ display:'flex', flexDirection:'column', flex:1, gap:10, padding:'16px 28px', paddingBottom:'calc(16px + env(safe-area-inset-bottom))', background:C.beige, overflow:'hidden' }}>
+      <div style={{ display:'flex', flexDirection:'column', flex:1, gap:10, padding:'16px 28px', paddingTop:24, paddingBottom:'calc(16px + env(safe-area-inset-bottom))', background:C.beige, overflow:'hidden' }}>
         {/* Card Reste à vivre du mois */}
         <div style={{ background:C.vert, borderRadius:16, padding:'24px 20px', textAlign:'center', marginTop: m.closed ? 8 : 0, display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
           <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'white', marginBottom:4 }}>Reste à vivre du mois</div>
