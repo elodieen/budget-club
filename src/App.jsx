@@ -1981,7 +1981,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
       <div style={{ padding:'16px 20px 4px', background:C.beige, flexShrink:0 }}>
-        <div style={{ fontFamily:serif, fontSize:32, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left' }}>Suivi</div>
+        <div style={{ fontFamily:serif, fontSize:28, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left' }}>Suivi</div>
         <div style={{ fontFamily:serif, fontSize:14, fontStyle:'italic', color:'#737874', textAlign:'left', marginTop:4 }}>
           {depTab === 'factures' ? 'Maîtrisez vos charges. Elles ne vous surprendront plus.' : 'Le luxe, c\'est de ne jamais être surpris par ses comptes.'}
         </div>
