@@ -1515,9 +1515,11 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
     <>
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
-      <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.vert }}>❧</span> BUDGET <span style={{ color:C.vert }}>❧</span></div>
-      <div style={{ textAlign:'center', padding:'6px 16px', fontFamily:serif, fontSize:12, fontStyle:'italic', color:C.muted, flexShrink:0, background:C.beige }}>
-        Un bon budget est la première étape vers la liberté financière.
+      <div style={{ padding:'16px 20px 4px', background:C.beige, flexShrink:0 }}>
+        <div style={{ fontFamily:serif, fontSize:24, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left' }}>Budget</div>
+        <div style={{ fontFamily:serif, fontSize:14, fontStyle:'italic', color:'#737874', textAlign:'left', marginTop:4 }}>
+          Un bon budget est la première étape vers la liberté financière.
+        </div>
       </div>
       <div style={{ flex:1, overflowY:'auto', padding:'0 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
         {/* Card état budget */}
@@ -1880,8 +1882,10 @@ export function RevenusView({ m, mi, setMi, updateData, onProfileAction }) {
     <>
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
-      <div style={{ textAlign:'center', padding:'8px 0 4px', fontFamily:serif, fontSize:16, color:C.vert, letterSpacing:'3px', flexShrink:0, background:C.beige }}><span style={{ color:C.vert }}>❧</span> REVENUS <span style={{ color:C.vert }}>❧</span></div>
-      <div style={{ textAlign:'center', padding:'4px 16px 8px', fontFamily:serif, fontSize:12, fontStyle:'italic', color:C.muted, flexShrink:0, background:C.beige, marginBottom:8 }}>Ce n'est pas ce qu'on gagne qui compte, c'est ce qu'on en fait.</div>
+      <div style={{ padding:'16px 20px 4px', background:C.beige, flexShrink:0 }}>
+        <div style={{ fontFamily:serif, fontSize:24, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left' }}>Revenus</div>
+        <div style={{ fontFamily:serif, fontSize:14, fontStyle:'italic', color:'#737874', textAlign:'left', marginTop:4 }}>Ce n'est pas ce qu'on gagne qui compte, c'est ce qu'on en fait.</div>
+      </div>
       {/* Card total */}
       <div style={{ background:'#1E3328', borderRadius:'16px', margin:'0 16px', padding:'16px 20px', flexShrink:0 }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
