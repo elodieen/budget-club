@@ -759,8 +759,8 @@ const BottomNav = ({ view, setView, m }) => {
               <div style={{ position:'relative', display:'inline-flex' }}>
                 <i className={`ti ${t.icon}`} style={{ fontSize:20, color: active ? C.vert : inactiveColor }} />
                 {hasBadge && (
-                  <div style={{ position:'absolute', top:-4, right:-6, width:13, height:13, borderRadius:'50%', background:C.rose, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                    <span style={{ fontSize:7, color:C.nav, fontWeight:800, lineHeight:1 }}>✓</span>
+                  <div style={{ position:'absolute', top:-4, right:-6, width:13, height:13, borderRadius:'50%', background:'#1E3328', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    <span style={{ fontSize:7, color:'#EEC4C4', fontWeight:800, lineHeight:1 }}>✓</span>
                   </div>
                 )}
               </div>
