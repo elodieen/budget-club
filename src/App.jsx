@@ -1984,14 +1984,14 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
     <>
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
       {m.closed && <ClosedBanner />}
-      <div style={{ padding:'16px 20px 4px', background:C.beige, flexShrink:0 }}>
+      <div style={{ padding:'16px 16px 4px', background:C.beige, flexShrink:0 }}>
         <div style={{ fontFamily:serif, fontSize:24, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left' }}>Suivi</div>
         <div style={{ fontFamily:serif, fontSize:14, fontStyle:'italic', color:'#737874', textAlign:'left', marginTop:4 }}>
           {depTab === 'factures' ? 'Maîtrisez vos charges. Elles ne vous surprendront plus.' : 'Le luxe, c\'est de ne jamais être surpris par ses comptes.'}
         </div>
       </div>
       {/* Switcher capsule */}
-      <div style={{ padding:'12px 20px', background:C.beige, flexShrink:0 }}>
+      <div style={{ padding:'12px 16px', background:C.beige, flexShrink:0 }}>
         <div style={{ display:'flex', background:'#EFEDEC', borderRadius:12, padding:4 }}>
           {[{id:'factures',label:'Factures'},{id:'depenses',label:'Dépenses'}].map(t => (
             <button key={t.id} onClick={() => setDepTab(t.id)}
@@ -2008,7 +2008,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
       {depTab === 'depenses' ? (
         <>
           {/* Card reste à dépenser */}
-          <div style={{ background:'#1E3328', borderRadius:'16px', margin:'0 16px', padding:'16px 20px', flexShrink:0, textAlign:'center', marginTop:8 }}>
+          <div style={{ background:'#1E3328', borderRadius:'16px', margin:'0 16px', padding:'16px', flexShrink:0, textAlign:'center', marginTop:8 }}>
             <div style={{ fontFamily:sans, fontSize:9, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.5)', marginBottom:4 }}>Reste à vivre du mois</div>
             {rev === 0
               ? <div style={{ fontFamily:serif, fontSize:24, fontStyle:'italic', color:C.rose }}>Revenus non saisis</div>
@@ -2062,7 +2062,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
       ) : (
         <>
           {/* Card récap factures */}
-          <div style={{ background:'#1E3328', borderRadius:'16px', margin:'0 16px', padding:'16px 20px', flexShrink:0, marginTop:8 }}>
+          <div style={{ background:'#1E3328', borderRadius:'16px', margin:'0 16px', padding:'16px', flexShrink:0, marginTop:8 }}>
             <div style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.5)', letterSpacing:1, textTransform:'uppercase', marginBottom:4 }}>{pN}/{bN} prélevées</div>
             <div style={{ display:'flex', alignItems:'baseline', gap:6 }}>
               <span style={{ fontFamily:serif, fontSize:28, fontWeight:700, color:C.rose }}>{fmt2(paidAmt)}</span>
