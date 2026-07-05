@@ -1326,8 +1326,8 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
           {rev > 0 && (
             <div style={{ marginTop:12 }}>
               <div style={{ position:'relative', height:5, background:'rgba(255,255,255,0.15)', borderRadius:3 }}>
-                <div style={{ position:'absolute', top:0, left:0, height:'100%', width:'100%', background:'#EEC4C4', borderRadius:3, transformOrigin:'left', transform:`scaleX(${pctConsomme / 100})`, transition:'transform 0.6s ease' }} />
-                <div style={{ position:'absolute', top:-3.5, left:`${pctMois}%`, transform:'translateX(-50%)', width:2, height:12, background:'rgba(255,255,255,0.8)', borderRadius:1 }} />
+                <div style={{ position:'absolute', top:0, left:0, height:'100%', width:'100%', background:'white', borderRadius:3, transformOrigin:'left', transform:`scaleX(${pctConsomme / 100})`, transition:'transform 0.6s ease' }} />
+                <div style={{ position:'absolute', top:-3.5, left:`${pctMois}%`, transform:'translateX(-50%)', width:2, height:12, background:C.rose, borderRadius:1 }} />
               </div>
               <div style={{ display:'flex', justifyContent:'space-between', marginTop:4 }}>
                 <span style={{ display:'flex', alignItems:'center', gap:5 }}>
