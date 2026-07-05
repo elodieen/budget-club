@@ -2646,12 +2646,10 @@ export function EpargneView({ currentYear, onProfileAction }) {
         </div>
       )}
 
-      <div style={{ textAlign:'center', padding:'4px 28px 10px', background:C.beige, flexShrink:0 }}>
-        <div style={{ fontFamily:serif, fontSize:16, letterSpacing:'3px', color:C.vert, textAlign:'center', lineHeight:1.5 }}>
-          <span style={{ color:C.vert }}>❧</span> ÉPARGNE &amp;<br />{"    "}INVESTISSEMENT <span style={{ color:C.vert }}>❧</span>
-        </div>
+      <div style={{ padding:'16px 28px 4px', background:C.beige, flexShrink:0 }}>
+        <div style={{ fontFamily:serif, fontSize:20, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left' }}>Épargne &amp; Investissement</div>
+        <div style={{ fontFamily:serif, fontSize:14, fontStyle:'italic', color:'#737874', textAlign:'left', marginTop:4, marginBottom:12 }}>Investir, c'est croire en son avenir — et bâtir son indépendance un versement à la fois.</div>
       </div>
-      <div style={{ textAlign:'center', padding:'4px 28px 8px', fontFamily:serif, fontSize:12, fontStyle:'italic', color:C.muted, flexShrink:0, background:C.beige }}>Investir, c'est croire en son avenir — et bâtir son indépendance un versement à la fois.</div>
 
       {/* Wrapper : cards fixes + jauges scrollables */}
       <div style={{ display:'flex', flexDirection:'column', flex:1, overflow:'hidden', background:C.beige }}>
