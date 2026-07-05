@@ -1332,7 +1332,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
               <div style={{ display:'flex', justifyContent:'space-between', marginTop:4 }}>
                 <span style={{ display:'flex', alignItems:'center', gap:5 }}>
                   {reste < 50
-                    ? <i className="ti ti-alert-triangle" style={{ fontSize:14, color:'#E8637A', flexShrink:0 }} />
+                    ? <i className="ti ti-alert-triangle" style={{ fontSize:14, color:C.rose, flexShrink:0 }} />
                     : verdictLabel === 'On freine un peu'
                       ? <i className="ti ti-alert-triangle" style={{ fontSize:14, color:C.rose, flexShrink:0 }} />
                       : <span style={{ width:6, height:6, borderRadius:'50%', background:verdictColor, display:'inline-block', flexShrink:0 }} />
