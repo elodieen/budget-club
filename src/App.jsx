@@ -1726,7 +1726,7 @@ export function BudgetEditView({ m, updateData, setView }) {
   };
 
   return (
-    <div style={{ flex:1, overflowY:'auto', padding:'0 16px 0', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
+    <div style={{ flex:1, overflowY:'auto', padding:'0 20px', paddingBottom:'calc(80px + env(safe-area-inset-bottom))', background:C.beige }}>
       {/* Card non ventilé */}
       <div style={{ background:C.vert, borderRadius:12, padding:'14px 16px', marginBottom:16 }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
