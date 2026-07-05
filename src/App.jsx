@@ -2647,7 +2647,7 @@ export function EpargneView({ currentYear, onProfileAction }) {
       )}
 
       <div style={{ padding:'16px 28px 4px', background:C.beige, flexShrink:0 }}>
-        <div style={{ fontFamily:serif, fontSize:20, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left' }}>Épargne &amp; Investissement</div>
+        <div style={{ fontFamily:serif, fontSize:32, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left', lineHeight:1.2 }}>Épargne &amp;<br />Investissement</div>
         <div style={{ fontFamily:serif, fontSize:14, fontStyle:'italic', color:'#737874', textAlign:'left', marginTop:4, marginBottom:12 }}>Investir, c'est croire en son avenir — et bâtir son indépendance un versement à la fois.</div>
       </div>
 
