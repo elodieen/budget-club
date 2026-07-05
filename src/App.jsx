@@ -1337,7 +1337,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
                       ? <i className="ti ti-alert-triangle" style={{ fontSize:14, color:C.rose, flexShrink:0 }} />
                       : <span style={{ width:6, height:6, borderRadius:'50%', background:verdictColor, display:'inline-block', flexShrink:0 }} />
                   }
-                  <span style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.75)', whiteSpace:'nowrap' }}>{verdictLabel}</span>
+                  <span style={{ fontFamily:sans, fontSize:10, color: reste < 50 ? C.rose : 'rgba(255,255,255,0.75)', whiteSpace:'nowrap' }}>{verdictLabel}</span>
                 </span>
                 <span style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.6)', whiteSpace:'nowrap' }}>Encore {joursRestants}j</span>
               </div>
