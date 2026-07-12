@@ -1311,6 +1311,22 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
     { num:5, label:'Clôturer le mois',      action: () => closeRef.current?.scrollIntoView({ behavior:'smooth', block:'center' }) },
   ];
 
+  const epargneTotal   = epg;
+  const soldeFinal     = m.soldeFinal ?? 0;
+  const seuilExcellent = rev * 0.10;
+  let phraseClotured = "Mois clôturé.";
+  if (soldeFinal < 0) {
+    phraseClotured = "Mois compliqué. Analyse, apprends. Le prochain, c'est toi qui gagnes.";
+  } else if (epargneTotal === 0 && soldeFinal >= 0 && soldeFinal < 50) {
+    phraseClotured = "Ce mois t'a challengée. Tu as tenu bon. C'est tout ce qui compte.";
+  } else if (epargneTotal === 0 && soldeFinal >= 0) {
+    phraseClotured = "Aujourd'hui tu tiens. Et si le prochain défi c'était d'épargner, même un peu ?";
+  } else if (epargneTotal > 0 && epargneTotal < seuilExcellent && soldeFinal > 0) {
+    phraseClotured = "Ta liberté grandit, versement après versement.";
+  } else if (epargneTotal >= seuilExcellent && soldeFinal > 0) {
+    phraseClotured = "Épargne record. Tu construis quelque chose de grand.";
+  }
+
   return (
     <>
       <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
@@ -1348,9 +1364,14 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
           )}
         </div>
         {/* Citation */}
-        <div style={{ textAlign:'center', fontFamily:serif, fontSize:15, fontStyle:'italic', color:C.muted, flexShrink:0, margin:'10px 0' }}>
-          Gérez l'ordinaire pour vous offrir l'extraordinaire.
-        </div>
+        {m.closed
+          ? <div style={{ textAlign:'left', fontFamily:serif, fontSize:14, fontStyle:'italic', color:'#737874', flexShrink:0, margin:'10px 0' }}>
+              {phraseClotured}
+            </div>
+          : <div style={{ textAlign:'center', fontFamily:serif, fontSize:15, fontStyle:'italic', color:C.muted, flexShrink:0, margin:'10px 0' }}>
+              Gérez l'ordinaire pour vous offrir l'extraordinaire.
+            </div>
+        }
         {/* 4 mini-cards */}
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:10 }}>
           {[
