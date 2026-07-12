@@ -2550,13 +2550,15 @@ export function EpargneView({ currentYear, onProfileAction }) {
       setPeaSolde(defaultP);
       localStorage.setItem(MIG, '1');
     }
-    // Force correct Livret A initial value
-    const MIG2 = `${currentProfileId}:budget:init:livret-v2`;
-    if (!localStorage.getItem(MIG2)) {
-      const correctL = { amount: 1938.37, date: '2026-06-01' };
-      saveLivretSolde(correctL);
-      setLivretSolde(correctL);
-      localStorage.setItem(MIG2, '1');
+    // Force correct Livret A initial value (uniquement pour Elodie)
+    if (currentProfileId === 'elodie') {
+      const MIG2 = `${currentProfileId}:budget:init:livret-v2`;
+      if (!localStorage.getItem(MIG2)) {
+        const correctL = { amount: 1938.37, date: '2026-06-01' };
+        saveLivretSolde(correctL);
+        setLivretSolde(correctL);
+        localStorage.setItem(MIG2, '1');
+      }
     }
   }, []);
 
