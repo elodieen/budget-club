@@ -307,6 +307,10 @@ const fmtDateTime = (d) => {
 
 const billValue      = (b) => b.paid ? (b.realAmount || b.amount) : b.amount;
 const byDate         = (arr) => [...arr].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+// Total des revenus réels, hors report automatique "Reste mois précédent" (id r-report-YYYY-MM)
+const realRevenuTotal = (revenues) => (revenues || [])
+  .filter(r => (r.type || 'revenu') === 'revenu' && !String(r.id || '').startsWith('r-report-'))
+  .reduce((s, r) => s + (r.amount || 0), 0);
 const getCustomCats  = () => { try { return JSON.parse(localStorage.getItem(`${currentProfileId}:budget:categories:custom`) || '[]'); } catch { return []; } };
 const saveCustomCats = (cats) => localStorage.setItem(`${currentProfileId}:budget:categories:custom`, JSON.stringify(cats));
 
@@ -827,7 +831,7 @@ const WarningTriangle = () => (
 
 // Bandeau mois clôturé
 const ClosedBanner = () => (
-  <div style={{ background:C.vert, padding:'7px 16px', display:'flex', alignItems:'center', justifyContent:'center', gap:8, flexShrink:0, marginBottom:12, marginTop:8 }}>
+  <div style={{ background:C.vert, padding:'7px 16px', display:'flex', alignItems:'center', justifyContent:'center', gap:8, flexShrink:0, marginTop:8 }}>
     <i className="ti ti-lock" style={{ fontSize:13, color:C.gold }} />
     <span style={{ fontFamily:sans, fontSize:12, fontWeight:600, color:'rgba(255,255,255,0.85)' }}>Mois clôturé</span>
   </div>
@@ -1315,7 +1319,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
         {/* Card Reste à vivre du mois */}
         <div style={{ background:C.vert, borderRadius:16, padding:'24px 20px', textAlign:'center', marginTop: m.closed ? 8 : 0, display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
           <div style={{ fontFamily:sans, fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'white', marginBottom:4 }}>Reste à vivre du mois</div>
-          {rev === 0
+          {realRevenuTotal(m.revenues) === 0
             ? <div style={{ fontFamily:serif, fontSize:26, fontStyle:'italic', color:C.rose, lineHeight:1.3 }}>Revenus non saisis</div>
             : <>
                 <div style={{ fontFamily:serif, fontSize:40, fontWeight:700, color: reste >= 0 ? C.rose : '#E8637A', lineHeight:1 }}>{fmtR(reste)}</div>
@@ -1491,6 +1495,7 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
   const [envName, setEnvName]             = useState('');
   const [envIcon, setEnvIcon]             = useState('ti-tag');
   const [confirmDelCat, setConfirmDelCat] = useState(null);
+  const [catSheet, setCatSheet]           = useState(null);
 
   const SAVINGS_LABELS = { epargne_livret: 'Épargne', epargne_pea: 'Investissement' };
   const catLabel = (cat) => SAVINGS_LABELS[cat.id] || cat.label;
@@ -1543,7 +1548,7 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
         {done && !m.budgetLocked && (
           <button onClick={() => updateData(mm => { mm.budgetLocked = true; })}
             style={{ width:'100%', padding:'10px 0', background:'none', border:`1.5px solid rgba(28,41,28,0.25)`, borderRadius:10, fontFamily:sans, fontSize:13, fontWeight:500, color:C.vert, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8, marginBottom:16 }}>
-            🔒 Verrouiller mon budget
+            <i className="ti ti-lock" style={{ fontSize:16, color:'#EEC4C4' }} /> Verrouiller mon budget
           </button>
         )}
         {m.budgetLocked && (
@@ -1581,7 +1586,8 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
             );
           }
           return (
-            <div key={cat.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 0', borderBottom:`0.5px solid ${C.border}` }}>
+            <div key={cat.id} onClick={() => setCatSheet(cat)}
+              style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 0', borderBottom:`0.5px solid ${C.border}`, cursor:'pointer' }}>
               <CatIcon catId={cat.id} size={44} />
               <div style={{ flex:1 }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:7 }}>
@@ -1592,7 +1598,7 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
                   <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                     <span style={{ fontFamily:sans, fontSize:12, color: ov ? '#E8637A' : C.muted }}>{fmtR(sp)} / {fmtP(bg)}</span>
                     {!m.closed && (
-                      <button onClick={() => setConfirmDelCat(cat.id)}
+                      <button onClick={ev => { ev.stopPropagation(); setConfirmDelCat(cat.id); }}
                         style={{ background:'none', border:'none', cursor:'pointer', padding:'1px 3px', color:'rgba(192,57,43,0.4)' }}>
                         <i className="ti ti-trash" style={{ fontSize:13 }} />
                       </button>
@@ -1630,7 +1636,8 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
             );
           }
           return (
-            <div key={cat.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 0', borderBottom:`0.5px solid ${C.border}` }}>
+            <div key={cat.id} onClick={() => setCatSheet(cat)}
+              style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 0', borderBottom:`0.5px solid ${C.border}`, cursor:'pointer' }}>
               <CatIcon catId={cat.id} size={44} gray />
               <div style={{ flex:1 }}>
                 <div style={{ display:'flex', justifyContent:'space-between', marginBottom:7 }}>
@@ -1638,7 +1645,7 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
                   <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                     <span style={{ fontFamily:sans, fontSize:12, color:C.muted }}>{fmtR(sp)}</span>
                     {isCustom && !m.closed && (
-                      <button onClick={() => setConfirmDelCat(cat.id)}
+                      <button onClick={ev => { ev.stopPropagation(); setConfirmDelCat(cat.id); }}
                         style={{ background:'none', border:'none', cursor:'pointer', padding:'1px 3px', color:'rgba(192,57,43,0.4)' }}>
                         <i className="ti ti-trash" style={{ fontSize:13 }} />
                       </button>
@@ -1683,6 +1690,25 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
           )
         )}
       </div>
+      {catSheet && (
+        <ModalShell title={catLabel(catSheet)} onClose={() => setCatSheet(null)}>
+          {(() => {
+            const catExps = byDate(m.expenses.filter(e => e.cat === catSheet.id));
+            if (catExps.length === 0) {
+              return <div style={{ textAlign:'center', padding:'24px 0', color:C.muted, fontFamily:sans, fontSize:13 }}>Aucune dépense ce mois</div>;
+            }
+            return catExps.map(e => (
+              <div key={e.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, padding:'10px 0', borderBottom:`0.5px solid ${C.border}` }}>
+                <div style={{ minWidth:0 }}>
+                  <div style={{ fontFamily:sans, fontSize:13, fontWeight:500, color:C.text, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{e.name || catLabel(catSheet)}</div>
+                  <div style={{ fontFamily:sans, fontSize:11, color:C.muted, marginTop:2 }}>{e.date ? new Date(e.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : ''}</div>
+                </div>
+                <div style={{ fontFamily:serif, fontSize:15, fontWeight:600, color:C.vert, flexShrink:0 }}>{fmtR(e.amount)}</div>
+              </div>
+            ));
+          })()}
+        </ModalShell>
+      )}
     </>
   );
 }
@@ -1733,7 +1759,7 @@ export function BudgetEditView({ m, updateData, setView }) {
           <span style={{ fontFamily:sans, fontSize:12, color:'white', fontWeight:500 }}>Reste à ventiler</span>
           {rev > 0 && <span style={{ fontFamily:serif, fontSize:22, fontWeight:700, color: lft >= 0 ? C.rose : '#FF8A80' }}>{fmtP(lft)}</span>}
         </div>
-        {rev === 0 && <div style={{ fontFamily:sans, fontSize:12, fontStyle:'italic', color:C.rose, marginTop:4 }}>Revenus non saisis</div>}
+        {realRevenuTotal(m.revenues) === 0 && <div style={{ fontFamily:sans, fontSize:12, fontStyle:'italic', color:C.rose, marginTop:4 }}>Revenus non saisis</div>}
         <div style={{ height:3, background:'rgba(238,196,196,0.2)', borderRadius:2, marginTop:8, overflow:'hidden' }}>
           <div style={{ height:'100%', width:`${rev > 0 && rpe > 0 ? Math.min(100, Math.round(tv/rpe*100)) : 0}%`, background:C.rose, borderRadius:2 }} />
         </div>
@@ -2010,7 +2036,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
           {/* Card reste à dépenser */}
           <div style={{ background:'#1E3328', borderRadius:'16px', margin:'0 28px', padding:'16px', flexShrink:0, textAlign:'center', marginTop:8 }}>
             <div style={{ fontFamily:sans, fontSize:9, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.5)', marginBottom:4 }}>Reste à vivre du mois</div>
-            {rev === 0
+            {realRevenuTotal(m.revenues) === 0
               ? <div style={{ fontFamily:serif, fontSize:24, fontStyle:'italic', color:C.rose }}>Revenus non saisis</div>
               : <div style={{ fontFamily:serif, fontSize:32, fontWeight:700, color:C.rose }}>{fmtR(reste)}</div>
             }
