@@ -1348,18 +1348,23 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
               <div style={{ position:'relative', height:5, background:'rgba(255,255,255,0.15)', borderRadius:3 }}>
                 <div style={{ position:'absolute', top:0, left:0, height:'100%', width:'100%', background:'white', borderRadius:3, transformOrigin:'left', transform:`scaleX(${pctConsomme / 100})`, transition:'transform 0.6s ease' }} />
               </div>
-              <div style={{ display:'flex', justifyContent:'space-between', marginTop:4 }}>
-                <span style={{ display:'flex', alignItems:'center', gap:5 }}>
-                  {reste < 50
-                    ? <i className="ti ti-alert-triangle" style={{ fontSize:14, color:C.rose, flexShrink:0 }} />
-                    : verdictLabel === 'On freine un peu'
-                      ? <i className="ti ti-alert-triangle" style={{ fontSize:14, color:C.rose, flexShrink:0 }} />
-                      : <span style={{ width:6, height:6, borderRadius:'50%', background:verdictColor, display:'inline-block', flexShrink:0 }} />
-                  }
-                  <span style={{ fontFamily:sans, fontSize:10, color: reste < 50 ? C.rose : 'rgba(255,255,255,0.75)', whiteSpace:'nowrap' }}>{verdictLabel}</span>
-                </span>
-                <span style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.6)', whiteSpace:'nowrap' }}>Encore {joursRestants}j</span>
-              </div>
+              {m.closed
+                ? <div style={{ textAlign:'center', marginTop:4 }}>
+                    <span style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.8)' }}>{phraseClotured}</span>
+                  </div>
+                : <div style={{ display:'flex', justifyContent:'space-between', marginTop:4 }}>
+                    <span style={{ display:'flex', alignItems:'center', gap:5 }}>
+                      {reste < 50
+                        ? <i className="ti ti-alert-triangle" style={{ fontSize:14, color:C.rose, flexShrink:0 }} />
+                        : verdictLabel === 'On freine un peu'
+                          ? <i className="ti ti-alert-triangle" style={{ fontSize:14, color:C.rose, flexShrink:0 }} />
+                          : <span style={{ width:6, height:6, borderRadius:'50%', background:verdictColor, display:'inline-block', flexShrink:0 }} />
+                      }
+                      <span style={{ fontFamily:sans, fontSize:10, color: reste < 50 ? C.rose : 'rgba(255,255,255,0.75)', whiteSpace:'nowrap' }}>{verdictLabel}</span>
+                    </span>
+                    <span style={{ fontFamily:sans, fontSize:10, color:'rgba(255,255,255,0.6)', whiteSpace:'nowrap' }}>Encore {joursRestants}j</span>
+                  </div>
+              }
             </div>
           )}
         </div>
