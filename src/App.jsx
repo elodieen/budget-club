@@ -43,10 +43,13 @@ const initProfiles = () => {
   profiles = profiles.map(p => p.id === 'elodie' && p.name === 'Élodie' ? { ...p, name:'Elodie' } : p);
   // Ajout du profil Démo pour les utilisateurs existants
   if (!profiles.find(p => p.id === 'demo')) profiles = [...profiles, { id:'demo', name:'Démo' }];
+  // Ajout du profil Alain (vide)
+  if (!profiles.find(p => p.id === 'alain')) profiles = [...profiles, { id:'alain', name:'Alain' }];
   saveProfiles(profiles);
   if (!getPin('elodie'))   savePin('elodie',   '123456');
   if (!getPin('ludivine')) savePin('ludivine', '123456');
   if (!getPin('demo'))     savePin('demo',     '000000');
+  if (!getPin('alain'))    savePin('alain',    '000000');
   // Soldes initiaux à 0 pour tous les profils non-elodie
   // (reset forcé si les valeurs d'Elodie se sont glissées dedans)
   const today = new Date().toISOString().split('T')[0];
