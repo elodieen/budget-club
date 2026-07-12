@@ -1588,7 +1588,8 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
 
         {/* Catégories avec budget */}
         {cwb.map(cat => {
-          const sp = m.expenses.filter(e => e.cat === cat.id).reduce((s,e) => s + (e.amount||0), 0);
+          const sp = m.expenses.filter(e => e.cat === cat.id && e.type !== 'remboursement').reduce((s,e) => s + (e.amount||0), 0)
+                   - m.expenses.filter(e => e.cat === cat.id && e.type === 'remboursement').reduce((s,e) => s + (e.amount||0), 0);
           const bg = cb[cat.id] || 0;
           const pt = bg > 0 ? Math.min(100, Math.round(sp / bg * 100)) : 0;
           const ov = bg > 0 && sp > bg;
@@ -1641,7 +1642,8 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
 
         {/* Catégories sans budget mais avec dépenses */}
         {allCatList.filter(c => !cb[c.id]).map(cat => {
-          const sp = m.expenses.filter(e => e.cat === cat.id).reduce((s,e) => s + (e.amount||0), 0);
+          const sp = m.expenses.filter(e => e.cat === cat.id && e.type !== 'remboursement').reduce((s,e) => s + (e.amount||0), 0)
+                   - m.expenses.filter(e => e.cat === cat.id && e.type === 'remboursement').reduce((s,e) => s + (e.amount||0), 0);
           if (!sp) return null;
           const isCustom = cat.id.startsWith('custom_');
           if (confirmDelCat === cat.id) {
