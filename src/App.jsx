@@ -1731,7 +1731,9 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
                   <div style={{ fontFamily:sans, fontSize:13, fontWeight:500, color:C.text, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{e.name || catLabel(catSheet)}</div>
                   <div style={{ fontFamily:sans, fontSize:11, color:C.muted, marginTop:2 }}>{e.date ? new Date(e.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : ''}</div>
                 </div>
-                <div style={{ fontFamily:serif, fontSize:15, fontWeight:600, color:C.vert, flexShrink:0 }}>{fmtR(e.amount)}</div>
+                <div style={{ fontFamily:serif, fontSize:15, fontWeight:600, color: e.type === 'remboursement' ? '#7BA88C' : '#1E3328', flexShrink:0 }}>
+                  {e.type === 'remboursement' ? '+' : '−'}{fmtR(e.amount)}
+                </div>
               </div>
             ));
           })()}
