@@ -69,6 +69,13 @@ const initProfiles = () => {
       localStorage.setItem(`${p.id}:budget:init:2026-06`, '1');
   });
   if (needsReset) localStorage.setItem(RESET_FLAG, '1');
+  // Réinitialisation forcée du profil Alain (corrige un solde hérité à tort d'Elodie par un bug déjà corrigé)
+  const ALAIN_RESET_FLAG = 'profile:alain:reset-soldes:v1';
+  if (!localStorage.getItem(ALAIN_RESET_FLAG)) {
+    localStorage.setItem('alain:budget:livret:soldeInitial', JSON.stringify({ amount: 0, date: today }));
+    localStorage.setItem('alain:budget:pea:soldeInitial',    JSON.stringify({ montant: 0, rendement: 0, pct: 0, date: today }));
+    localStorage.setItem(ALAIN_RESET_FLAG, '1');
+  }
   return profiles;
 };
 
