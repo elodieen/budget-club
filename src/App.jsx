@@ -3,6 +3,10 @@
 // Stack cible : React 18 + Vite + localStorage
 // ============================================================
 import { useState, useEffect, useCallback, useRef } from "react";
+import { supabase } from './supabaseClient';
+import { USE_AUTH } from './config';
+import LoginScreen from './LoginScreen.jsx';
+import { fetchMonthFromSupabase, syncMonthChangesToSupabase, applyIdMapToMonth } from './supabaseData.js';
 
 // ─── DESIGN TOKENS ──────────────────────────────────────────
 const C = {
@@ -248,6 +252,13 @@ const mkMonth = () => {
 // mi = { month: 0-11, year: YYYY }
 const storageKey = (mi) => `${currentProfileId}:budget:${mi.year}:${String(mi.month + 1).padStart(2, '0')}`;
 
+// Cache mémoire (durée de la session) des mois déjà résolus, par "profileId:year:month".
+// Migration explicite en amont : un mois n'est traité comme "Supabase" que si une
+// ligne budget_months existe déjà pour lui (créée par migrateAllMonths) — on ne crée
+// jamais cette ligne nous-mêmes depuis l'app. Sinon, comportement localStorage inchangé.
+// entry = { source: 'supabase'|'local', data, monthId, lastSynced, queue }
+const monthCache = new Map();
+
 const loadYearData = (year) => {
   const months = [];
   for (let m = 0; m < 12; m++) {
@@ -346,34 +357,154 @@ const savePeaHist    = (v) => localStorage.setItem(`${currentProfileId}:budget:p
 // ─── HOOK STORAGE ────────────────────────────────────────────
 function useMonthData(mi) {
   const key = storageKey(mi);
+  const cacheKey = `${currentProfileId}:${mi.year}:${mi.month}`;
 
-  const [data, setData] = useState(() => {
-    try {
-      const stored = localStorage.getItem(key);
-      if (stored) return JSON.parse(stored);
-    } catch {}
-    return mkMonth();
-  });
+  // Protège contre un "setData" tardif d'un mois quitté entre-temps (écriture
+  // encore en file d'attente pendant que l'utilisateur a déjà changé de mois) :
+  // la donnée elle-même n'est jamais perdue (le cache/la queue de CE mois
+  // continuent), seul l'affichage du mois actuellement affiché est protégé.
+  const activeCacheKeyRef = useRef(cacheKey);
+  useEffect(() => { activeCacheKeyRef.current = cacheKey; }, [cacheKey]);
+
+  const [data, setData] = useState(() => monthCache.get(cacheKey)?.data ?? null);
+  const [loading, setLoading] = useState(() => !monthCache.get(cacheKey));
+  const [isSupabaseBacked, setIsSupabaseBacked] = useState(() => monthCache.get(cacheKey)?.source === 'supabase');
+  // null | 'saving' | 'success' | 'error' — reflète l'écriture Supabase en cours
+  // pour le mois actuellement affiché (indicateur visuel dans MainApp).
+  const [saveStatus, setSaveStatus] = useState(null);
+  const saveStatusTimeoutRef = useRef(null);
+  const dismissSaveStatus = useCallback(() => {
+    clearTimeout(saveStatusTimeoutRef.current);
+    setSaveStatus(null);
+  }, []);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(key);
-      setData(stored ? JSON.parse(stored) : mkMonth());
-    } catch {
-      setData(mkMonth());
+    let cancelled = false;
+    const existing = monthCache.get(cacheKey);
+    if (existing) {
+      setData(existing.data);
+      setIsSupabaseBacked(existing.source === 'supabase');
+      setLoading(false);
+      return;
     }
-  }, [key]);
+
+    const entry = { source: null, data: null, monthId: null, lastSynced: null, queue: Promise.resolve() };
+    monthCache.set(cacheKey, entry);
+
+    const finish = (source, loaded, monthId) => {
+      entry.source = source;
+      entry.data = loaded;
+      entry.monthId = monthId;
+      entry.lastSynced = loaded;
+      if (cancelled || activeCacheKeyRef.current !== cacheKey) return;
+      setData(loaded);
+      setIsSupabaseBacked(source === 'supabase');
+      setLoading(false);
+    };
+
+    const loadLocal = () => {
+      let loaded;
+      try {
+        const stored = localStorage.getItem(key);
+        loaded = stored ? JSON.parse(stored) : mkMonth();
+      } catch {
+        loaded = mkMonth();
+      }
+      finish('local', loaded, null);
+    };
+
+    if (!USE_AUTH) {
+      loadLocal();
+      return;
+    }
+
+    // Migration explicite en amont : Supabase n'est utilisé que si la ligne
+    // existe déjà (migrée via migrateAllMonths) — sinon on retombe sur localStorage,
+    // sans jamais créer la ligne budget_months depuis l'app elle-même.
+    setLoading(true);
+    fetchMonthFromSupabase(currentProfileId, mi.year, mi.month + 1)
+      .then(fetched => {
+        if (cancelled) return;
+        if (fetched) finish('supabase', fetched, fetched.supabaseMonthId);
+        else loadLocal();
+      })
+      .catch(err => {
+        if (cancelled) return;
+        console.error('[Supabase] Erreur chargement du mois :', err.message);
+        loadLocal();
+      });
+
+    return () => { cancelled = true; };
+  }, [key, cacheKey]);
 
   const updateData = useCallback((fn) => {
-    setData(prev => {
-      const next = { ...prev };
-      fn(next);
-      localStorage.setItem(key, JSON.stringify(next));
-      return next;
-    });
-  }, [key]);
+    const entry = monthCache.get(cacheKey);
+    if (!entry) return; // pas encore chargé — les actions ne sont pas exposées tant que loading est true
 
-  return { data, loading: false, updateData };
+    // Copie les tableaux (pas seulement l'objet racine) : sinon fn() qui fait
+    // `mm.bills[i] = {...}` mute en place le même tableau que celui déjà capturé
+    // par une tâche de la queue en cours (entry.lastSynced ou un "current" figé
+    // dans une closure async) — ce qui corrompt silencieusement la base de diff
+    // et fait sauter des écritures vers Supabase sans erreur visible.
+    const next = { ...entry.data, revenues: [...(entry.data.revenues || [])], bills: [...(entry.data.bills || [])], expenses: [...(entry.data.expenses || [])] };
+    fn(next);
+    entry.data = next;
+    if (activeCacheKeyRef.current === cacheKey) setData(next);
+
+    if (entry.source === 'supabase') {
+      if (!entry.monthId) {
+        console.error('[Supabase] Sauvegarde impossible : id du mois introuvable.');
+        if (activeCacheKeyRef.current === cacheKey) { clearTimeout(saveStatusTimeoutRef.current); setSaveStatus('error'); }
+        return;
+      }
+      if (activeCacheKeyRef.current === cacheKey) { clearTimeout(saveStatusTimeoutRef.current); setSaveStatus('saving'); }
+      // File d'attente séquentielle par mois : chaque écriture attend que la
+      // précédente soit totalement terminée (y compris le remplacement des ids
+      // temporaires) avant de calculer son propre diff, à partir de l'état le
+      // plus récent au moment où c'est SON tour — pas de celui capturé à l'appel.
+      // C'est ce qui évite la race condition ajout+suppression rapprochée d'un
+      // même élément : au moment où la suppression s'exécute, l'ajout précédent
+      // a déjà été confirmé et son id temporaire déjà remplacé par l'id réel.
+      entry.queue = entry.queue.then(async () => {
+        const base = entry.lastSynced;
+        const current = entry.data;
+        try {
+          const idMap = await syncMonthChangesToSupabase(entry.monthId, base, current);
+          entry.lastSynced = applyIdMapToMonth(current, idMap);
+          if (Object.keys(idMap).length > 0) {
+            entry.data = applyIdMapToMonth(entry.data, idMap);
+          }
+          if (activeCacheKeyRef.current === cacheKey) {
+            setData(entry.data);
+            setSaveStatus('success');
+            saveStatusTimeoutRef.current = setTimeout(() => {
+              if (activeCacheKeyRef.current === cacheKey) setSaveStatus(null);
+            }, 1500);
+          }
+        } catch (err) {
+          // Rollback : on repart de "base" (dernier état confirmé par Supabase avant
+          // CETTE mutation), pas de l'état optimiste — la mutation qui a échoué est
+          // donc bien annulée localement. err.idMap est quand même réappliqué
+          // par-dessus pour les éléments qui, eux, ont réussi à s'insérer avant
+          // l'échec (ex: 2 dépenses ajoutées dans le même batch, une seule échoue).
+          const reconciled = applyIdMapToMonth(base, err.idMap || {});
+          entry.lastSynced = reconciled;
+          entry.data = reconciled;
+          console.error('[Supabase] Erreur de sauvegarde, annulation locale :', err.message);
+          if (activeCacheKeyRef.current === cacheKey) {
+            clearTimeout(saveStatusTimeoutRef.current);
+            setData(reconciled);
+            setSaveStatus('error');
+            // Pas de timeout : reste affiché jusqu'à ce que l'utilisateur clique dessus.
+          }
+        }
+      });
+    } else {
+      localStorage.setItem(key, JSON.stringify(next));
+    }
+  }, [key, cacheKey]);
+
+  return { data, loading, updateData, isSupabaseBacked, saveStatus, dismissSaveStatus };
 }
 
 // ─── COMPOSANTS PARTAGÉS ─────────────────────────────────────
@@ -383,6 +514,36 @@ const Logo = ({ size = 38, src = '/icon-512.png' }) => (
   <img src={src} alt="Budget Club"
     style={{ width:size, height:size, borderRadius:'50%', objectFit:'cover', flexShrink:0, display:'block' }} />
 );
+
+// Indicateur de sauvegarde Supabase — 'saving' | 'success' | 'error'.
+// N'apparaît que pour les mois branchés Supabase (localStorage est synchrone,
+// pas de statut à afficher). L'état "error" reste affiché jusqu'au clic.
+const SaveIndicator = ({ status, onDismiss }) => {
+  if (!status) return null;
+  const conf = {
+    saving:  { icon:'ti-device-floppy', bg:C.vert,    fg:'white',  label:'Enregistrement…' },
+    success: { icon:'ti-circle-check',  bg:C.vert,    fg:C.rose,   label:'Enregistré' },
+    error:   { icon:'ti-alert-circle',  bg:'#E8637A', fg:'white',  label:'Échec de la sauvegarde' },
+  }[status];
+  return (
+    <div
+      onClick={status === 'error' ? onDismiss : undefined}
+      style={{
+        position:'absolute', top:'calc(10px + env(safe-area-inset-top))', right:12, zIndex:500,
+        display:'flex', alignItems:'center', gap:7,
+        padding:'7px 13px', borderRadius:20,
+        background:conf.bg, color:conf.fg,
+        fontFamily:sans, fontSize:12, fontWeight:600,
+        boxShadow:'0 4px 14px rgba(0,0,0,0.25)',
+        cursor: status === 'error' ? 'pointer' : 'default',
+        animation: status === 'saving' ? 'saveIndicatorPulse 1.1s ease-in-out infinite' : 'none',
+      }}>
+      <i className={`ti ${conf.icon}`} style={{ fontSize:14 }} />
+      {conf.label}
+      <style>{`@keyframes saveIndicatorPulse { 0%,100% { opacity:1 } 50% { opacity:0.55 } }`}</style>
+    </div>
+  );
+};
 
 // Icône catégorie — cercle vert foncé
 const CatIcon = ({ catId, size = 42, gray = false, green = false }) => {
@@ -404,7 +565,7 @@ const CatIcon = ({ catId, size = 42, gray = false, green = false }) => {
 
 const PIN_KEYS = ['1','2','3','4','5','6','7','8','9','','0','del'];
 
-const ProfileMenu = ({ onClose, onSwitch, onCreateProfile }) => {
+const ProfileMenu = ({ onClose, onSwitch, onCreateProfile, onLogout }) => {
   const [allProfiles,   setAllProfiles]   = useState(getProfiles() || []);
   const profile  = allProfiles.find(p => p.id === currentProfileId);
   const [stage,         setStage]         = useState(null); // null | 'manage' | 'settings' | 'old' | 'new' | 'confirm'
@@ -581,6 +742,9 @@ const ProfileMenu = ({ onClose, onSwitch, onCreateProfile }) => {
                 { icon:'ti-settings', label:'Gérer les profils', action: () => setStage('manage') },
                 { icon:'ti-user-plus', label:'Ajouter un profil', action: onCreateProfile },
               ] : []),
+              ...(USE_AUTH && onLogout ? [
+                { icon:'ti-logout', label:'Se déconnecter', action: onLogout },
+              ] : []),
             ].map(btn => (
               <button key={btn.label} onClick={btn.action}
                 style={{ width:'100%', display:'flex', alignItems:'center', gap:12, padding:'12px 10px', background:'none', border:'none', cursor:'pointer', borderRadius:10, marginBottom:4, textAlign:'left' }}>
@@ -697,7 +861,7 @@ const ProfileMenu = ({ onClose, onSwitch, onCreateProfile }) => {
   );
 };
 
-const ProfileBadge = ({ onSwitch, onCreateProfile }) => {
+const ProfileBadge = ({ onSwitch, onCreateProfile, onLogout }) => {
   const [open, setOpen] = useState(false);
   const profiles = getProfiles() || [];
   const profile  = profiles.find(p => p.id === currentProfileId);
@@ -712,6 +876,7 @@ const ProfileBadge = ({ onSwitch, onCreateProfile }) => {
           onClose={() => setOpen(false)}
           onSwitch={() => { setOpen(false); onSwitch(); }}
           onCreateProfile={() => { setOpen(false); onCreateProfile(); }}
+          onLogout={onLogout ? () => { setOpen(false); onLogout(); } : undefined}
         />
       )}
     </>
@@ -736,7 +901,7 @@ const MonthHeader = ({ mi, setMi, closed, onProfileAction }) => {
           style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>›</button>
       </div>
       <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'flex-end' }}>
-        <ProfileBadge onSwitch={() => onProfileAction?.('select')} onCreateProfile={() => onProfileAction?.('create')} />
+        <ProfileBadge onSwitch={() => onProfileAction?.('select')} onCreateProfile={() => onProfileAction?.('create')} onLogout={() => onProfileAction?.('logout')} />
       </div>
     </div>
   );
@@ -1263,7 +1428,7 @@ export const AddPeaRendementModal = ({ onAdd, onClose }) => {
 // ─── VUES ────────────────────────────────────────────────────
 
 // Vue ACCUEIL
-export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onProfileAction }) {
+export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onProfileAction, isSupabaseBacked }) {
   const [confirmClose, setConfirmClose] = useState(false);
   const [soldeFinalInput, setSoldeFinalInput] = useState('');
   const [showSteps, setShowSteps] = useState(false);
@@ -1460,6 +1625,10 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
                 {m.closed ? (
                   <button onClick={() => {
                     updateData(mm => { mm.closed = false; delete mm.soldeFinal; });
+                    if (isSupabaseBacked) {
+                      console.log('[Supabase] Action non disponible pour les mois branchés à Supabase : nettoyage du revenu "report" sur le mois suivant.');
+                      return;
+                    }
                     const nextMonth = mi.month === 11 ? 0 : mi.month + 1;
                     const nextYear  = mi.month === 11 ? mi.year + 1 : mi.year;
                     const nextKey   = `${currentProfileId}:budget:${nextYear}:${String(nextMonth + 1).padStart(2, '0')}`;
@@ -1971,7 +2140,7 @@ export function RevenusView({ m, mi, setMi, updateData, onProfileAction }) {
 }
 
 // Vue DÉPENSES + FACTURES
-export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onProfileAction }) {
+export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onProfileAction, isSupabaseBacked }) {
   const exps    = m.expenses;
   const bills   = m.bills.filter(b => b.selected !== false);
   const unpaid  = bills.filter(b => !b.paid);
@@ -2025,6 +2194,11 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
   };
 
   const deletePermanently = (billId) => {
+    if (isSupabaseBacked) {
+      console.log('[Supabase] Action non disponible pour les mois branchés à Supabase : suppression définitive multi-mois.');
+      setDeleteBillPending(null);
+      return;
+    }
     saveRecurringBills(getRecurringBills().filter(b => b.id !== billId));
     addDisabledBill(billId);
     for (let y = mi.year; y <= mi.year + 2; y++) {
@@ -2245,6 +2419,10 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
                       <button onClick={() => {
                         const newAmt = parseFloat(billForm.amount);
                         if (!newAmt) return;
+                        if (isSupabaseBacked) {
+                          console.log('[Supabase] Action non disponible pour les mois branchés à Supabase : propagation du montant par défaut multi-mois.');
+                          return;
+                        }
                         const billId = b.id;
                         for (let y = mi.year; y <= mi.year + 2; y++) {
                           for (let mo = (y === mi.year ? mi.month : 0); mo < 12; mo++) {
@@ -2703,7 +2881,7 @@ export function EpargneView({ currentYear, onProfileAction }) {
             style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>›</button>
         </div>
         <div style={{ width:38, display:'flex', justifyContent:'flex-end' }}>
-          <ProfileBadge onSwitch={() => onProfileAction?.('select')} onCreateProfile={() => onProfileAction?.('create')} />
+          <ProfileBadge onSwitch={() => onProfileAction?.('select')} onCreateProfile={() => onProfileAction?.('create')} onLogout={() => onProfileAction?.('logout')} />
         </div>
       </div>
 
@@ -3259,7 +3437,7 @@ function MainApp({ onProfileAction }) {
   const [modal, setModal]       = useState(null);
   const [revType, setRevType]   = useState('revenu');
   const [expTypeModal, setExpTypeModal] = useState('depense');
-  const { data: m, loading, updateData } = useMonthData(mi);
+  const { data: m, loading, updateData, isSupabaseBacked, saveStatus, dismissSaveStatus } = useMonthData(mi);
   const [autoBackupOffer, setAutoBackupOffer] = useState(null);
 
   // Auto-save on hide/close
@@ -3356,11 +3534,11 @@ function MainApp({ onProfileAction }) {
 
   const renderView = () => {
     switch (view) {
-      case 'accueil':     return <AccueilView  m={m} mi={mi} setMi={setMi} setView={setView} setDepTab={setDepTab} updateData={updateData} onProfileAction={onProfileAction} />;
+      case 'accueil':     return <AccueilView  m={m} mi={mi} setMi={setMi} setView={setView} setDepTab={setDepTab} updateData={updateData} onProfileAction={onProfileAction} isSupabaseBacked={isSupabaseBacked} />;
       case 'budget':      return <BudgetView   m={m} mi={mi} setMi={setMi} setView={setView} updateData={updateData} onProfileAction={onProfileAction} />;
       case 'budget_edit': return <BudgetEditView m={m} updateData={updateData} setView={setView} />;
       case 'revenus':     return <RevenusView  m={m} mi={mi} setMi={setMi} updateData={updateData} onProfileAction={onProfileAction} />;
-      case 'depenses':    return <DepensesView m={m} mi={mi} setMi={setMi} updateData={updateData} depTab={depTab} setDepTab={setDepTab} onProfileAction={onProfileAction} />;
+      case 'depenses':    return <DepensesView m={m} mi={mi} setMi={setMi} updateData={updateData} depTab={depTab} setDepTab={setDepTab} onProfileAction={onProfileAction} isSupabaseBacked={isSupabaseBacked} />;
       case 'epargne':     return <EpargneView  currentYear={mi.year} onProfileAction={onProfileAction} />;
       default:            return null;
     }
@@ -3371,6 +3549,7 @@ function MainApp({ onProfileAction }) {
       <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
       <div style={{ background:C.beige, height:'100dvh', display:'flex', flexDirection:'column', width:'100%', maxWidth:430, margin:'0 auto', position:'relative', overflow:'hidden', fontFamily:sans }}>
+        <SaveIndicator status={saveStatus} onDismiss={dismissSaveStatus} />
         {!['accueil','budget_edit','epargne','budget','revenus','depenses'].includes(view) && (
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px 8px', background:C.beige, flexShrink:0 }}>
             <button onClick={() => setView('accueil')} style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:22, width:32 }}>‹</button>
@@ -3419,15 +3598,32 @@ function MainApp({ onProfileAction }) {
 
 // ─── APP ROOT (gestion auth + profils) ──────────────────────
 export default function App() {
-  const [appStage,       setAppStage]       = useState('splash'); // 'splash'|'select'|'pin'|'create'|'app'
+  const [appStage,       setAppStage]       = useState('splash'); // 'splash'|'select'|'pin'|'login'|'create'|'app'
   const [pendingProfile, setPendingProfile] = useState(null);
 
-  const handleSplashDone = () => {
+  const handleSplashDone = async () => {
     migrateData();
     clearLudivineData();
     seedDemoProfile();
     const profiles = initProfiles();
-    const savedId  = getSavedProfileId();
+
+    if (USE_AUTH) {
+      // Session Supabase déjà active (ex: reload) → on retrouve le profil lié
+      // sans redemander de connexion. Sinon, écran de connexion.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('auth_user_id', session.user.id)
+          .maybeSingle();
+        if (profile) { persistProfile(profile.id); setAppStage('app'); return; }
+      }
+      setAppStage('login');
+      return;
+    }
+
+    const savedId = getSavedProfileId();
     if (savedId) {
       const p = profiles.find(x => x.id === savedId);
       if (p) { setPendingProfile(p); setAppStage('pin'); return; }
@@ -3442,6 +3638,11 @@ export default function App() {
       setAppStage('select');
     } else if (action === 'create') {
       setAppStage('create');
+    } else if (action === 'logout') {
+      supabase.auth.signOut();
+      localStorage.removeItem('profile:current');
+      setPendingProfile(null);
+      setAppStage('login');
     }
   };
 
@@ -3473,6 +3674,15 @@ export default function App() {
           onBack={() => { setPendingProfile(null); setAppStage('select'); }}
         />
       </>
+    );
+  }
+
+  if (appStage === 'login') {
+    return (
+      <LoginScreen
+        onSuccess={profileId => { persistProfile(profileId); setAppStage('app'); }}
+        onDemo={() => { persistProfile('demo'); setAppStage('app'); }}
+      />
     );
   }
 
