@@ -154,6 +154,11 @@ const storageKey = (mi) => `${currentProfileId}:budget:${mi.year}:${String(mi.mo
 // entry = { source: 'supabase'|'local', data, monthId, lastSynced, queue }
 const monthCache = new Map();
 
+// Compteur global d'écritures Supabase en attente, tous mois confondus — sert
+// uniquement au filet de sécurité beforeunload (App root) pour avertir avant
+// une fermeture d'onglet pendant qu'une sauvegarde est encore en vol.
+let pendingSupabaseWrites = 0;
+
 const loadYearData = (year) => {
   const months = [];
   for (let m = 0; m < 12; m++) {
@@ -265,13 +270,10 @@ function useMonthData(mi) {
   const [loading, setLoading] = useState(() => !monthCache.get(cacheKey));
   const [isSupabaseBacked, setIsSupabaseBacked] = useState(() => monthCache.get(cacheKey)?.source === 'supabase');
   // null | 'saving' | 'success' | 'error' — reflète l'écriture Supabase en cours
-  // pour le mois actuellement affiché (indicateur visuel dans MainApp).
+  // pour le mois actuellement affiché (indicateur visuel dans MainApp). null
+  // est affiché comme l'état de repos "Enregistré" (voir SaveIndicator).
   const [saveStatus, setSaveStatus] = useState(null);
   const saveStatusTimeoutRef = useRef(null);
-  const dismissSaveStatus = useCallback(() => {
-    clearTimeout(saveStatusTimeoutRef.current);
-    setSaveStatus(null);
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -383,6 +385,7 @@ function useMonthData(mi) {
       // C'est ce qui évite la race condition ajout+suppression rapprochée d'un
       // même élément : au moment où la suppression s'exécute, l'ajout précédent
       // a déjà été confirmé et son id temporaire déjà remplacé par l'id réel.
+      pendingSupabaseWrites++;
       entry.queue = entry.queue.then(async () => {
         const base = entry.lastSynced;
         const current = entry.data;
@@ -395,6 +398,8 @@ function useMonthData(mi) {
           if (activeCacheKeyRef.current === cacheKey) {
             setData(entry.data);
             setSaveStatus('success');
+            // Retombe sur l'état "idle" (disquette permanente, tout est enregistré) —
+            // saveStatus redevient null, que SaveIndicator affiche comme l'état de repos.
             saveStatusTimeoutRef.current = setTimeout(() => {
               if (activeCacheKeyRef.current === cacheKey) setSaveStatus(null);
             }, 1500);
@@ -413,8 +418,11 @@ function useMonthData(mi) {
             clearTimeout(saveStatusTimeoutRef.current);
             setData(reconciled);
             setSaveStatus('error');
-            // Pas de timeout : reste affiché jusqu'à ce que l'utilisateur clique dessus.
+            // Pas de timeout ni de fermeture manuelle : reste affiché tant qu'une
+            // écriture ultérieure (réussie ou non) ne vient pas mettre à jour le statut.
           }
+        } finally {
+          pendingSupabaseWrites--;
         }
       });
     } else {
@@ -422,7 +430,7 @@ function useMonthData(mi) {
     }
   }, [key, cacheKey]);
 
-  return { data, loading, updateData, isSupabaseBacked, saveStatus, dismissSaveStatus };
+  return { data, loading, updateData, isSupabaseBacked, saveStatus };
 }
 
 // ─── COMPOSANTS PARTAGÉS ─────────────────────────────────────
@@ -433,30 +441,35 @@ const Logo = ({ size = 38, src = '/icon-512.png' }) => (
     style={{ width:size, height:size, borderRadius:'50%', objectFit:'cover', flexShrink:0, display:'block' }} />
 );
 
-// Indicateur de sauvegarde Supabase — 'saving' | 'success' | 'error'.
-// N'apparaît que pour les mois branchés Supabase (localStorage est synchrone,
-// pas de statut à afficher). L'état "error" reste affiché jusqu'au clic.
-const SaveIndicator = ({ status, onDismiss }) => {
-  if (!status) return null;
+// Indicateur de sauvegarde Supabase — visible en permanence pour les mois
+// branchés Supabase (localStorage est synchrone, pas de statut à afficher).
+// status null/'idle' = tout est enregistré (état de repos) ; 'saving' =
+// écriture en cours ; 'success' = confirmation brève puis retour au repos ;
+// 'error' = reste affiché tant qu'une écriture ultérieure (réussie ou non)
+// ne vient pas le remplacer — pas de fermeture manuelle, pour ne jamais
+// masquer un problème non résolu.
+const SaveIndicator = ({ status, isSupabaseBacked }) => {
+  if (!isSupabaseBacked) return null;
+  const effective = status || 'idle';
   const conf = {
-    saving:  { icon:'ti-device-floppy', bg:C.vert,    fg:'white',  label:'Enregistrement…' },
-    success: { icon:'ti-circle-check',  bg:C.vert,    fg:C.rose,   label:'Enregistré' },
-    error:   { icon:'ti-alert-circle',  bg:'#E8637A', fg:'white',  label:'Échec de la sauvegarde' },
-  }[status];
+    idle:    { icon:'ti-device-floppy', extra:null,              bg:'rgba(30,51,40,0.55)', fg:'rgba(255,255,255,0.85)', label:'Enregistré' },
+    saving:  { icon:'ti-device-floppy', extra:null,              bg:C.vert,                fg:'white',                   label:'Enregistrement…' },
+    success: { icon:'ti-device-floppy', extra:'ti-circle-check', bg:C.vert,                fg:C.rose,                    label:'Enregistré' },
+    error:   { icon:'ti-device-floppy', extra:'ti-x',            bg:'#E8637A',             fg:'white',                   label:'Échec de la sauvegarde' },
+  }[effective];
   return (
     <div
-      onClick={status === 'error' ? onDismiss : undefined}
       style={{
         position:'absolute', top:'calc(10px + env(safe-area-inset-top))', right:12, zIndex:500,
-        display:'flex', alignItems:'center', gap:7,
+        display:'flex', alignItems:'center', gap:6,
         padding:'7px 13px', borderRadius:20,
         background:conf.bg, color:conf.fg,
         fontFamily:sans, fontSize:12, fontWeight:600,
         boxShadow:'0 4px 14px rgba(0,0,0,0.25)',
-        cursor: status === 'error' ? 'pointer' : 'default',
-        animation: status === 'saving' ? 'saveIndicatorPulse 1.1s ease-in-out infinite' : 'none',
+        animation: effective === 'saving' ? 'saveIndicatorPulse 1.1s ease-in-out infinite' : 'none',
       }}>
       <i className={`ti ${conf.icon}`} style={{ fontSize:14 }} />
+      {conf.extra && <i className={`ti ${conf.extra}`} style={{ fontSize:11 }} />}
       {conf.label}
       <style>{`@keyframes saveIndicatorPulse { 0%,100% { opacity:1 } 50% { opacity:0.55 } }`}</style>
     </div>
@@ -3419,7 +3432,7 @@ function MainApp({ onProfileAction }) {
   const [modal, setModal]       = useState(null);
   const [revType, setRevType]   = useState('revenu');
   const [expTypeModal, setExpTypeModal] = useState('depense');
-  const { data: m, loading, updateData, isSupabaseBacked, saveStatus, dismissSaveStatus } = useMonthData(mi);
+  const { data: m, loading, updateData, isSupabaseBacked, saveStatus } = useMonthData(mi);
   const [autoBackupOffer, setAutoBackupOffer] = useState(null);
 
   // Auto-save on hide/close
@@ -3531,7 +3544,7 @@ function MainApp({ onProfileAction }) {
       <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
       <div style={{ background:C.beige, height:'100dvh', display:'flex', flexDirection:'column', width:'100%', maxWidth:430, margin:'0 auto', position:'relative', overflow:'hidden', fontFamily:sans }}>
-        <SaveIndicator status={saveStatus} onDismiss={dismissSaveStatus} />
+        <SaveIndicator status={saveStatus} isSupabaseBacked={isSupabaseBacked} />
         {!['accueil','budget_edit','epargne','budget','revenus','depenses'].includes(view) && (
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px 8px', background:C.beige, flexShrink:0 }}>
             <button onClick={() => setView('accueil')} style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:22, width:32 }}>‹</button>
@@ -3582,6 +3595,20 @@ function MainApp({ onProfileAction }) {
 export default function App() {
   const [appStage,       setAppStage]       = useState('splash'); // 'splash'|'select'|'pin'|'login'|'create'|'app'
   const [pendingProfile, setPendingProfile] = useState(null);
+
+  // Filet de sécurité : avertit avant de fermer l'onglet/l'app si une écriture
+  // Supabase est encore en vol (queue non vidée), pour ne jamais fermer
+  // silencieusement sur une modification pas encore confirmée en base.
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (pendingSupabaseWrites > 0) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
 
   const handleSplashDone = async () => {
     migrateData();
