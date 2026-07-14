@@ -52,11 +52,11 @@ const fieldStyle = {
   boxSizing: 'border-box',
 };
 
-// onSuccess(profileId, user) / onDemo() : callbacks optionnels utilisés quand ce
-// composant est embarqué dans App.jsx (USE_AUTH=true). En leur absence (route
-// standalone #login), le comportement par défaut est conservé : affichage du
-// résultat à l'écran, et pour la démo écriture localStorage + reload.
-export default function LoginScreen({ onSuccess, onDemo } = {}) {
+// onSuccess(profileId, user) : callback optionnel utilisé quand ce composant
+// est embarqué dans App.jsx (USE_AUTH=true). En son absence (route standalone
+// #login), le comportement par défaut est conservé : affichage du résultat à
+// l'écran.
+export default function LoginScreen({ onSuccess } = {}) {
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
   const [running,  setRunning]  = useState(false);
@@ -107,13 +107,6 @@ export default function LoginScreen({ onSuccess, onDemo } = {}) {
     setRunning(false);
   };
 
-  const handleDemo = () => {
-    if (onDemo) { onDemo(); return; }
-    localStorage.setItem('profile:current', 'demo');
-    window.location.hash = '';
-    window.location.reload();
-  };
-
   return (
     <>
       <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -159,14 +152,6 @@ export default function LoginScreen({ onSuccess, onDemo } = {}) {
         <button onClick={handleForgotPassword}
           style={{ marginTop:16, background:'none', border:'none', color:'rgba(255,255,255,0.45)', fontFamily:sans, fontSize:12, cursor:'pointer', textDecoration:'underline' }}>
           Mot de passe oublié ?
-        </button>
-
-        <div style={{ width:'100%', height:1, background:'rgba(238,196,196,0.3)', margin:'22px 0 16px' }} />
-
-        <button
-          onClick={handleDemo}
-          style={{ width:'100%', padding:'13px 0', background:'transparent', border:`1.5px solid ${C.rose}`, borderRadius:10, fontFamily:sans, fontSize:14, fontWeight:600, color:'white', cursor:'pointer', letterSpacing:1 }}>
-          Continuer en démo
         </button>
       </SplashBg>
     </>
