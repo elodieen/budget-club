@@ -270,10 +270,10 @@ function useMonthData(mi) {
   const [loading, setLoading] = useState(() => !monthCache.get(cacheKey));
   const [isSupabaseBacked, setIsSupabaseBacked] = useState(() => monthCache.get(cacheKey)?.source === 'supabase');
   // null | 'saving' | 'success' | 'error' — reflète l'écriture Supabase en cours
-  // pour le mois actuellement affiché (indicateur visuel dans MainApp). null
-  // est affiché comme l'état de repos "Enregistré" (voir SaveIndicator).
+  // pour le mois actuellement affiché (indicateur visuel dans MainApp). 'success'
+  // et 'error' sont permanents une fois atteints (pas d'auto-retour à null) :
+  // seule une écriture ultérieure ('saving' puis son propre résultat) les remplace.
   const [saveStatus, setSaveStatus] = useState(null);
-  const saveStatusTimeoutRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -374,10 +374,10 @@ function useMonthData(mi) {
     if (entry.source === 'supabase') {
       if (!entry.monthId) {
         console.error('[Supabase] Sauvegarde impossible : id du mois introuvable.');
-        if (activeCacheKeyRef.current === cacheKey) { clearTimeout(saveStatusTimeoutRef.current); setSaveStatus('error'); }
+        if (activeCacheKeyRef.current === cacheKey) setSaveStatus('error');
         return;
       }
-      if (activeCacheKeyRef.current === cacheKey) { clearTimeout(saveStatusTimeoutRef.current); setSaveStatus('saving'); }
+      if (activeCacheKeyRef.current === cacheKey) setSaveStatus('saving');
       // File d'attente séquentielle par mois : chaque écriture attend que la
       // précédente soit totalement terminée (y compris le remplacement des ids
       // temporaires) avant de calculer son propre diff, à partir de l'état le
@@ -398,11 +398,8 @@ function useMonthData(mi) {
           if (activeCacheKeyRef.current === cacheKey) {
             setData(entry.data);
             setSaveStatus('success');
-            // Retombe sur l'état "idle" (disquette permanente, tout est enregistré) —
-            // saveStatus redevient null, que SaveIndicator affiche comme l'état de repos.
-            saveStatusTimeoutRef.current = setTimeout(() => {
-              if (activeCacheKeyRef.current === cacheKey) setSaveStatus(null);
-            }, 1500);
+            // Permanent : reste affiché (coche) tant qu'une écriture ultérieure
+            // ne vient pas le remplacer (nouveau 'saving', puis succès ou erreur).
           }
         } catch (err) {
           // Rollback : on repart de "base" (dernier état confirmé par Supabase avant
@@ -415,7 +412,6 @@ function useMonthData(mi) {
           entry.data = reconciled;
           console.error('[Supabase] Erreur de sauvegarde, annulation locale :', err.message);
           if (activeCacheKeyRef.current === cacheKey) {
-            clearTimeout(saveStatusTimeoutRef.current);
             setData(reconciled);
             setSaveStatus('error');
             // Pas de timeout ni de fermeture manuelle : reste affiché tant qu'une
@@ -441,31 +437,30 @@ const Logo = ({ size = 38, src = '/icon-512.png' }) => (
     style={{ width:size, height:size, borderRadius:'50%', objectFit:'cover', flexShrink:0, display:'block' }} />
 );
 
-// Indicateur de sauvegarde Supabase — icône seule (pas d'étiquette texte),
-// affichée en permanence à côté de l'avatar profil pour les mois branchés
-// Supabase (localStorage est synchrone, pas de statut à afficher). status
-// null/'idle' = tout est enregistré (état de repos) ; 'saving' = écriture en
-// cours (pulsation) ; 'success' = coche verte en overlay, confirmation brève
-// puis retour au repos ; 'error' = croix rouge en overlay, reste affichée
-// tant qu'une écriture ultérieure (réussie ou non) ne vient pas la remplacer
-// — pas de fermeture manuelle, pour ne jamais masquer un problème non résolu.
+// Indicateur de sauvegarde Supabase — icône disquette verte seule (pas de
+// fond, pas d'étiquette texte), affichée en permanence à côté de l'avatar
+// profil pour les mois branchés Supabase (localStorage est synchrone, pas de
+// statut à afficher). 'saving' = pulsation, sans overlay ; 'success' = coche
+// rose en overlay, permanente tant que rien de nouveau n'est écrit ; 'error'
+// = croix rouge en overlay, permanente jusqu'à ce qu'une écriture ultérieure
+// réussisse — dans les deux cas, pas de fermeture manuelle ni de disparition
+// automatique : l'overlay reflète fidèlement le dernier résultat connu.
 const SaveIndicator = ({ status, isSupabaseBacked }) => {
   if (!isSupabaseBacked) return null;
-  const effective = status || 'idle';
-  const overlay = effective === 'success' ? { icon:'ti-circle-check', color:'#3FA65B' }
-    : effective === 'error' ? { icon:'ti-circle-x', color:'#E8637A' }
+  const overlay = status === 'success' ? { icon:'ti-circle-check', color:C.rose }
+    : status === 'error' ? { icon:'ti-circle-x', color:'#E8637A' }
     : null;
   return (
     <div
       style={{
-        position:'relative', width:30, height:30, borderRadius:'50%', flexShrink:0,
-        background:'rgba(30,51,40,0.5)', display:'flex', alignItems:'center', justifyContent:'center',
-        animation: effective === 'saving' ? 'saveIndicatorPulse 1.1s ease-in-out infinite' : 'none',
+        position:'relative', width:22, height:22, flexShrink:0,
+        display:'flex', alignItems:'center', justifyContent:'center',
+        animation: status === 'saving' ? 'saveIndicatorPulse 1.1s ease-in-out infinite' : 'none',
       }}>
-      <i className="ti ti-device-floppy" style={{ fontSize:14, color:'rgba(255,255,255,0.9)' }} />
+      <i className="ti ti-device-floppy" style={{ fontSize:19, color:'#3FA65B' }} />
       {overlay && (
         <i className={`ti ${overlay.icon}`}
-          style={{ position:'absolute', bottom:-2, right:-2, fontSize:13, color:overlay.color, background:'white', borderRadius:'50%' }} />
+          style={{ position:'absolute', bottom:-3, right:-4, fontSize:13, color:overlay.color, background:'white', borderRadius:'50%' }} />
       )}
       <style>{`@keyframes saveIndicatorPulse { 0%,100% { opacity:1 } 50% { opacity:0.55 } }`}</style>
     </div>
