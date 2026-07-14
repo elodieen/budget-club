@@ -441,36 +441,32 @@ const Logo = ({ size = 38, src = '/icon-512.png' }) => (
     style={{ width:size, height:size, borderRadius:'50%', objectFit:'cover', flexShrink:0, display:'block' }} />
 );
 
-// Indicateur de sauvegarde Supabase — visible en permanence pour les mois
-// branchés Supabase (localStorage est synchrone, pas de statut à afficher).
-// status null/'idle' = tout est enregistré (état de repos) ; 'saving' =
-// écriture en cours ; 'success' = confirmation brève puis retour au repos ;
-// 'error' = reste affiché tant qu'une écriture ultérieure (réussie ou non)
-// ne vient pas le remplacer — pas de fermeture manuelle, pour ne jamais
-// masquer un problème non résolu.
+// Indicateur de sauvegarde Supabase — icône seule (pas d'étiquette texte),
+// affichée en permanence à côté de l'avatar profil pour les mois branchés
+// Supabase (localStorage est synchrone, pas de statut à afficher). status
+// null/'idle' = tout est enregistré (état de repos) ; 'saving' = écriture en
+// cours (pulsation) ; 'success' = coche verte en overlay, confirmation brève
+// puis retour au repos ; 'error' = croix rouge en overlay, reste affichée
+// tant qu'une écriture ultérieure (réussie ou non) ne vient pas la remplacer
+// — pas de fermeture manuelle, pour ne jamais masquer un problème non résolu.
 const SaveIndicator = ({ status, isSupabaseBacked }) => {
   if (!isSupabaseBacked) return null;
   const effective = status || 'idle';
-  const conf = {
-    idle:    { icon:'ti-device-floppy', extra:null,              bg:'rgba(30,51,40,0.55)', fg:'rgba(255,255,255,0.85)', label:'Enregistré' },
-    saving:  { icon:'ti-device-floppy', extra:null,              bg:C.vert,                fg:'white',                   label:'Enregistrement…' },
-    success: { icon:'ti-device-floppy', extra:'ti-circle-check', bg:C.vert,                fg:C.rose,                    label:'Enregistré' },
-    error:   { icon:'ti-device-floppy', extra:'ti-x',            bg:'#E8637A',             fg:'white',                   label:'Échec de la sauvegarde' },
-  }[effective];
+  const overlay = effective === 'success' ? { icon:'ti-circle-check', color:'#3FA65B' }
+    : effective === 'error' ? { icon:'ti-circle-x', color:'#E8637A' }
+    : null;
   return (
     <div
       style={{
-        position:'absolute', top:'calc(10px + env(safe-area-inset-top))', right:12, zIndex:500,
-        display:'flex', alignItems:'center', gap:6,
-        padding:'7px 13px', borderRadius:20,
-        background:conf.bg, color:conf.fg,
-        fontFamily:sans, fontSize:12, fontWeight:600,
-        boxShadow:'0 4px 14px rgba(0,0,0,0.25)',
+        position:'relative', width:30, height:30, borderRadius:'50%', flexShrink:0,
+        background:'rgba(30,51,40,0.5)', display:'flex', alignItems:'center', justifyContent:'center',
         animation: effective === 'saving' ? 'saveIndicatorPulse 1.1s ease-in-out infinite' : 'none',
       }}>
-      <i className={`ti ${conf.icon}`} style={{ fontSize:14 }} />
-      {conf.extra && <i className={`ti ${conf.extra}`} style={{ fontSize:11 }} />}
-      {conf.label}
+      <i className="ti ti-device-floppy" style={{ fontSize:14, color:'rgba(255,255,255,0.9)' }} />
+      {overlay && (
+        <i className={`ti ${overlay.icon}`}
+          style={{ position:'absolute', bottom:-2, right:-2, fontSize:13, color:overlay.color, background:'white', borderRadius:'50%' }} />
+      )}
       <style>{`@keyframes saveIndicatorPulse { 0%,100% { opacity:1 } 50% { opacity:0.55 } }`}</style>
     </div>
   );
@@ -821,16 +817,19 @@ const ProfileMenu = ({ onClose, onSwitch, onCreateProfile, onLogout }) => {
   );
 };
 
-const ProfileBadge = ({ onSwitch, onCreateProfile, onLogout }) => {
+const ProfileBadge = ({ onSwitch, onCreateProfile, onLogout, saveStatus, isSupabaseBacked }) => {
   const [open, setOpen] = useState(false);
   const profiles = getProfiles() || [];
   const profile  = profiles.find(p => p.id === currentProfileId);
   const initial  = profile ? profile.name[0].toUpperCase() : '?';
   return (
     <>
-      <button onClick={() => setOpen(true)} style={{ width:36, height:36, borderRadius:'50%', background:C.vert, border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-        <span style={{ fontFamily:serif, fontSize:14, color:C.rose, fontWeight:700, lineHeight:1 }}>{initial}</span>
-      </button>
+      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+        <SaveIndicator status={saveStatus} isSupabaseBacked={isSupabaseBacked} />
+        <button onClick={() => setOpen(true)} style={{ width:36, height:36, borderRadius:'50%', background:C.vert, border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+          <span style={{ fontFamily:serif, fontSize:14, color:C.rose, fontWeight:700, lineHeight:1 }}>{initial}</span>
+        </button>
+      </div>
       {open && (
         <ProfileMenu
           onClose={() => setOpen(false)}
@@ -844,7 +843,7 @@ const ProfileBadge = ({ onSwitch, onCreateProfile, onLogout }) => {
 };
 
 // Header avec logo + navigation mois (sans limite)
-const MonthHeader = ({ mi, setMi, closed, onProfileAction }) => {
+const MonthHeader = ({ mi, setMi, closed, onProfileAction, saveStatus, isSupabaseBacked }) => {
   const prev = () => setMi(p => p.month === 0 ? { month:11, year:p.year-1 } : { month:p.month-1, year:p.year });
   const next = () => setMi(p => p.month === 11 ? { month:0, year:p.year+1 } : { month:p.month+1, year:p.year });
   return (
@@ -861,7 +860,7 @@ const MonthHeader = ({ mi, setMi, closed, onProfileAction }) => {
           style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>›</button>
       </div>
       <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'flex-end' }}>
-        <ProfileBadge onSwitch={() => onProfileAction?.('select')} onCreateProfile={() => onProfileAction?.('create')} onLogout={() => onProfileAction?.('logout')} />
+        <ProfileBadge onSwitch={() => onProfileAction?.('select')} onCreateProfile={() => onProfileAction?.('create')} onLogout={() => onProfileAction?.('logout')} saveStatus={saveStatus} isSupabaseBacked={isSupabaseBacked} />
       </div>
     </div>
   );
@@ -1388,7 +1387,7 @@ export const AddPeaRendementModal = ({ onAdd, onClose }) => {
 // ─── VUES ────────────────────────────────────────────────────
 
 // Vue ACCUEIL
-export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onProfileAction, isSupabaseBacked }) {
+export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onProfileAction, isSupabaseBacked, saveStatus }) {
   const [confirmClose, setConfirmClose] = useState(false);
   const [soldeFinalInput, setSoldeFinalInput] = useState('');
   const [showSteps, setShowSteps] = useState(false);
@@ -1464,7 +1463,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
 
   return (
     <>
-      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
+      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} saveStatus={saveStatus} isSupabaseBacked={isSupabaseBacked} />
       {m.closed && <ClosedBanner />}
       <div style={{ display:'flex', flexDirection:'column', flex:1, gap:10, padding:'16px 28px', paddingTop:24, paddingBottom:'calc(16px + env(safe-area-inset-bottom))', background:C.beige, overflow:'hidden' }}>
         {/* Card Reste à vivre du mois */}
@@ -1653,7 +1652,7 @@ export function AccueilView({ m, mi, setMi, setView, setDepTab, updateData, onPr
 }
 
 // Vue BUDGET
-export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction }) {
+export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction, isSupabaseBacked, saveStatus }) {
   const cb   = m.catBudgets || {};
   const [customCats, setCustomCats]       = useState(getCustomCats);
   const [showEnv, setShowEnv]             = useState(false);
@@ -1683,7 +1682,7 @@ export function BudgetView({ m, mi, setMi, setView, updateData, onProfileAction 
 
   return (
     <>
-      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
+      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} saveStatus={saveStatus} isSupabaseBacked={isSupabaseBacked} />
       {m.closed && <ClosedBanner />}
       <div style={{ padding:'16px 28px 4px', background:C.beige, flexShrink:0 }}>
         <div style={{ fontFamily:serif, fontSize:20, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left' }}>Budget</div>
@@ -2067,7 +2066,7 @@ function RevenueRow({ r, i, onUpdate, onDelete, closed }) {
   );
 }
 
-export function RevenusView({ m, mi, setMi, updateData, onProfileAction }) {
+export function RevenusView({ m, mi, setMi, updateData, onProfileAction, isSupabaseBacked, saveStatus }) {
   const revenus = m.revenues.filter(r => (r.type || 'revenu') === 'revenu');
   const total   = revenus.reduce((s,r) => s + (r.amount||0), 0);
   const del = (i)          => updateData(mm => { mm.revenues = mm.revenues.filter((_,idx) => idx !== i); });
@@ -2075,7 +2074,7 @@ export function RevenusView({ m, mi, setMi, updateData, onProfileAction }) {
 
   return (
     <>
-      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
+      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} saveStatus={saveStatus} isSupabaseBacked={isSupabaseBacked} />
       {m.closed && <ClosedBanner />}
       <div style={{ padding:'16px 28px 4px', background:C.beige, flexShrink:0 }}>
         <div style={{ fontFamily:serif, fontSize:20, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left' }}>Revenus</div>
@@ -2100,7 +2099,7 @@ export function RevenusView({ m, mi, setMi, updateData, onProfileAction }) {
 }
 
 // Vue DÉPENSES + FACTURES
-export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onProfileAction, isSupabaseBacked }) {
+export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onProfileAction, isSupabaseBacked, saveStatus }) {
   const exps    = m.expenses;
   const bills   = m.bills.filter(b => b.selected !== false);
   const unpaid  = bills.filter(b => !b.paid);
@@ -2182,7 +2181,7 @@ export function DepensesView({ m, mi, setMi, updateData, depTab, setDepTab, onPr
 
   return (
     <>
-      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} />
+      <MonthHeader mi={mi} setMi={setMi} closed={m.closed} onProfileAction={onProfileAction} saveStatus={saveStatus} isSupabaseBacked={isSupabaseBacked} />
       {m.closed && <ClosedBanner />}
       <div style={{ padding:'16px 28px 4px', background:C.beige, flexShrink:0 }}>
         <div style={{ fontFamily:serif, fontSize:20, fontWeight:700, color:'#1E3328', textTransform:'uppercase', letterSpacing:'0.05em', textAlign:'left' }}>Suivi</div>
@@ -2656,7 +2655,7 @@ const SavingsDetail = ({ type, label, histItems, soldeItem, onSaveHist, onDelete
 };
 
 // Vue ÉPARGNE — navigation année indépendante
-export function EpargneView({ currentYear, onProfileAction }) {
+export function EpargneView({ currentYear, onProfileAction, isSupabaseBacked, saveStatus }) {
   const [epargneYear, setEpargneYear] = useState(currentYear);
   const [months, setMonths] = useState(() => loadYearData(currentYear));
 
@@ -2840,8 +2839,8 @@ export function EpargneView({ currentYear, onProfileAction }) {
           <button onClick={nextYear}
             style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:20, padding:'0 3px' }}>›</button>
         </div>
-        <div style={{ width:38, display:'flex', justifyContent:'flex-end' }}>
-          <ProfileBadge onSwitch={() => onProfileAction?.('select')} onCreateProfile={() => onProfileAction?.('create')} onLogout={() => onProfileAction?.('logout')} />
+        <div style={{ display:'flex', justifyContent:'flex-end', flexShrink:0 }}>
+          <ProfileBadge onSwitch={() => onProfileAction?.('select')} onCreateProfile={() => onProfileAction?.('create')} onLogout={() => onProfileAction?.('logout')} saveStatus={saveStatus} isSupabaseBacked={isSupabaseBacked} />
         </div>
       </div>
 
@@ -3529,12 +3528,12 @@ function MainApp({ onProfileAction }) {
 
   const renderView = () => {
     switch (view) {
-      case 'accueil':     return <AccueilView  m={m} mi={mi} setMi={setMi} setView={setView} setDepTab={setDepTab} updateData={updateData} onProfileAction={onProfileAction} isSupabaseBacked={isSupabaseBacked} />;
-      case 'budget':      return <BudgetView   m={m} mi={mi} setMi={setMi} setView={setView} updateData={updateData} onProfileAction={onProfileAction} />;
+      case 'accueil':     return <AccueilView  m={m} mi={mi} setMi={setMi} setView={setView} setDepTab={setDepTab} updateData={updateData} onProfileAction={onProfileAction} isSupabaseBacked={isSupabaseBacked} saveStatus={saveStatus} />;
+      case 'budget':      return <BudgetView   m={m} mi={mi} setMi={setMi} setView={setView} updateData={updateData} onProfileAction={onProfileAction} isSupabaseBacked={isSupabaseBacked} saveStatus={saveStatus} />;
       case 'budget_edit': return <BudgetEditView m={m} updateData={updateData} setView={setView} />;
-      case 'revenus':     return <RevenusView  m={m} mi={mi} setMi={setMi} updateData={updateData} onProfileAction={onProfileAction} />;
-      case 'depenses':    return <DepensesView m={m} mi={mi} setMi={setMi} updateData={updateData} depTab={depTab} setDepTab={setDepTab} onProfileAction={onProfileAction} isSupabaseBacked={isSupabaseBacked} />;
-      case 'epargne':     return <EpargneView  currentYear={mi.year} onProfileAction={onProfileAction} />;
+      case 'revenus':     return <RevenusView  m={m} mi={mi} setMi={setMi} updateData={updateData} onProfileAction={onProfileAction} isSupabaseBacked={isSupabaseBacked} saveStatus={saveStatus} />;
+      case 'depenses':    return <DepensesView m={m} mi={mi} setMi={setMi} updateData={updateData} depTab={depTab} setDepTab={setDepTab} onProfileAction={onProfileAction} isSupabaseBacked={isSupabaseBacked} saveStatus={saveStatus} />;
+      case 'epargne':     return <EpargneView  currentYear={mi.year} onProfileAction={onProfileAction} isSupabaseBacked={isSupabaseBacked} saveStatus={saveStatus} />;
       default:            return null;
     }
   };
@@ -3544,7 +3543,6 @@ function MainApp({ onProfileAction }) {
       <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
       <div style={{ background:C.beige, height:'100dvh', display:'flex', flexDirection:'column', width:'100%', maxWidth:430, margin:'0 auto', position:'relative', overflow:'hidden', fontFamily:sans }}>
-        <SaveIndicator status={saveStatus} isSupabaseBacked={isSupabaseBacked} />
         {!['accueil','budget_edit','epargne','budget','revenus','depenses'].includes(view) && (
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px 8px', background:C.beige, flexShrink:0 }}>
             <button onClick={() => setView('accueil')} style={{ background:'none', border:'none', cursor:'pointer', color:C.vert, fontSize:22, width:32 }}>‹</button>
