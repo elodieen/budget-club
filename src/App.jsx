@@ -6,7 +6,11 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from './supabaseClient';
 import { USE_AUTH } from './config';
 import LoginScreen from './LoginScreen.jsx';
-import { fetchMonthFromSupabase, syncMonthChangesToSupabase, applyIdMapToMonth } from './supabaseData.js';
+import {
+  fetchMonthFromSupabase, syncMonthChangesToSupabase, applyIdMapToMonth, createMonthInSupabase,
+  isProfileSupabaseNative, createProfileInSupabase, verifyProfilePinInSupabase, updateProfilePinInSupabase,
+  profileHasAuthAccount,
+} from './supabaseData.js';
 
 // ─── DESIGN TOKENS ──────────────────────────────────────────
 const C = {
@@ -418,21 +422,44 @@ function useMonthData(mi) {
       return;
     }
 
-    // Migration explicite en amont : Supabase n'est utilisé que si la ligne
-    // existe déjà (migrée via migrateAllMonths) — sinon on retombe sur localStorage,
-    // sans jamais créer la ligne budget_months depuis l'app elle-même.
     setLoading(true);
-    fetchMonthFromSupabase(currentProfileId, mi.year, mi.month + 1)
-      .then(fetched => {
+    const profileId = currentProfileId;
+    (async () => {
+      let native = false;
+      try { native = await isProfileSupabaseNative(profileId); } catch {}
+      if (cancelled) return;
+
+      try {
+        const fetched = await fetchMonthFromSupabase(profileId, mi.year, mi.month + 1);
         if (cancelled) return;
-        if (fetched) finish('supabase', fetched, fetched.supabaseMonthId);
-        else loadLocal();
-      })
-      .catch(err => {
+        if (fetched) { finish('supabase', fetched, fetched.supabaseMonthId); return; }
+
+        if (native) {
+          // Profil "toujours Supabase" : un mois qui n'existe pas encore est créé
+          // directement là-bas, jamais en localStorage. mkMonth() fournit le même
+          // jeu de factures par défaut/récurrentes que la version locale aurait posé.
+          const created = await createMonthInSupabase(profileId, mi.year, mi.month + 1, mkMonth().bills);
+          if (cancelled) return;
+          finish('supabase', created, created.supabaseMonthId);
+        } else {
+          // Migration explicite en amont pour les profils non natifs : Supabase
+          // seulement si déjà migré, sinon repli localStorage classique.
+          loadLocal();
+        }
+      } catch (err) {
         if (cancelled) return;
-        console.error('[Supabase] Erreur chargement du mois :', err.message);
-        loadLocal();
-      });
+        console.error('[Supabase] Erreur chargement/création du mois :', err.message);
+        if (native) {
+          // Un profil natif ne doit jamais retomber sur localStorage : on affiche
+          // un mois vide en mémoire (non persisté) plutôt que de créer une donnée
+          // fantôme en local. monthId reste null → toute écriture est bloquée avec
+          // un message clair au lieu d'être silencieusement perdue.
+          finish('supabase', mkMonth(), null);
+        } else {
+          loadLocal();
+        }
+      }
+    })();
 
     return () => { cancelled = true; };
   }, [key, cacheKey]);
@@ -577,6 +604,16 @@ const ProfileMenu = ({ onClose, onSwitch, onCreateProfile, onLogout }) => {
   const [startDayVal,   setStartDayVal]   = useState(() => getStartDay());
   const [savedFlash,    setSavedFlash]    = useState(false);
   const importRef = useRef(null);
+  // "Se déconnecter" ne concerne que les profils réellement connectés via
+  // Supabase Auth (elodie) — pas un profil PIN natif Supabase sans compte Auth
+  // (ex: un sous-profil créé pendant que USE_AUTH est actif).
+  const [hasAuthAccount, setHasAuthAccount] = useState(false);
+  useEffect(() => {
+    if (!USE_AUTH) return;
+    let cancelled = false;
+    profileHasAuthAccount(currentProfileId).then(has => { if (!cancelled) setHasAuthAccount(has); });
+    return () => { cancelled = true; };
+  }, []);
 
   const handleSave = () => {
     const data = {};
@@ -645,6 +682,9 @@ const ProfileMenu = ({ onClose, onSwitch, onCreateProfile, onLogout }) => {
     setConfirmDelete(null);
   };
 
+  // Comme PinScreen : un profil Supabase-natif vérifie/écrit son PIN via les
+  // fonctions RPC (pin_hash n'est jamais lu/écrit en direct depuis le client) ;
+  // les autres profils gardent le comportement local getPin/savePin inchangé.
   const handlePinKey = (k) => {
     if (k === 'del') { setPinInput(p => p.slice(0,-1)); return; }
     if (pinInput.length >= 6) return;
@@ -652,20 +692,36 @@ const ProfileMenu = ({ onClose, onSwitch, onCreateProfile, onLogout }) => {
     setPinInput(next);
     if (next.length < 6) return;
     if (stage === 'old') {
-      if (next === getPin(currentProfileId)) { setNewPinVal(''); setStage('new'); setPinInput(''); setPinError(''); }
-      else { setPinError('Code incorrect'); setTimeout(() => { setPinInput(''); setPinError(''); }, 800); }
+      checkOldPin(next);
     } else if (stage === 'new') {
       setNewPinVal(next); setStage('confirm'); setPinInput('');
     } else if (stage === 'confirm') {
-      if (next === newPinVal) {
-        savePin(currentProfileId, next);
-        setPinSuccess(true);
-        setTimeout(() => { setStage(null); setPinInput(''); setPinSuccess(false); }, 1200);
-      } else {
-        setPinError('Les codes ne correspondent pas');
-        setTimeout(() => { setPinInput(''); setPinError(''); setStage('new'); setNewPinVal(''); }, 800);
-      }
+      confirmNewPin(next);
     }
+  };
+
+  const checkOldPin = async (candidate) => {
+    const native = USE_AUTH && await isProfileSupabaseNative(currentProfileId);
+    const ok = native ? await verifyProfilePinInSupabase(currentProfileId, candidate) : candidate === getPin(currentProfileId);
+    if (ok) { setNewPinVal(''); setStage('new'); setPinInput(''); setPinError(''); }
+    else { setPinError('Code incorrect'); setTimeout(() => { setPinInput(''); setPinError(''); }, 800); }
+  };
+
+  const confirmNewPin = async (candidate) => {
+    if (candidate !== newPinVal) {
+      setPinError('Les codes ne correspondent pas');
+      setTimeout(() => { setPinInput(''); setPinError(''); setStage('new'); setNewPinVal(''); }, 800);
+      return;
+    }
+    const native = USE_AUTH && await isProfileSupabaseNative(currentProfileId);
+    if (native) {
+      try { await updateProfilePinInSupabase(currentProfileId, candidate); }
+      catch (err) { setPinError(err.message); setTimeout(() => { setPinInput(''); setPinError(''); setStage('new'); setNewPinVal(''); }, 1500); return; }
+    } else {
+      savePin(currentProfileId, candidate);
+    }
+    setPinSuccess(true);
+    setTimeout(() => { setStage(null); setPinInput(''); setPinSuccess(false); }, 1200);
   };
 
   return (
@@ -742,7 +798,7 @@ const ProfileMenu = ({ onClose, onSwitch, onCreateProfile, onLogout }) => {
                 { icon:'ti-settings', label:'Gérer les profils', action: () => setStage('manage') },
                 { icon:'ti-user-plus', label:'Ajouter un profil', action: onCreateProfile },
               ] : []),
-              ...(USE_AUTH && onLogout ? [
+              ...(USE_AUTH && onLogout && hasAuthAccount ? [
                 { icon:'ti-logout', label:'Se déconnecter', action: onLogout },
               ] : []),
             ].map(btn => (
@@ -3197,18 +3253,26 @@ const PinScreen = ({ profile, onSuccess, onBack }) => {
   const [newPin,     setNewPin]     = useState('');
   const [resetErr,   setResetErr]   = useState('');
 
+  // Un profil "Supabase-natif" (a une ligne dans profiles, ex: elodie ou tout
+  // sous-profil créé pendant que USE_AUTH est actif) vérifie/écrit son PIN
+  // côté Supabase (haché) ; les autres profils gardent le comportement local
+  // inchangé, qu'ils soient utilisés avec USE_AUTH actif ou non.
   const handleKey = (k) => {
     if (resetStage) { handleResetKey(k); return; }
     if (k === 'del') { setPin(p => p.slice(0,-1)); return; }
     if (pin.length >= 6) return;
     const next = pin + k;
     setPin(next);
-    if (next.length === 6) {
-      if (next === getPin(profile.id)) { onSuccess(profile); }
-      else {
-        setShake(true); setError(true);
-        setTimeout(() => { setShake(false); setPin(''); setError(false); }, 800);
-      }
+    if (next.length === 6) verifyPin(next);
+  };
+
+  const verifyPin = async (candidate) => {
+    const native = USE_AUTH && await isProfileSupabaseNative(profile.id);
+    const ok = native ? await verifyProfilePinInSupabase(profile.id, candidate) : candidate === getPin(profile.id);
+    if (ok) { onSuccess(profile); }
+    else {
+      setShake(true); setError(true);
+      setTimeout(() => { setShake(false); setPin(''); setError(false); }, 800);
     }
   };
 
@@ -3224,16 +3288,24 @@ const PinScreen = ({ profile, onSuccess, onBack }) => {
       if (pin.length >= 6) return;
       const next = pin + k;
       setPin(next);
-      if (next.length === 6) {
-        if (next === newPin) {
-          savePin(profile.id, next);
-          onSuccess(profile);
-        } else {
-          setResetErr('Les codes ne correspondent pas');
-          setPin(''); setNewPin('');
-          setTimeout(() => { setResetErr(''); setResetStage('new'); }, 1200);
-        }
-      }
+      if (next.length === 6) confirmResetPin(next);
+    }
+  };
+
+  const confirmResetPin = async (candidate) => {
+    if (candidate !== newPin) {
+      setResetErr('Les codes ne correspondent pas');
+      setPin(''); setNewPin('');
+      setTimeout(() => { setResetErr(''); setResetStage('new'); }, 1200);
+      return;
+    }
+    const native = USE_AUTH && await isProfileSupabaseNative(profile.id);
+    if (native) {
+      try { await updateProfilePinInSupabase(profile.id, candidate); onSuccess(profile); }
+      catch (err) { setResetErr(err.message); setPin(''); setNewPin(''); setTimeout(() => { setResetErr(''); setResetStage('new'); }, 1500); }
+    } else {
+      savePin(profile.id, candidate);
+      onSuccess(profile);
     }
   };
 
@@ -3324,14 +3396,33 @@ const CreateProfileScreen = ({ onCreated, onCancel }) => {
       } else {
         const id = 'user_' + Date.now();
         const newProfile = { id, name: name.trim() };
-        const profiles = getProfiles() || [];
-        saveProfiles([...profiles, newProfile]);
-        savePin(id, pin);
         const today = new Date().toISOString().split('T')[0];
-        localStorage.setItem(`${id}:budget:livret:soldeInitial`, JSON.stringify({ amount: 0, date: today }));
-        localStorage.setItem(`${id}:budget:pea:soldeInitial`, JSON.stringify({ montant: 0, rendement: 0, pct: 0, date: today }));
-        localStorage.setItem(`${id}:budget:init:2026-06`, '1');
-        onCreated(newProfile);
+        // L'épargne (Livret A/PEA) reste hors périmètre Supabase pour l'instant,
+        // donc ces clés restent locales quel que soit USE_AUTH.
+        const finishCreate = () => {
+          localStorage.setItem(`${id}:budget:livret:soldeInitial`, JSON.stringify({ amount: 0, date: today }));
+          localStorage.setItem(`${id}:budget:pea:soldeInitial`, JSON.stringify({ montant: 0, rendement: 0, pct: 0, date: today }));
+          localStorage.setItem(`${id}:budget:init:2026-06`, '1');
+          onCreated(newProfile);
+        };
+        if (USE_AUTH) {
+          // Profil Supabase-natif dès sa création : ses mois/PIN ne passeront
+          // jamais par le localStorage. On garde juste {id, name} en local pour
+          // que l'UI existante (nom affiché, "Gérer les profils") continue de
+          // fonctionner sans requête réseau à chaque affichage.
+          createProfileInSupabase(id, name.trim(), pin)
+            .then(() => {
+              const profiles = getProfiles() || [];
+              saveProfiles([...profiles, newProfile]);
+              finishCreate();
+            })
+            .catch(err => { setError('Erreur : ' + err.message); setConfirmPin(''); });
+        } else {
+          const profiles = getProfiles() || [];
+          saveProfiles([...profiles, newProfile]);
+          savePin(id, pin);
+          finishCreate();
+        }
       }
     }
   };

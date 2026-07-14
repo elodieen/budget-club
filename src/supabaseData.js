@@ -273,3 +273,103 @@ export async function syncMonthChangesToSupabase(monthId, prev, next) {
   }
   return idMap;
 }
+
+// ============================================================
+// PROFILS — "profil Supabase-natif" = a une ligne dans la table "profiles".
+// Aucune liste codée en dur : n'importe quel profil (elodie ou un nouveau
+// sous-profil créé plus tard) devient natif dès qu'il existe dans cette table.
+// Ne concerne que l'existence/le PIN du profil — l'épargne, les factures
+// récurrentes, les catégories personnalisées restent hors périmètre (localStorage).
+// ============================================================
+
+const nativeProfileCache = new Map(); // profileId -> boolean, mémoïsé pour la session
+const authAccountCache = new Map(); // profileId -> boolean, idem
+
+export async function isProfileSupabaseNative(profileId) {
+  if (nativeProfileCache.has(profileId)) return nativeProfileCache.get(profileId);
+  try {
+    const { data, error } = await supabase.from('profiles').select('id').eq('id', profileId).maybeSingle();
+    const native = !error && !!data;
+    nativeProfileCache.set(profileId, native);
+    return native;
+  } catch {
+    return false;
+  }
+}
+
+// Distinct de isProfileSupabaseNative : un profil natif (ex: TestSupa, PIN)
+// n'a pas forcément de compte Auth email/mot de passe (ex: elodie). Sert à
+// n'afficher "Se déconnecter" que pour un profil réellement connecté via Auth.
+export async function profileHasAuthAccount(profileId) {
+  if (authAccountCache.has(profileId)) return authAccountCache.get(profileId);
+  try {
+    const { data, error } = await supabase.from('profiles').select('auth_user_id').eq('id', profileId).maybeSingle();
+    const has = !error && !!data?.auth_user_id;
+    authAccountCache.set(profileId, has);
+    return has;
+  } catch {
+    return false;
+  }
+}
+
+// Hachage et vérification du PIN entièrement côté Postgres (pgcrypto/bcrypt,
+// fonctions SECURITY DEFINER create_profile_with_pin / set_profile_pin /
+// verify_profile_pin — cf. migration_rls.sql). pin_hash ne transite plus
+// jamais côté client, ni en lecture ni en écriture : le client n'envoie que
+// le PIN en clair (comme avant, via HTTPS) et reçoit un booléen ou rien.
+// La table "profiles" elle-même est verrouillée par RLS + GRANT côté serveur :
+// une lecture/écriture directe de pin_hash échoue désormais systématiquement.
+
+export async function createProfileInSupabase(id, name, pin) {
+  const { error } = await supabase.rpc('create_profile_with_pin', { p_id: id, p_name: name, p_pin: pin });
+  if (error) throw new Error(`Erreur création profil : ${error.message}`);
+  nativeProfileCache.set(id, true);
+}
+
+export async function verifyProfilePinInSupabase(profileId, pin) {
+  const { data, error } = await supabase.rpc('verify_profile_pin', { p_id: profileId, p_pin: pin });
+  if (error) return false;
+  return !!data;
+}
+
+export async function updateProfilePinInSupabase(profileId, pin) {
+  const { error } = await supabase.rpc('set_profile_pin', { p_id: profileId, p_pin: pin });
+  if (error) throw new Error(`Erreur mise à jour du code PIN : ${error.message}`);
+}
+
+// Crée un nouveau mois directement dans Supabase (profil "toujours Supabase") :
+// utilisé quand fetchMonthFromSupabase ne trouve rien pour un profil natif —
+// jamais de repli localStorage dans ce cas. initialBills permet de reprendre
+// le même jeu de factures par défaut/récurrentes que mkMonth() aurait posé localement.
+export async function createMonthInSupabase(profileId, year, month, initialBills = []) {
+  const { data: monthRow, error: monthError } = await supabase
+    .from('budget_months')
+    .insert({ profile_id: profileId, year, month, cat_budgets: {}, closed: false, solde_final: null, budget_locked: false, factures_validees: false })
+    .select()
+    .single();
+  if (monthError) throw new Error(`Erreur création du mois : ${monthError.message}`);
+
+  let bills = [];
+  if (initialBills.length > 0) {
+    const rows = initialBills.map(b => ({
+      month_id: monthRow.id, name: b.name, amount: b.amount, real_amount: b.realAmount, paid: !!b.paid, paid_date: b.paidDate || null,
+    }));
+    const { data: billRows, error: billsError } = await supabase.from('bills').insert(rows).select();
+    if (billsError) throw new Error(`Erreur création des factures par défaut : ${billsError.message}`);
+    bills = (billRows || []).map(b => ({
+      id: b.id, name: b.name, amount: b.amount, realAmount: b.real_amount, paid: !!b.paid, paidDate: b.paid_date || '',
+    }));
+  }
+
+  return {
+    supabaseMonthId: monthRow.id,
+    catBudgets: {},
+    closed: false,
+    soldeFinal: null,
+    budgetLocked: false,
+    facturesValidees: false,
+    revenues: [],
+    bills,
+    expenses: [],
+  };
+}
