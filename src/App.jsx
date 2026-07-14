@@ -437,18 +437,20 @@ const Logo = ({ size = 38, src = '/icon-512.png' }) => (
     style={{ width:size, height:size, borderRadius:'50%', objectFit:'cover', flexShrink:0, display:'block' }} />
 );
 
-// Indicateur de sauvegarde Supabase — icône disquette verte seule (pas de
-// fond, pas d'étiquette texte), affichée en permanence à côté de l'avatar
-// profil pour les mois branchés Supabase (localStorage est synchrone, pas de
-// statut à afficher). 'saving' = pulsation, sans overlay ; 'success' = coche
-// rose en overlay, permanente tant que rien de nouveau n'est écrit ; 'error'
-// = croix rouge en overlay, permanente jusqu'à ce qu'une écriture ultérieure
-// réussisse — dans les deux cas, pas de fermeture manuelle ni de disparition
-// automatique : l'overlay reflète fidèlement le dernier résultat connu.
+// Indicateur de sauvegarde Supabase — icône disquette seule, couleur du thème
+// (C.vert, comme le fond des avatars BC/profil), pas de fond ni d'étiquette
+// texte, affichée en permanence à côté (à gauche) de l'avatar profil pour les
+// mois branchés Supabase (localStorage est synchrone, pas de statut à
+// afficher). 'saving' = pulsation, sans badge ; 'success' = coche rose en
+// overlay haut-gauche, permanente tant que rien de nouveau n'est écrit ;
+// 'error' = croix rose foncé en overlay haut-gauche, permanente jusqu'à ce
+// qu'une écriture ultérieure réussisse — dans les deux cas, pas de fermeture
+// manuelle ni de disparition automatique : le badge reflète fidèlement le
+// dernier résultat connu.
 const SaveIndicator = ({ status, isSupabaseBacked }) => {
   if (!isSupabaseBacked) return null;
-  const overlay = status === 'success' ? { icon:'ti-circle-check', color:C.rose }
-    : status === 'error' ? { icon:'ti-circle-x', color:'#E8637A' }
+  const badge = status === 'success' ? { icon:'ti-circle-check', color:C.rose }
+    : status === 'error' ? { icon:'ti-circle-x', color:'#B5657A' }
     : null;
   return (
     <div
@@ -457,10 +459,10 @@ const SaveIndicator = ({ status, isSupabaseBacked }) => {
         display:'flex', alignItems:'center', justifyContent:'center',
         animation: status === 'saving' ? 'saveIndicatorPulse 1.1s ease-in-out infinite' : 'none',
       }}>
-      <i className="ti ti-device-floppy" style={{ fontSize:19, color:'#3FA65B' }} />
-      {overlay && (
-        <i className={`ti ${overlay.icon}`}
-          style={{ position:'absolute', bottom:-3, right:-4, fontSize:13, color:overlay.color, background:'white', borderRadius:'50%' }} />
+      <i className="ti ti-device-floppy" style={{ fontSize:19, color:C.vert }} />
+      {badge && (
+        <i className={`ti ${badge.icon}`}
+          style={{ position:'absolute', top:-3, left:-4, fontSize:13, color:badge.color, background:'white', borderRadius:'50%' }} />
       )}
       <style>{`@keyframes saveIndicatorPulse { 0%,100% { opacity:1 } 50% { opacity:0.55 } }`}</style>
     </div>
