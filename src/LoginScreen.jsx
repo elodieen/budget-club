@@ -52,6 +52,13 @@ const fieldStyle = {
   boxSizing: 'border-box',
 };
 
+// Petits accès locaux dupliqués depuis App.jsx (non exportés depuis là-bas,
+// même logique que SplashBg/SplashLogo ci-dessus) — uniquement pour poser
+// l'entrée légère {id, name} attendue par l'UI existante (ProfileBadge,
+// "Gérer les profils"...) pour tout profil Supabase-natif.
+const getLocalProfiles  = () => { try { return JSON.parse(localStorage.getItem('profile:list') || '[]'); } catch { return []; } };
+const saveLocalProfiles = (p) => localStorage.setItem('profile:list', JSON.stringify(p));
+
 // Relie l'utilisateur Auth actuellement connecté (user) à sa ligne profiles,
 // en la créant si elle n'existe pas encore — cas du tout premier login après
 // inscription (immédiat si pas de confirmation email requise, ou différé au
@@ -70,6 +77,18 @@ const ensureProfileForUser = async (user) => {
   const name = user.user_metadata?.name || user.email.split('@')[0];
   const { error: rpcError } = await supabase.rpc('create_profile_for_auth_user', { p_id: id, p_name: name });
   if (rpcError) throw new Error(`Erreur lors de la création du profil : ${rpcError.message}`);
+
+  // Entrée locale légère (nom affiché dans l'UI) + comptes épargne à 0 —
+  // l'épargne (Livret/PEA) reste hors périmètre Supabase pour l'instant,
+  // donc sans ceci le premier passage sur l'écran Épargne hériterait par
+  // défaut des soldes historiques d'Elodie (bug identifié le 2026-07-14).
+  const profiles = getLocalProfiles();
+  saveLocalProfiles([...profiles, { id, name }]);
+  const today = new Date().toISOString().split('T')[0];
+  localStorage.setItem(`${id}:budget:livret:soldeInitial`, JSON.stringify({ amount: 0, date: today }));
+  localStorage.setItem(`${id}:budget:pea:soldeInitial`, JSON.stringify({ montant: 0, rendement: 0, pct: 0, date: today }));
+  localStorage.setItem(`${id}:budget:init:2026-06`, '1');
+
   return id;
 };
 

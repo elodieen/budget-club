@@ -2683,8 +2683,14 @@ export function EpargneView({ currentYear, onProfileAction, isSupabaseBacked, sa
   useEffect(() => {
     const MIG = `${currentProfileId}:budget:init:2026-06`;
     if (!localStorage.getItem(MIG)) {
-      const defaultL = { amount: 1938.37, date: '2026-06-01' };
-      const defaultP = { montant: 1841.72, rendement: 259.24, pct: 16.48, date: '2026-06-01' };
+      // Ces montants historiques ne concernent qu'Elodie — tout autre profil
+      // (nouveau profil créé via inscription ou "Nouveau profil") doit partir
+      // à 0€, jamais hériter des soldes réels d'Elodie faute d'initialisation
+      // préalable. Ce bloc ne sert donc plus que de filet de sécurité : les
+      // parcours de création (CreateProfileScreen, ensureProfileForUser)
+      // posent normalement déjà ce flag et les soldes à 0 avant ce montage.
+      const defaultL = currentProfileId === 'elodie' ? { amount: 1938.37, date: '2026-06-01' } : { amount: 0, date: '2026-06-01' };
+      const defaultP = currentProfileId === 'elodie' ? { montant: 1841.72, rendement: 259.24, pct: 16.48, date: '2026-06-01' } : { montant: 0, rendement: 0, pct: 0, date: '2026-06-01' };
       saveLivretSolde(defaultL);
       savePeaSolde(defaultP);
       setLivretSolde(defaultL);
