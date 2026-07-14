@@ -52,11 +52,34 @@ const fieldStyle = {
   boxSizing: 'border-box',
 };
 
+// Relie l'utilisateur Auth actuellement connecté (user) à sa ligne profiles,
+// en la créant si elle n'existe pas encore — cas du tout premier login après
+// inscription (immédiat si pas de confirmation email requise, ou différé au
+// premier signInWithPassword si le compte devait d'abord être confirmé par
+// email). Utilisé aussi bien après signUp() que signInWithPassword().
+const ensureProfileForUser = async (user) => {
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('auth_user_id', user.id)
+    .maybeSingle();
+  if (error) throw new Error(`Erreur lors de la recherche du profil : ${error.message}`);
+  if (profile) return profile.id;
+
+  const id   = 'user_' + Date.now();
+  const name = user.user_metadata?.name || user.email.split('@')[0];
+  const { error: rpcError } = await supabase.rpc('create_profile_for_auth_user', { p_id: id, p_name: name });
+  if (rpcError) throw new Error(`Erreur lors de la création du profil : ${rpcError.message}`);
+  return id;
+};
+
 // onSuccess(profileId, user) : callback optionnel utilisé quand ce composant
 // est embarqué dans App.jsx (USE_AUTH=true). En son absence (route standalone
 // #login), le comportement par défaut est conservé : affichage du résultat à
 // l'écran.
 export default function LoginScreen({ onSuccess } = {}) {
+  const [mode,     setMode]     = useState('signin'); // 'signin' | 'signup'
+  const [name,     setName]     = useState('');
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
   const [running,  setRunning]  = useState(false);
@@ -75,21 +98,47 @@ export default function LoginScreen({ onSuccess } = {}) {
       return;
     }
 
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('auth_user_id', data.user.id)
-      .maybeSingle();
+    try {
+      const profileId = await ensureProfileForUser(data.user);
+      if (onSuccess) { onSuccess(profileId, data.user); return; }
+      setStatus({ type: 'success', message: `Bienvenue ${data.user.email} — profil : "${profileId}"` });
+    } catch (err) {
+      setStatus({ type: 'error', message: err.message });
+    }
+    setRunning(false);
+  };
 
-    if (profileError) {
-      setStatus({ type: 'error', message: `Connecté, mais erreur lors de la recherche du profil : ${profileError.message}` });
-    } else if (!profile) {
-      setStatus({ type: 'error', message: `Connecté en tant que ${data.user.email}, mais aucun profil relié à ce compte.` });
-    } else if (onSuccess) {
-      onSuccess(profile.id, data.user);
+  const handleSignUp = async () => {
+    if (!name.trim() || !email || !password) return;
+    setRunning(true);
+    setStatus(null);
+
+    const { data, error } = await supabase.auth.signUp({
+      email, password,
+      options: { data: { name: name.trim() } },
+    });
+    if (error) {
+      setStatus({ type: 'error', message: error.message });
+      setRunning(false);
       return;
+    }
+
+    if (data.session && data.user) {
+      // Pas de confirmation email requise pour ce projet : le compte est
+      // immédiatement actif, on finalise tout de suite.
+      try {
+        const profileId = await ensureProfileForUser(data.user);
+        if (onSuccess) { onSuccess(profileId, data.user); return; }
+        setStatus({ type: 'success', message: `Compte créé — profil : "${profileId}"` });
+      } catch (err) {
+        setStatus({ type: 'error', message: err.message });
+      }
     } else {
-      setStatus({ type: 'success', message: `Bienvenue ${data.user.email} — profil trouvé : "${profile.id}"` });
+      // Confirmation email requise avant la première connexion : le profil
+      // sera créé automatiquement au premier signInWithPassword réussi
+      // (voir ensureProfileForUser, appelé aussi dans handleSignIn).
+      setStatus({ type: 'success', message: `Compte créé pour ${email}. Vérifie ta boîte mail pour confirmer l'adresse, puis connecte-toi ci-dessous.` });
+      setMode('signin');
     }
     setRunning(false);
   };
@@ -114,6 +163,15 @@ export default function LoginScreen({ onSuccess } = {}) {
         <SplashLogo size={80} titleSize={30} spacing="6px" />
 
         <div style={{ marginTop:26, width:'100%', display:'flex', flexDirection:'column', gap:12 }}>
+          {mode === 'signup' && (
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="Prénom"
+              style={fieldStyle}
+            />
+          )}
           <input
             type="text"
             value={email}
@@ -126,7 +184,7 @@ export default function LoginScreen({ onSuccess } = {}) {
             value={password}
             onChange={e => setPassword(e.target.value)}
             placeholder="Mot de passe"
-            onKeyDown={e => { if (e.key === 'Enter') handleSignIn(); }}
+            onKeyDown={e => { if (e.key === 'Enter') (mode === 'signup' ? handleSignUp : handleSignIn)(); }}
             style={fieldStyle}
           />
         </div>
@@ -142,16 +200,35 @@ export default function LoginScreen({ onSuccess } = {}) {
           </div>
         )}
 
-        <button
-          onClick={handleSignIn}
-          disabled={!email || !password || running}
-          style={{ marginTop:16, width:'100%', padding:'13px 0', background:'white', border:'1px solid rgba(255,255,255,0.3)', borderRadius:10, fontFamily:sans, fontSize:14, fontWeight:700, color:C.vert, cursor: !email || !password || running ? 'default' : 'pointer', letterSpacing:1, opacity: !email || !password || running ? 0.7 : 1 }}>
-          {running ? 'Connexion en cours...' : 'Se connecter'}
-        </button>
+        {mode === 'signup' ? (
+          <button
+            onClick={handleSignUp}
+            disabled={!name.trim() || !email || !password || running}
+            style={{ marginTop:16, width:'100%', padding:'13px 0', background:'white', border:'1px solid rgba(255,255,255,0.3)', borderRadius:10, fontFamily:sans, fontSize:14, fontWeight:700, color:C.vert, cursor: !name.trim() || !email || !password || running ? 'default' : 'pointer', letterSpacing:1, opacity: !name.trim() || !email || !password || running ? 0.7 : 1 }}>
+            {running ? 'Création en cours...' : 'Créer mon compte'}
+          </button>
+        ) : (
+          <button
+            onClick={handleSignIn}
+            disabled={!email || !password || running}
+            style={{ marginTop:16, width:'100%', padding:'13px 0', background:'white', border:'1px solid rgba(255,255,255,0.3)', borderRadius:10, fontFamily:sans, fontSize:14, fontWeight:700, color:C.vert, cursor: !email || !password || running ? 'default' : 'pointer', letterSpacing:1, opacity: !email || !password || running ? 0.7 : 1 }}>
+            {running ? 'Connexion en cours...' : 'Se connecter'}
+          </button>
+        )}
 
-        <button onClick={handleForgotPassword}
-          style={{ marginTop:16, background:'none', border:'none', color:'rgba(255,255,255,0.45)', fontFamily:sans, fontSize:12, cursor:'pointer', textDecoration:'underline' }}>
-          Mot de passe oublié ?
+        {mode === 'signin' && (
+          <button onClick={handleForgotPassword}
+            style={{ marginTop:16, background:'none', border:'none', color:'rgba(255,255,255,0.45)', fontFamily:sans, fontSize:12, cursor:'pointer', textDecoration:'underline' }}>
+            Mot de passe oublié ?
+          </button>
+        )}
+
+        <div style={{ width:'100%', height:1, background:'rgba(238,196,196,0.3)', margin:'20px 0 14px' }} />
+
+        <button
+          onClick={() => { setMode(m => m === 'signin' ? 'signup' : 'signin'); setStatus(null); setResetSent(false); }}
+          style={{ background:'none', border:'none', color:'rgba(255,255,255,0.7)', fontFamily:sans, fontSize:12, fontWeight:600, cursor:'pointer', textDecoration:'underline' }}>
+          {mode === 'signin' ? 'Créer un compte' : "J'ai déjà un compte"}
         </button>
       </SplashBg>
     </>
